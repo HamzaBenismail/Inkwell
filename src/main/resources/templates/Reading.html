@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InkWell</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-panel: #1e293b;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --panel-width: 300px;
+            --transition-speed: 0.3s;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .main-container {
+        	position: relative;
+            display: flex;
+            min-height: 100vh;
+            transition: margin-right var(--transition-speed) ease; /* Updated transition property */
+        	z-index: 100;
+        }
+
+        .reading-container {
+            flex-grow: 1;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            background-color: var(--bg-panel);
+            min-height: 100vh; /* Added min-height */
+            transition: margin-right var(--transition-speed) ease; /* Updated transition property */
+        }
+
+        .side-panel {
+            position: fixed;
+            top: 0;
+            right: var(--panel-width); /* Changed to left */
+            width: var(--panel-width);
+            height: 100vh;
+            background-color: var(--bg-panel);
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1); /* Updated box-shadow */
+            transition: left var(--transition-speed) ease; /* Changed to left */
+            padding: 1.5rem;
+            overflow-y: auto;
+            z-index: 99;
+            opacity: 0;
+        }
+        
+        /* When panel is active */
+		.side-panel.active {
+		    right: calc(1.4 * var(--panel-width));
+		    opacity: 1;	 /* Slide panel into view */
+		    transition: left var(--transition-speed) ease;
+		}
+		
+		.main-container.shifted {
+		    margin-right: var(--panel-width); /* Shift content to make space for panel */
+		}
+
+        .control-buttons {
+            position: fixed;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            z-index: 100;
+        }
+
+        .control-button {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--bg-panel);
+            border: none;
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s ease; /* Removed color transition */
+        }
+
+        .control-button:hover {
+            background-color: var(--accent-blue);
+        }
+
+        .cover-image {
+            width: 300px;
+            height: 400px;
+            margin: 0 auto 2rem;
+            display: block;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+
+        .chapter-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .chapter-list li {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+        }
+
+        .chapter-list li:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .color-option {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            cursor: pointer;
+            display: inline-block;
+            margin-right: 0.5rem;
+        }
+
+        .color-option.active {
+            border-color: var(--accent-blue);
+        }
+
+        .font-size-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .font-size-button {
+            padding: 0.5rem 1rem;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 4px;
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+
+        .sort-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .sort-button {
+            padding: 0.5rem 1rem;
+            background-color: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+
+        .sort-button.active {
+            background-color: var(--accent-purple);
+        }
+
+        .comment {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .comment-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .comment-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 1rem;
+        }
+
+        a {
+            color: var(--accent-blue);
+            transition: color 0.3s ease;
+        }
+
+        a:hover {
+            color: var(--accent-purple);
+        }
+        
+        .modal {
+   		/* Optional: Refine panel transitions */
+    	transition: left var(--transition-speed) ease-in-out;
+		}
+        
+    </style>
+    <style th:replace="fragments/sidebar :: sidebar-style"></style>
+</head>
+<body>
+    <div class="main-container">
+    <!-- Sidebar Trigger -->
+        <div th:replace="fragments/sidebar :: sidebar-trigger"></div>
+        <!-- Sidebar -->
+        <aside th:replace="fragments/sidebar :: sidebar"></aside>
+        <div class="reading-container">
+            <img src="/images/mfbg.png" alt="Novel Cover" class="cover-image">
+            <h1 class="text-3xl font-bold text-center mb-2">School Transmigration: I, Chosen as the Saint by Dragons at the Start</h1>
+            <p class="text-center text-gray-400 mb-8">Author: <a href="#" class="text-blue-500">Sesame_Cookies</a></p>
+
+            <div class="chapter-content">
+                <h2 class="text-2xl font-bold mb-4">Chapter 1: The Whole School Transports</h2>
+                <p class="mb-4">Seaside, the Archaeology Museum.</p>
+                <p class="mb-4">The entrance plaza is abuzz with voices, as countless vibrant students step off the bus, gathering together.</p>
+                <p class="mb-4">They are all high schoolers from Saint Aya Academy.</p>
+                <!-- Add more paragraphs as needed -->
+            </div>
+        </div>
+    </div>
+
+    <div class="control-buttons">
+        <button class="control-button" onclick="togglePanel('chapters')">
+            <i class="fas fa-list"></i>
+        </button>
+        <button class="control-button" onclick="togglePanel('settings')">
+            <i class="fas fa-cog"></i>
+        </button>
+        <button class="control-button" onclick="togglePanel('comments')">
+            <i class="fas fa-comments"></i>
+        </button>
+    </div>
+
+    <div id="chapters-panel" class="side-panel">
+        <h3 class="text-xl font-bold mb-4">Table of Contents</h3>
+        <ul class="chapter-list">
+            <li>1. The Whole School Transports</li>
+            <li>2. The Prophecy</li>
+            <li>3. The Prophecy Fulfilled</li>
+            <li>4. The Arrogant Roger</li>
+            <li>5. The Saint's Belated Protector</li>
+        </ul>
+    </div>
+
+    <div id="settings-panel" class="side-panel">
+        <h3 class="text-xl font-bold mb-4">Display Options</h3>
+        
+        <div class="mb-4">
+            <div class="font-semibold mb-2">Background</div>
+            <div class="color-option active" style="background-color: #0f172a;" onclick="setBackground('#0f172a')"></div>
+            <div class="color-option" style="background-color: #f8fafc;" onclick="setBackground('#f8fafc')"></div>
+        </div>
+
+        <div class="mb-4">
+            <div class="font-semibold mb-2">Font</div>
+            <select class="bg-gray-700 text-white p-2 rounded w-full" onchange="setFont(this.value)">
+                <option value="Inter">Inter</option>
+                <option value="Nunito Sans">Nunito Sans</option>
+                <option value="Merriweather">Merriweather</option>
+            </select>
+        </div>
+
+        <div>
+            <div class="font-semibold mb-2">Size</div>
+            <div class="font-size-controls">
+                <button class="font-size-button" onclick="adjustFontSize(-2)">A-</button>
+                <span id="font-size">18</span>
+                <button class="font-size-button" onclick="adjustFontSize(2)">A+</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="comments-panel" class="side-panel">
+        <h3 class="text-xl font-bold mb-4">Chapter Comments</h3>
+        
+        <div class="sort-controls">
+            <button class="sort-button active" onclick="sortComments('liked')">LIKED</button>
+            <button class="sort-button" onclick="sortComments('newest')">NEWEST</button>
+        </div>
+
+        <div class="comments-container">
+            <div class="comment">
+                <div class="comment-header">
+                    <img src="/placeholder.svg?height=40&width=40" alt="User Avatar" class="comment-avatar">
+                    <div>
+                        <div class="font-bold">Origin_Tao</div>
+                        <div class="text-sm text-gray-400">10min</div>
+                    </div>
+                </div>
+                <p>alright I am interested now</p>
+                <div class="flex items-center gap-2 mt-2 text-gray-400">
+                    <button class="hover:text-white"><i class="fas fa-thumbs-up"></i> 4</button>
+                    <button class="hover:text-white"><i class="fas fa-reply"></i> Reply</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+	<script th:replace="fragments/sidebar :: sidebar-script"></script>
+    <script>
+        const mainContainer = document.querySelector('.main-container');
+        const readingContainer = document.querySelector('.reading-container');
+        let activePanel = null;
+
+        function togglePanel(panelName) {
+            const panel = document.getElementById(panelName + '-panel');
+            
+            if (activePanel === panel) {
+                closePanel();
+            } else {
+                if (activePanel) {
+                    closePanel(); // Close any currently active panel
+                }
+                openPanel(panel);
+            }
+        }
+
+        function openPanel(panel) {
+            panel.classList.add('active'); // Slide panel in
+            mainContainer.classList.add('shifted'); // Slide main content left
+            activePanel = panel; // Set active panel
+        }
+
+        function closePanel() {
+            if (activePanel) {
+                activePanel.classList.remove('active'); // Slide panel out
+                mainContainer.classList.remove('shifted'); // Slide main content back
+                activePanel = null; // Reset active panel
+            }
+        }
+
+        function adjustFontSize(change) {
+            const content = document.querySelector('.chapter-content');
+            const sizeDisplay = document.getElementById('font-size');
+            let currentSize = parseInt(window.getComputedStyle(content).fontSize);
+            let newSize = currentSize + change;
+            
+            if (newSize >= 12 && newSize <= 24) {
+                content.style.fontSize = newSize + 'px';
+                sizeDisplay.textContent = newSize;
+            }
+        }
+
+        function setBackground(color) {
+            document.body.style.backgroundColor = color;
+            document.body.style.color = color === '#0f172a' ? '#e2e8f0' : '#000000';
+            
+            const options = document.querySelectorAll('.color-option');
+            options.forEach(option => {
+                option.classList.toggle('active', option.style.backgroundColor === color);
+            });
+        }
+
+        function setFont(fontFamily) {
+            document.querySelector('.chapter-content').style.fontFamily = fontFamily;
+        }
+
+        function sortComments(method) {
+            const buttons = document.querySelectorAll('.sort-button');
+            buttons.forEach(button => {
+                button.classList.toggle('active', button.textContent.toLowerCase() === method.toUpperCase());
+            });
+        }
+    </script>
+</body>
+</html>
+

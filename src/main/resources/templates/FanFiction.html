@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inkwell - Fan Fiction</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'accent-blue': '#0ea5e9',
+                        'accent-cyan': '#06b6d4',
+                        'bg-dark': '#030712',
+                        'bg-card': '#111827',
+                        'bg-card-hover': '#1f2937'
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Core Styles */
+        body {
+            background-color: #030712;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #111827;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #374151;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #0ea5e9;
+        }
+        
+        /* Story card with immersive hover effects */
+        .story-card {
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(145deg, #151e30, #0f1625);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            transition: all 0.5s cubic-bezier(0.33, 1, 0.68, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            transform: perspective(1000px) translateZ(0);
+            transform-style: preserve-3d;
+            backface-visibility: hidden;
+        }
+        
+        /* Glow effect */
+        .story-card::before {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            background: linear-gradient(90deg, transparent, rgba(14, 165, 233, 0.1), transparent);
+            z-index: -1;
+            opacity: 0;
+            border-radius: 14px;
+            transition: opacity 0.5s ease-in-out;
+            filter: blur(8px);
+        }
+        
+        /* Top border accent */
+        .story-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(14, 165, 233, 0.3), transparent);
+            transform: scaleX(0);
+            transition: transform 0.6s cubic-bezier(0.33, 1, 0.68, 1);
+        }
+        
+        /* Main card transform effect */
+        .story-card:hover {
+            transform: perspective(1000px) translateY(-8px) rotateX(2deg) translateZ(10px);
+            border-color: rgba(14, 165, 233, 0.15);
+            box-shadow: 
+                0 15px 30px rgba(0, 0, 0, 0.4),
+                0 0 20px rgba(14, 165, 233, 0.1);
+            filter: brightness(1.05);
+        }
+        
+        /* Activate glow and border accent */
+        .story-card:hover::before {
+            opacity: 1;
+        }
+        
+        .story-card:hover::after {
+            transform: scaleX(1);
+        }
+        
+        /* Image container with parallax effect */
+        .story-image-container {
+            position: relative;
+            height: 12rem;
+            overflow: hidden;
+            border-radius: 12px 12px 0 0;
+            transform-style: preserve-3d;
+            perspective: 1000px;
+        }
+        
+        /* Image with depth effect */
+        .story-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: all 0.7s cubic-bezier(0.33, 1, 0.68, 1);
+            transform: translateZ(0);
+            filter: brightness(0.9);
+        }
+        
+        /* Layered image overlay */
+        .story-image-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                to top,
+                rgba(17, 24, 39, 0.95) 0%,
+                rgba(17, 24, 39, 0.5) 40%,
+                rgba(17, 24, 39, 0.1) 100%
+            );
+            transition: all 0.7s cubic-bezier(0.33, 1, 0.68, 1);
+        }
+        
+        /* Shine effect overlay */
+        .story-image-container::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(
+                to right,
+                transparent 0%,
+                rgba(255, 255, 255, 0.05) 50%,
+                transparent 100%
+            );
+            transform: skewX(-25deg);
+            opacity: 0;
+            transition: all 0.8s ease;
+        }
+        
+        /* HOVER: Image parallax effect */
+        .story-card:hover .story-image {
+            transform: scale(1.12) translateZ(0);
+            filter: brightness(1.1) contrast(1.1);
+        }
+        
+        /* HOVER: Overlay fade effect */
+        .story-card:hover .story-image-overlay {
+            background: linear-gradient(
+                to top,
+                rgba(17, 24, 39, 0.85) 0%,
+                rgba(17, 24, 39, 0.4) 40%,
+                rgba(17, 24, 39, 0) 100%
+            );
+        }
+        
+        /* HOVER: Activate shine effect */
+        .story-card:hover .story-image-container::after {
+            animation: shine 1.5s ease forwards;
+        }
+        
+        @keyframes shine {
+            0% {
+                left: -100%;
+                opacity: 0;
+            }
+            20% {
+                opacity: 1;
+            }
+            100% {
+                left: 100%;
+                opacity: 0;
+            }
+        }
+        
+        /* Card content with staggered animations */
+        .story-card .card-content {
+            position: relative;
+            z-index: 2;
+            transition: transform 0.5s cubic-bezier(0.33, 1, 0.68, 1);
+        }
+        
+        .story-card:hover .card-content {
+            transform: translateZ(10px);
+        }
+        
+        /* Title animations */
+        .story-title {
+            color: white;
+            font-weight: 700;
+            position: relative;
+            display: inline-block;
+            transition: all 0.4s cubic-bezier(0.33, 1, 0.68, 1);
+        }
+        
+        .story-title::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: -3px;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #0ea5e9, transparent);
+            transition: width 0.4s cubic-bezier(0.33, 1, 0.68, 1) 0.1s;
+            opacity: 0;
+            border-radius: 2px;
+        }
+        
+        .story-card:hover .story-title {
+            color: #0ea5e9;
+            transform: translateX(3px);
+            text-shadow: 0 0 8px rgba(14, 165, 233, 0.2);
+        }
+        
+        .story-card:hover .story-title::after {
+            width: 100%;
+            opacity: 1;
+        }
+        
+        /* Description animation */
+        .story-card p {
+            transition: all 0.5s cubic-bezier(0.33, 1, 0.68, 1);
+            opacity: 0.7;
+            transform-origin: left;
+        }
+        
+        .story-card:hover p {
+            opacity: 1;
+            transform: scale(1.01);
+        }
+        
+        /* Tags with staggered animations */
+        .tag {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: rgba(14, 165, 233, 0.08);
+            color: #0ea5e9;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.33, 1, 0.68, 1);
+            border: 1px solid rgba(14, 165, 233, 0.08);
+            opacity: 0.8;
+            transform: translateY(0);
+        }
+        
+        .story-card .tag:nth-child(1) {
+            transition-delay: 0.05s;
+        }
+        
+        .story-card .tag:nth-child(2) {
+            transition-delay: 0.1s;
+        }
+        
+        .story-card .tag:nth-child(3) {
+            transition-delay: 0.15s;
+        }
+        
+        .story-card:hover .tag {
+            background: rgba(14, 165, 233, 0.15);
+            border-color: rgba(14, 165, 233, 0.3);
+            transform: translateY(-3px);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            opacity: 1;
+        }
+        
+        .story-card:hover .tag:hover {
+            background: rgba(14, 165, 233, 0.25);
+            transform: translateY(-5px) scale(1.05);
+            color: white;
+            box-shadow: 0 5px 15px rgba(14, 165, 233, 0.2);
+        }
+        
+        /* Star rating animation */
+        .stars {
+            display: inline-flex;
+            align-items: center;
+            transition: all 0.5s cubic-bezier(0.33, 1, 0.68, 1);
+            transform-origin: left;
+        }
+        
+        .stars i {
+            color: #eab308;
+            font-size: 0.875rem;
+            transition: all 0.4s ease;
+            transform: scale(1);
+        }
+        
+        .story-card:hover .stars i {
+            transform: scale(1.15);
+            filter: drop-shadow(0 0 3px rgba(234, 179, 8, 0.5));
+        }
+        
+        /* View count animation */
+        .view-count {
+            transition: all 0.4s ease;
+        }
+        
+        .story-card:hover .view-count {
+            color: #d1d5db;
+            transform: translateX(-3px);
+        }
+        
+        .story-card:hover .view-count i {
+            transform: scale(1.2);
+            color: #0ea5e9;
+        }
+        
+        /* Read button */
+        .card-read-btn {
+            background: linear-gradient(90deg, #0ea5e9, #06b6d4);
+            color: white;
+            border-radius: 8px;
+            padding: 0.5rem 1.5rem;
+            font-weight: 500;
+            transition: all 0.4s cubic-bezier(0.33, 1, 0.68, 1);
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+            transform: scale(0.95);
+            opacity: 0.9;
+        }
+        
+        .card-read-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.7s ease;
+            z-index: -1;
+        }
+        
+        .story-card:hover .card-read-btn {
+            transform: scale(1);
+            opacity: 1;
+            box-shadow: 0 0 15px rgba(14, 165, 233, 0.3);
+        }
+        
+        .story-card:hover .card-read-btn::before {
+            left: 100%;
+        }
+        
+        /* Gradient text */
+        .gradient-text {
+            background: linear-gradient(90deg, #0ea5e9, #06b6d4);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        /* Search container */
+        .search-container {
+            position: relative;
+            max-width: 700px;
+            margin: 0 auto;
+            transition: all 0.3s;
+        }
+        
+        .search-input {
+            width: 100%;
+            background: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            padding-left: 3rem;
+            color: white;
+            font-size: 1.1rem;
+            transition: all 0.3s;
+        }
+        
+        .search-input:focus {
+            border-color: #0ea5e9;
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.3);
+            outline: none;
+        }
+        
+        /* Filter controls */
+        .filter-control {
+            background: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            color: white;
+            transition: all 0.3s;
+        }
+        
+        .filter-control:focus {
+            border-color: #0ea5e9;
+            box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+            outline: none;
+        }
+        
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 2rem;
+        }
+        
+        .pagination-btn {
+            min-width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            background: rgba(17, 24, 39, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .pagination-btn:hover {
+            background: rgba(14, 165, 233, 0.1);
+            border-color: #0ea5e9;
+        }
+        
+        .pagination-btn.active {
+            background: #0ea5e9;
+            color: white;
+        }
+        
+        .pagination-btn.disabled {
+            opacity: 0.3;
+            pointer-events: none;
+        }
+    </style>
+    <style th:replace="fragments/sidebar :: sidebar-style"></style>
+    <style th:replace="fragments/FantasyBackground :: fantasy-style"></style>
+</head>
+<body class="bg-bg-dark text-gray-100 font-sans">
+<div class="flex h-screen">
+
+    <div th:replace="fragments/FantasyBackground :: fantasy-elements"></div>
+
+    <!-- Sidebar trigger-->
+    <div th:replace="fragments/sidebar :: sidebar-trigger"></div>
+    <!-- Sidebar -->
+    <aside th:replace="~{fragments/sidebar :: sidebar}"></aside>
+
+    <!-- Main Content -->
+    <div class="flex-1 overflow-auto">
+        <!-- Main Content -->
+        <main id="discover" class="py-10">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <h1 class="text-3xl font-bold mb-6 text-white">
+                    <span class="gradient-text">Fan Fiction</span>
+                </h1>
+                
+                <!-- Search and Filters -->
+                <div class="mb-12 space-y-6">
+                    <!-- Search Bar -->
+                    <div class="search-container">
+                        <form action="/FanFiction" method="get" class="relative">
+                            <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
+                            <input 
+                                type="text" 
+                                name="search" 
+                                th:value="${currentSearch}" 
+                                placeholder="Search fan fiction..." 
+                                class="search-input"
+                                aria-label="Search fan fiction">
+                            <button type="submit" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-accent-blue hover:text-accent-cyan transition-colors">
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
+                            
+                            <!-- Hidden inputs to preserve current filters when searching -->
+                            <input type="hidden" name="genre" th:value="${currentGenre}">
+                            <input type="hidden" name="sort" th:value="${currentSort}">
+                            <input type="hidden" name="size" th:value="${currentSize}">
+                        </form>
+                    </div>
+
+                    <!-- Sorts -->
+                    <div class="flex flex-wrap gap-4 items-center justify-between">
+                        <div class="flex flex-wrap items-center gap-3">
+                            <span class="text-gray-400">Sort by:</span>
+                            
+                            <!-- Sort Options -->
+                            <select id="sortFilter" onchange="applyFilters()" class="filter-control">
+                                <option value="trending" th:selected="${currentSort == 'trending'}">Trending</option> 
+                                <option value="recent" th:selected="${currentSort == 'recent'}">Most Recent</option>
+                                <option value="popular" th:selected="${currentSort == 'popular'}">Most Popular</option>
+                                <option value="updated" th:selected="${currentSort == 'updated'}">Recently Updated</option>
+                                <option value="highest_rated" th:selected="${currentSort == 'highest_rated'}">Highest Rated</option>
+                                <option value="lowest_rated" th:selected="${currentSort == 'lowest_rated'}">Lowest Rated</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Page Size -->
+                        <div class="flex items-center gap-2">
+                            <span class="text-gray-400">Show:</span>
+                            <select id="sizeFilter" onchange="applyFilters()" class="filter-control">
+                                <option value="20" th:selected="${currentSize == 20}">20 stories</option>
+                                <option value="50" th:selected="${currentSize == 50}">50 stories</option>
+                                <option value="100" th:selected="${currentSize == 100}">100 stories</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Summary -->
+                <div class="mb-6 flex justify-between items-center">
+                    <h2 class="text-2xl font-bold">
+                        <span th:if="${currentSearch != null && !currentSearch.isEmpty()}" th:text="'Results for \'' + ${currentSearch} + '\''">Results for 'search'</span>
+                        <span th:unless="${currentSearch != null && !currentSearch.isEmpty()}">Fan Fiction Stories</span>
+                        <span class="text-sm font-normal text-gray-400 ml-2" th:text="'(' + ${totalItems} + ' stories)'"></span>
+                    </h2>
+                    <a href="/FanFiction" th:if="${currentSearch != null || currentGenre != null}" class="text-accent-blue hover:text-accent-cyan transition-colors">
+                        <i class="fas fa-times mr-1"></i> Clear filters
+                    </a>
+                </div>
+
+                <!-- Stories Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <!-- Story Cards -->
+                    <article th:each="story : ${stories}" class="story-card">
+                        <div class="story-image-container">
+                            <img 
+                                th:if="${story.coverImage}" 
+                                th:src="${story.coverImage}" 
+                                th:alt="${story.title + ' cover'}" 
+                                class="story-image"
+                                onerror="this.src='https://images.unsplash.com/photo-1518744386442-2d48ac47a7eb?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80'"
+                            />
+                            <img 
+                                th:unless="${story.coverImage}" 
+                                src="https://images.unsplash.com/photo-1518744386442-2d48ac47a7eb?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80" 
+                                th:alt="${story.title + ' cover'}" 
+                                class="story-image"
+                            />
+                            <div class="story-image-overlay"></div>
+                        </div>
+                        
+                        <!-- Card content area with staggered animations -->
+                        <div class="p-5 space-y-4 flex-grow flex flex-col card-content">
+                            <h3 class="text-xl story-title" th:text="${story.title}">Story Title</h3>
+                            
+                            <p class="text-gray-400 text-sm line-clamp-3" th:text="${story.description}">
+                                Story description...
+                            </p>
+                            
+                            <div class="flex flex-wrap gap-2 mt-2">
+                                <span 
+                                    th:each="tag, tagStat : ${story.tags}" 
+                                    th:if="${tagStat.index < 3}"
+                                    class="tag"
+                                    th:text="${tag.name}">
+                                    Tag
+                                </span>
+                                <span 
+                                    th:if="${story.tags != null && story.tags.size() > 3}" 
+                                    class="text-xs text-gray-500"
+                                    th:text="'+ ' + (${story.tags.size() - 3} + ' more')">
+                                    + 2 more
+                                </span>
+                            </div>
+                            
+                            <div class="flex items-center justify-between pt-3 border-t border-gray-800 mt-auto card-footer">
+                                <div class="flex items-center gap-1">
+                                    <span class="stars">
+                                        <i class="fas fa-star"></i>
+                                    </span>
+                                    <span th:if="${story.averageRating != null}" th:text="${#numbers.formatDecimal(story.averageRating, 1, 1)}" class="text-sm">4.5</span>
+                                    <span th:unless="${story.averageRating != null}" class="text-sm text-gray-400">New</span>
+                                </div>
+                                <div class="flex items-center gap-4">
+                                    <span class="text-sm text-gray-400 flex items-center gap-1 view-count">
+                                        <i class="fas fa-eye"></i>
+                                        <span th:text="${story.readCount}">0</span>
+                                    </span>
+                                    <a th:href="@{/story/{id}(id=${story.id})}" class="card-read-btn py-1 px-3 text-sm">
+                                        Read
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- Empty state when no stories are found -->
+                    <div th:if="${stories == null || stories.isEmpty()}" class="col-span-full flex flex-col items-center justify-center py-16 text-center">
+                        <div class="w-24 h-24 mb-6 rounded-full bg-bg-card flex items-center justify-center text-accent-blue">
+                            <i class="fas fa-book-open text-4xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-2">No fan fiction found</h3>
+                        <p class="text-gray-400 mb-6 max-w-md">
+                            We couldn't find any fan fiction matching your search. Try adjusting your filters or search terms.
+                        </p>
+                        <a href="/FanFiction" class="card-read-btn py-2 px-4">
+                            Browse All Fan Fiction
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Pagination Controls -->
+                <div th:if="${totalPages > 1}" class="pagination">
+                    <!-- First page -->
+                    <a th:href="@{/FanFiction(page=0,size=${currentSize},search=${currentSearch},genre=${currentGenre},sort=${currentSort})}"
+                       th:class="${currentPage == 0 ? 'pagination-btn disabled' : 'pagination-btn'}"
+                       aria-label="First page">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                    
+                    <!-- Previous page -->
+                    <a th:href="@{/FanFiction(page=${currentPage - 1},size=${currentSize},search=${currentSearch},genre=${currentGenre},sort=${currentSort})}"
+                       th:class="${currentPage == 0 ? 'pagination-btn disabled' : 'pagination-btn'}"
+                       aria-label="Previous page">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                    
+                    <!-- Page numbers -->
+                    <a th:each="i : ${#numbers.sequence(currentPage > 2 ? currentPage - 2 : 0, 
+                                                         currentPage + 2 < totalPages - 1 ? currentPage + 2 : totalPages - 1)}"
+                       th:href="@{/FanFiction(page=${i},size=${currentSize},search=${currentSearch},genre=${currentGenre},sort=${currentSort})}"
+                       th:text="${i + 1}"
+                       th:class="${currentPage == i ? 'pagination-btn active' : 'pagination-btn'}">
+                    </a>
+                    
+                    <!-- Next page -->
+                    <a th:href="@{/FanFiction(page=${currentPage + 1},size=${currentSize},search=${currentSearch},genre=${currentGenre},sort=${currentSort})}"
+                       th:class="${currentPage >= totalPages - 1 ? 'pagination-btn disabled' : 'pagination-btn'}"
+                       aria-label="Next page">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                    
+                    <!-- Last page -->
+                    <a th:href="@{/FanFiction(page=${totalPages - 1},size=${currentSize},search=${currentSearch},genre=${currentGenre},sort=${currentSort})}"
+                       th:class="${currentPage >= totalPages - 1 ? 'pagination-btn disabled' : 'pagination-btn'}"
+                       aria-label="Last page">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                </div>
+                
+                <!-- Pagination Info -->
+                <div class="mt-4 text-center text-sm text-gray-400">
+                    <span th:text="${'Showing ' + (stories.size() > 0 ? (currentPage * currentSize + 1) : 0) + ' to ' + (currentPage * currentSize + stories.size()) + ' of ' + totalItems + ' stories'}">
+                        Showing 1 to 20 of 100 stories
+                    </span>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-bg-card py-10 mt-auto border-t border-gray-800">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="grid md:grid-cols-4 gap-8">
+                    <div class="md:col-span-2">
+                        <a href="/Home" class="text-2xl font-bold gradient-text inline-block mb-3">Inkwell</a>
+                        <p class="text-gray-400 max-w-md">
+                            A platform for writers and readers to connect through the power of storytelling. 
+                            Create, share, and discover stories that captivate and inspire.
+                        </p>
+                        <div class="flex mt-6 space-x-4">
+                            <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">
+                                <i class="fab fa-twitter text-xl"></i>
+                            </a>
+                            <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">
+                                <i class="fab fa-facebook text-xl"></i>
+                            </a>
+                            <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">
+                                <i class="fab fa-instagram text-xl"></i>
+                            </a>
+                            <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">
+                                <i class="fab fa-github text-xl"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4 text-white">Navigation</h3>
+                        <ul class="space-y-2">
+                            <li>
+                                <a href="/Home" class="text-gray-400 hover:text-accent-blue transition-colors">Home</a>
+                            </li>
+                            <li>
+                                <a href="/fanfiction" class="text-gray-400 hover:text-accent-blue transition-colors">Fan Fiction</a>
+                            </li>
+                            <li>
+                                <a href="/Library" class="text-gray-400 hover:text-accent-blue transition-colors">Library</a>
+                            </li>
+                            <li>
+                                <a href="/Dashboard" class="text-gray-400 hover:text-accent-blue transition-colors">Dashboard</a>
+                            </li>
+                            <li>
+                                <a href="/Writing" class="text-gray-400 hover:text-accent-blue transition-colors">Write</a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4 text-white">Legal</h3>
+                        <ul class="space-y-2">
+                            <li>
+                                <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">Terms of Service</a>
+                            </li>
+                            <li>
+                                <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">Privacy Policy</a>
+                            </li>
+                            <li>
+                                <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">Copyright</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="mt-8 pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center">
+                    <p class="text-gray-400 text-sm">
+                        &copy; 2023-2025 Inkwell. All rights reserved.
+                    </p>
+                    <div class="mt-4 md:mt-0">
+                        <a href="#" class="text-sm text-accent-blue hover:underline">Back to top</a>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+</div>
+
+<script th:replace="~{fragments/sidebar :: sidebar-script}"></script>
+<script th:replace="fragments/FantasyBackground :: fantasy-script"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Theme setup
+        const savedTheme = localStorage.getItem('interfaceTheme') || 'none';
+        if (window.setTheme) {
+            window.setTheme(savedTheme);
+        }
+        
+        // Add 3D tilt effect to story cards
+        const storyCards = document.querySelectorAll('.story-card');
+        storyCards.forEach(card => {
+            card.addEventListener('mousemove', handleCardTilt);
+            card.addEventListener('mouseleave', resetCardTilt);
+        });
+        
+        // Initialize staggered entry animations
+        initializeCardAnimations();
+    });
+    
+    // 3D tilt effect function
+    function handleCardTilt(e) {
+        const card = this;
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        
+        const rotateY = ((x - centerX) / centerX) * 3;
+        const rotateX = -((y - centerY) / centerY) * 3;
+        
+        card.style.transform = `perspective(1000px) translateY(-8px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(10px)`;
+        
+        // Light effect based on cursor position
+        const imageContainer = card.querySelector('.story-image-container');
+        if (imageContainer) {
+            const lightStrength = 0.15;
+            const lightX = ((x / rect.width) - 0.5) * 2;
+            const lightY = ((y / rect.height) - 0.5) * 2;
+            
+            const angle = Math.atan2(lightY, lightX);
+            const distance = Math.sqrt(lightX * lightX + lightY * lightY);
+            const brightness = 1 + distance * lightStrength;
+            
+            imageContainer.style.filter = `brightness(${brightness})`;
+        }
+    }
+    
+    function resetCardTilt(e) {
+        this.style.transform = 'perspective(1000px) translateZ(0)';
+        const imageContainer = this.querySelector('.story-image-container');
+        if (imageContainer) {
+            imageContainer.style.filter = '';
+        }
+    }
+    
+    // Staggered entry animations
+    function initializeCardAnimations() {
+        const cards = document.querySelectorAll('.story-card');
+        cards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(30px)';
+            
+            setTimeout(() => {
+                card.style.transition = 'all 0.8s cubic-bezier(0.33, 1, 0.68, 1)';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, 100 + (index % 8) * 120); // Stagger by position in grid (mod 8 to reset for rows)
+        });
+    }
+    
+    // Filter functionality
+
+function applyFilters() {
+    const sort = document.getElementById('sortFilter').value;
+    const size = document.getElementById('sizeFilter').value;
+    const searchParams = new URLSearchParams(window.location.search);
+    
+    // Get current search term if it exists
+    const search = searchParams.get('search') || '';
+    
+    // Build the new URL with filters
+    let url = '/fanfiction?';
+    if (search) url += `search=${encodeURIComponent(search)}&`;
+    if (sort) url += `sort=${encodeURIComponent(sort)}&`;
+    if (size) url += `size=${encodeURIComponent(size)}&`;
+    url += 'page=0'; // Reset to first page when filters change
+    
+    // Navigate to the filtered URL
+    window.location.href = url;
+}
+</script>
+</body>
+</html>

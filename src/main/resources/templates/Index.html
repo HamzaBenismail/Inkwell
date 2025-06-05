@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inkwell - Your Writing Journey Begins Here</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'accent-blue': '#3B82F6',
+                        'accent-purple': '#8B5CF6',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .bg-image {
+            background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.8)), url('https://images.unsplash.com/photo-1457369804613-52c61a468e7d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .glass-card {
+            background: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .float-animation {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes typewriter {
+            from { width: 0; }
+            to { width: 85%; }
+        }
+
+        .typewriter {
+            overflow: hidden;
+            border-right: .15em solid #3B82F6;
+            white-space: nowrap;
+            margin: 0 auto;
+            letter-spacing: .15em;
+            animation: 
+                typewriter 5s steps(40, end) infinite,
+                blink-caret .75s step-end infinite;
+        }
+
+        @keyframes blink-caret {
+            from, to { border-color: transparent }
+            50% { border-color: #3B82F6; }
+        }
+
+        .ink-splatter {
+            position: absolute;
+            opacity: 0.1;
+            transform: scale(0.5);
+            transition: all 0.5s ease;
+        }
+
+        .ink-splatter:hover {
+            opacity: 0.3;
+            transform: scale(0.55);
+        }
+    </style>
+</head>
+<body class="bg-black text-gray-100 font-sans">
+    <div class="relative min-h-screen bg-image flex flex-col justify-center items-center p-4">
+        <!-- Ink splatter decorations -->
+        <div class="ink-splatter top-10 left-10">
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
+                <path fill="#3B82F6" d="M50 0C22.4 0 0 22.4 0 50s22.4 50 50 50 50-22.4 50-50S77.6 0 50 0zm0 90C27.9 90 10 72.1 10 50S27.9 10 50 10s40 17.9 40 40-17.9 40-40 40z"/>
+            </svg>
+        </div>
+        <div class="ink-splatter bottom-10 right-10">
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
+                <path fill="#8B5CF6" d="M50 0C22.4 0 0 22.4 0 50s22.4 50 50 50 50-22.4 50-50S77.6 0 50 0zm0 90C27.9 90 10 72.1 10 50S27.9 10 50 10s40 17.9 40 40-17.9 40-40 40z"/>
+            </svg>
+        </div>
+
+        <!-- Main Content Card -->
+        <div class="glass-card rounded-2xl p-8 max-w-md w-full mx-auto text-center relative z-10">
+            <!-- Logo -->
+            <div class="mb-8 float-animation">
+                <div class="mx-auto w-20 h-20 mb-4 relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-accent-blue to-accent-purple opacity-20 rounded-full animate-pulse"></div>
+                    <i class="fas fa-feather-alt text-4xl text-white absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></i>
+                </div>
+                <h1 class="text-5xl font-bold bg-gradient-to-r from-accent-blue to-accent-purple bg-clip-text text-transparent">
+                    Inkwell
+                </h1>
+            </div>
+
+            <!-- Typewriter effect -->
+            <div class="h-12 mb-8">
+                <p class="typewriter text-lg text-gray-300">Where stories come to life...</p>
+            </div>
+
+            <!-- Buttons -->
+            <div class="space-y-4">
+                <button onclick="window.location.href='/SignUp'" 
+                        class="w-full py-3 px-6 rounded-lg bg-gradient-to-r from-accent-blue to-accent-purple text-white font-semibold hover:opacity-90 transition-opacity duration-300 transform hover:scale-105">
+                    Start Writing
+                </button>
+                <button onclick="window.location.href='/Home'" 
+                        class="w-full py-3 px-6 rounded-lg bg-gray-800 text-white font-semibold hover:bg-gray-700 transition-colors duration-300 border border-gray-700">
+                    Explore Stories
+                </button>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="absolute bottom-4 text-sm text-gray-400">
+            <a href="#" class="hover:text-white transition-colors duration-200 mx-2">About</a>
+            <a href="#" class="hover:text-white transition-colors duration-200 mx-2">Terms</a>
+            <a href="#" class="hover:text-white transition-colors duration-200 mx-2">Privacy</a>
+        </div>
+    </div>
+
+    <script>
+        // Add floating book elements
+        function createFloatingBooks(count) {
+            const container = document.querySelector('.bg-image');
+            const bookIcons = ['📘', '📕', '📗', '📙'];
+            for (let i = 0; i < count; i++) {
+                const book = document.createElement('div');
+                book.textContent = bookIcons[Math.floor(Math.random() * bookIcons.length)];
+                book.className = 'absolute text-4xl';
+                book.style.left = Math.random() * 100 + '%';
+                book.style.top = Math.random() * 100 + '%';
+                book.style.animation = `float ${3 + Math.random() * 2}s ease-in-out infinite`;
+                book.style.animationDelay = `${Math.random() * 2}s`;
+                container.appendChild(book);
+            }
+        }
+
+        // Initialize floating books
+        document.addEventListener('DOMContentLoaded', () => {
+            createFloatingBooks(10);
+        });
+    </script>
+</body>
+</html>
+

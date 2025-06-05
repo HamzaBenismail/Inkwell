@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100">
+  <defs>
+    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f1c40f"/>
+      <stop offset="50%" stop-color="#d4af37"/>
+      <stop offset="100%" stop-color="#b7950b"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Quill -->
+  <path d="M150,20 C140,30 130,40 120,60 C110,80 100,90 80,95 C60,100 40,100 20,95 L25,90 C40,93 60,93 75,88 C90,83 100,75 110,55 C120,35 130,25 140,15 Z" fill="none" stroke="url(#goldGradient)" stroke-width="1.5"/>
+  
+  <!-- Quill Details -->
+  <path d="M140,15 L145,10 L150,20 Z" fill="url(#goldGradient)"/>
+  <path d="M120,60 L125,55 M110,55 L115,50 M100,50 L105,45" stroke="url(#goldGradient)" stroke-width="1"/>
+  
+  <!-- Ink Splatter -->
+  <circle cx="30" cy="90" r="5" fill="url(#goldGradient)"/>
+  <circle cx="25" cy="85" r="3" fill="url(#goldGradient)"/>
+  <circle cx="35" cy="88" r="2" fill="url(#goldGradient)"/>
+  <circle cx="28" cy="92" r="1.5" fill="url(#goldGradient)"/>
+  
+  <!-- Decorative Line -->
+  <path d="M20,95 C40,90 60,90 80,90 C100,90 120,90 140,95 C160,100 180,100 190,95" fill="none" stroke="url(#goldGradient)" stroke-width="1"/>
+</svg>
+

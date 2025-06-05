@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${writer.username} + '\'s Forum - Inkwell'">Writer's Forum - Inkwell</title>
+    <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:if="${_csrf != null}" th:content="${_csrf.headerName}"/>
+    
+    <!-- Use CDN links instead of local CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Match tailwind config from Home.html -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'accent-blue': '#0ea5e9',
+                        'accent-cyan': '#06b6d4',
+                        'bg-dark': '#030712',
+                        'bg-card': '#111827',
+                        'bg-card-hover': '#1f2937'
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <!-- Include essential styles from Home.html -->
+    <style>
+        /* Core Styles */
+        body {
+            background-color: #030712;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #111827;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #374151;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #0ea5e9;
+        }
+        
+        /* Subforum card with hover effects */
+        .subforum-card {
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(145deg, #151e30, #0f1625);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            transition: all 0.4s cubic-bezier(0.33, 1, 0.68, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            transform: perspective(1000px) translateZ(0);
+        }
+        
+        /* Glow effect on hover */
+        .subforum-card::before {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            background: linear-gradient(90deg, transparent, rgba(14, 165, 233, 0.1), transparent);
+            z-index: -1;
+            opacity: 0;
+            border-radius: 14px;
+            transition: opacity 0.4s ease-in-out;
+            filter: blur(8px);
+        }
+        
+        /* Hover effects */
+        .subforum-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            border-color: rgba(14, 165, 233, 0.15);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), 0 0 15px rgba(14, 165, 233, 0.1);
+        }
+        
+        .subforum-card:hover::before {
+            opacity: 1;
+        }
+        
+        /* Icon container styles */
+        .icon-container {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .subforum-card:hover .icon-container {
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(14, 165, 233, 0.2);
+        }
+        
+        /* Subforum title styles */
+        .subforum-title {
+            transition: all 0.3s ease;
+            position: relative;
+            display: inline;
+        }
+        
+        .subforum-title::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #0ea5e9, transparent);
+            transition: width 0.3s ease;
+        }
+        
+        .subforum-card:hover .subforum-title {
+            color: #0ea5e9;
+        }
+        
+        .subforum-card:hover .subforum-title::after {
+            width: 100%;
+        }
+        
+        /* Notifications styling */
+        .notification {
+            border-left: 4px solid;
+            animation: slideIn 0.4s ease forwards;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        /* Gradient text */
+        .gradient-text {
+            background: linear-gradient(90deg, #0ea5e9, #06b6d4);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        /* Forum header styles */
+        .forum-header {
+            background: linear-gradient(to bottom, rgba(14, 165, 233, 0.05), transparent);
+            border-bottom: 1px solid rgba(14, 165, 233, 0.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Loading overlay */
+        .loading-overlay {
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+        
+        /* Fade-in animation for content */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+        
+        .delay-100 { animation-delay: 0.1s; }
+        .delay-200 { animation-delay: 0.2s; }
+        .delay-300 { animation-delay: 0.3s; }
+        
+        /* Button styles */
+        .btn-primary {
+            background: linear-gradient(90deg, #0ea5e9, #06b6d4);
+            color: white;
+            border-radius: 8px;
+            padding: 0.5rem 1.5rem;
+            font-weight: 500;
+            transition: all 0.3s;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .btn-primary:hover {
+            box-shadow: 0 0 15px rgba(14, 165, 233, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: rgba(14, 165, 233, 0.1);
+            color: #0ea5e9;
+            border: 1px solid rgba(14, 165, 233, 0.3);
+            border-radius: 8px;
+            padding: 0.5rem 1.5rem;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(14, 165, 233, 0.15);
+            transform: translateY(-2px);
+        }
+    </style>
+    
+    <style th:replace="fragments/sidebar :: sidebar-style"></style>
+    <style th:replace="fragments/FantasyBackground :: fantasy-style"></style>
+</head>
+<body class="bg-bg-dark text-gray-100 font-sans">
+    <div class="flex min-h-screen">
+        <!-- Fantasy Background -->
+        <div th:replace="fragments/FantasyBackground :: fantasy-elements"></div>
+        
+        <!-- Sidebar Trigger -->
+        <div th:replace="fragments/sidebar :: sidebar-trigger"></div>
+        
+        <!-- Sidebar -->
+        <aside th:replace="fragments/sidebar :: sidebar"></aside>
+
+        <!-- Main Content -->
+        <div class="flex-1 overflow-auto">
+            <main class="py-6 lg:py-10">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <!-- Forum Header -->
+                    <div class="forum-header rounded-lg p-6 mb-8 animate-fade-in">
+                        <div class="flex flex-col md:flex-row items-center md:items-start">
+                            <div class="w-24 h-24 rounded-full overflow-hidden mb-4 md:mb-0 md:mr-6 border-2 border-accent-blue shadow-lg">
+                                <img th:if="${writer.profileImage}" th:src="@{'/images/profile/' + ${writer.profileImage}}" class="w-full h-full object-cover" alt="Profile" onerror="this.src='https://via.placeholder.com/150?text=Writer';">
+                                <div th:unless="${writer.profileImage}" class="w-full h-full bg-accent-blue flex items-center justify-center text-3xl font-bold">
+                                    <span th:text="${writer.username.substring(0,1).toUpperCase()}">W</span>
+                                </div>
+                            </div>
+                            <div class="text-center md:text-left">
+                                <div class="flex items-center justify-center md:justify-start">
+                                    <a href="/forums" class="text-accent-blue hover:text-accent-cyan transition-colors mr-2">
+                                        <i class="fas fa-chevron-left"></i> Forums
+                                    </a>
+                                    <span class="text-gray-500 mx-2">/</span>
+                                    <h1 class="text-2xl md:text-3xl font-bold gradient-text" th:text="${forum.name}">Writer's Forum</h1>
+                                </div>
+                                <p class="text-gray-400 mt-1" th:text="${forum.description}">Discussion space for this writer's works</p>
+                                <div class="mt-2">
+                                    <span class="text-gray-400 text-sm" th:text="'Member since ' + ${#temporals.format(writer.createdAt, 'MMMM yyyy')}">Member since</span>
+                                    <span class="mx-2 text-gray-600">•</span>
+                                    <span class="text-gray-400 text-sm" th:text="${subforums.size()} + ' discussion spaces'">3 discussion spaces</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Debug info (for development only) -->
+                    <div th:if="${isForumOwner}" class="bg-red-900 bg-opacity-30 p-4 mb-6 rounded-lg animate-fade-in">
+                        <h3 class="font-bold">Debug Info</h3>
+                        <p>Writer: <span th:text="${writer != null ? writer.username : 'null'}"></span></p>
+                        <p>Forum: <span th:text="${forum != null ? forum.name : 'null'}"></span></p>
+                        <p>Subforums Count: <span th:text="${subforums != null ? subforums.size() : 'null'}"></span></p>
+                        <p>Auto Created: <span th:text="${autoCreatedForum}"></span></p>
+                        <p>Subforums Created: <span th:text="${subforumsCreated}"></span></p>
+                    </div>
+                    
+                    <!-- System notifications -->
+                    <div th:if="${autoCreatedForum}" class="notification border-accent-blue bg-accent-blue bg-opacity-10 p-4 mb-6 rounded-lg">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-info-circle text-accent-blue mt-0.5"></i>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-lg font-medium text-white">Forum Created</h3>
+                                <div class="mt-2 text-sm text-gray-300">
+                                    <p>We've automatically created a forum for <strong th:text="${writer.username}">the writer</strong>. You can now engage in discussions about their works.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div th:if="${subforumsCreated}" class="notification border-green-500 bg-green-500 bg-opacity-10 p-4 mb-6 rounded-lg">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-check-circle text-green-500 mt-0.5"></i>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-lg font-medium text-white">Subforums Created</h3>
+                                <div class="mt-2 text-sm text-gray-300">
+                                    <p>We've set up discussion spaces for each of <strong th:text="${writer.username}">the writer</strong>'s stories.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- No access message for non-subscribers -->
+                    <div th:if="${!isSubscribed && !isForumOwner}" class="notification border-yellow-500 bg-yellow-500 bg-opacity-10 p-6 mb-6 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-lock text-2xl text-yellow-500"></i>
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-xl font-semibold mb-1">Subscriber-Only Content</h3>
+                                <p class="text-gray-300">You need to subscribe to <strong th:text="${writer.username}">this writer</strong> to access their forum discussions.</p>
+                                <a th:href="@{'/writer/' + ${writer.username}}" class="btn-primary inline-block mt-4">
+                                    <i class="fas fa-star mr-2"></i> View Subscription Options
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Subforums Grid -->
+                    <div th:if="${isSubscribed || isForumOwner}" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div th:each="subforum, stat : ${subforums}" th:class="${'subforum-card p-5 animate-fade-in delay-' + (stat.index % 3 * 100)}">
+                            <div class="flex items-center">
+                                <div th:class="${subforum.iconBgClass + ' icon-container mr-4'}">
+                                    <i th:class="${subforum.iconClass + ' text-white text-xl'}"></i>
+                                </div>
+                                <div class="flex-grow">
+                                    <h2 class="text-xl font-semibold mb-1">
+                                        <a th:href="@{'/forums/' + ${writer.username} + '/' + ${subforum.slug}}" 
+                                           class="subforum-title text-white hover:text-accent-blue transition-colors" 
+                                           th:text="${subforum.name}">
+                                            Subforum name
+                                        </a>
+                                    </h2>
+                                    <p class="text-gray-400 text-sm" th:text="${subforum.description}">Subforum description</p>
+                                </div>
+                                <div class="text-right text-sm text-gray-400">
+                                    <div class="mb-1" th:text="${subforum.topicCount + ' topics'}">0 topics</div>
+                                    <div th:text="${subforum.postCount + ' posts'}">0 posts</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Create new subforum (for forum owner) -->
+                        <div th:if="${isForumOwner}" class="subforum-card p-5 bg-opacity-50 border-dashed animate-fade-in delay-300">
+                            <div class="flex items-center justify-center h-full">
+                                <div class="text-center">
+                                    <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-accent-blue bg-opacity-10 flex items-center justify-center">
+                                        <i class="fas fa-plus text-accent-blue text-xl"></i>
+                                    </div>
+                                    <h3 class="text-xl font-medium mb-2">Create New Space</h3>
+                                    <p class="text-gray-400 text-sm mb-4">Add a custom discussion area to your forum</p>
+                                    <button class="btn-secondary">
+                                        <i class="fas fa-plus mr-2"></i> Create Subforum
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Footer -->
+            <footer class="bg-bg-card py-10 mt-auto border-t border-gray-800">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="grid md:grid-cols-4 gap-8">
+                        <div class="md:col-span-2">
+                            <a href="/Home" class="text-2xl font-bold gradient-text inline-block mb-3">Inkwell</a>
+                            <p class="text-gray-400 max-w-md">
+                                A platform for writers and readers to connect through the power of storytelling. 
+                                Create, share, and discover stories that captivate and inspire.
+                            </p>
+                            <div class="flex mt-6 space-x-4">
+                                <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">
+                                    <i class="fab fa-twitter text-xl"></i>
+                                </a>
+                                <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">
+                                    <i class="fab fa-facebook text-xl"></i>
+                                </a>
+                                <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">
+                                    <i class="fab fa-instagram text-xl"></i>
+                                </a>
+                                <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">
+                                    <i class="fab fa-github text-xl"></i>
+                                </a>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold mb-4 text-white">Navigation</h3>
+                            <ul class="space-y-2">
+                                <li>
+                                    <a href="/Home" class="text-gray-400 hover:text-accent-blue transition-colors">Home</a>
+                                </li>
+                                <li>
+                                    <a href="/Library" class="text-gray-400 hover:text-accent-blue transition-colors">Library</a>
+                                </li>
+                                <li>
+                                    <a href="/Dashboard" class="text-gray-400 hover:text-accent-blue transition-colors">Dashboard</a>
+                                </li>
+                                <li>
+                                    <a href="/Writing" class="text-gray-400 hover:text-accent-blue transition-colors">Write</a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold mb-4 text-white">Legal</h3>
+                            <ul class="space-y-2">
+                                <li>
+                                    <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">Terms of Service</a>
+                                </li>
+                                <li>
+                                    <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">Privacy Policy</a>
+                                </li>
+                                <li>
+                                    <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">Copyright</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="mt-8 pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center">
+                        <p class="text-gray-400 text-sm">
+                            &copy; 2023-2025 Inkwell. All rights reserved.
+                        </p>
+                        <div class="mt-4 md:mt-0">
+                            <a href="#" class="text-sm text-accent-blue hover:underline">Back to top</a>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Loading overlay -->
+    <div id="loadingOverlay" class="hidden fixed inset-0 bg-bg-dark bg-opacity-80 loading-overlay flex items-center justify-center z-50">
+        <div class="text-center">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent-blue mb-4"></div>
+            <p class="text-lg text-white">Loading forum...</p>
+            <p class="text-sm text-gray-400 mt-2">Setting up discussion spaces...</p>
+        </div>
+    </div>
+    
+    <script th:replace="fragments/sidebar :: sidebar-script"></script>
+    <script th:replace="fragments/FantasyBackground :: fantasy-script"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show loading overlay when navigating between forums
+            document.querySelectorAll('a[href^="/forums/"]').forEach(link => {
+                link.addEventListener('click', function() {
+                    document.getElementById('loadingOverlay').classList.remove('hidden');
+                });
+            });
+            
+            // Apply subtle hover effects to subforum cards
+            document.querySelectorAll('.subforum-card').forEach(card => {
+                card.addEventListener('mousemove', function(e) {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+                    
+                    // Subtle tilt effect
+                    const tiltX = (y - centerY) / 10;
+                    const tiltY = (x - centerX) / 10;
+                    
+                    card.style.transform = `translateY(-5px) perspective(1000px) rotateX(${-tiltX}deg) rotateY(${tiltY}deg) scale(1.02)`;
+                    
+                    // Light effect
+                    const icon = card.querySelector('.icon-container');
+                    if (icon) {
+                        const glowX = ((x / rect.width) - 0.5) * 30;
+                        const glowY = ((y / rect.height) - 0.5) * 30;
+                        
+                        icon.style.boxShadow = `${glowX}px ${glowY}px 15px rgba(14, 165, 233, 0.2)`;
+                    }
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    card.style.transform = '';
+                    
+                    const icon = card.querySelector('.icon-container');
+                    if (icon) {
+                        icon.style.boxShadow = '';
+                    }
+                });
+            });
+            
+            // Auto-hide notifications after 10 seconds
+            setTimeout(() => {
+                document.querySelectorAll('.notification').forEach(notification => {
+                    notification.style.opacity = '0';
+                    notification.style.height = notification.offsetHeight + 'px';
+                    
+                    setTimeout(() => {
+                        notification.style.height = '0';
+                        notification.style.margin = '0';
+                        notification.style.padding = '0';
+                        notification.style.overflow = 'hidden';
+                        
+                        setTimeout(() => {
+                            notification.style.display = 'none';
+                        }, 500);
+                    }, 500);
+                });
+            }, 10000);
+        });
+    </script>
+</body>
+</html>

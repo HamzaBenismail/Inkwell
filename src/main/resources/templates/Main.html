@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inkwell - My Stories</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+    	/*SideBar*/
+    	.sidebar {
+            transition: transform 0.3s ease-in-out;
+            transform: translateX(-100%);
+        }
+
+        .sidebar.open {
+            transform: translateX(0);
+        }
+
+        .sidebar-trigger {
+            transition: opacity 0.3s ease-in-out;
+        }
+    	
+    
+    	
+        /* Story Carousel Styles */
+        .story-carousel {
+            overflow: hidden;
+            position: relative;
+            padding: 20px 40px;
+        }
+
+        .story-carousel-container {
+            display: flex;
+            transition: transform 0.3s ease-in-out;
+            gap: 1rem;
+        }
+
+        .story-card {
+            min-width: 250px;
+            flex-shrink: 0;
+        }
+
+        .carousel-button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            z-index: 10;
+        }
+
+        .carousel-button.prev {
+            left: 10px;
+        }
+
+        .carousel-button.next {
+            right: 10px;
+        }
+
+        /* Content Layout Styles */
+        .content-layout {
+            display: flex;
+            gap: 1rem;
+            height: calc(100vh - 200px);
+        }
+
+        .left-panel {
+            width: 250px;
+            flex-shrink: 0;
+        }
+
+        .right-panel {
+            flex-grow: 1;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Story Planning Diagram Styles */
+        .diagram-container {
+            position: relative;
+            height: 100%;
+            overflow: auto;
+        }
+
+        .diagram-box {
+            position: absolute;
+            background: rgba(59, 130, 246, 0.1);
+            border: 2px solid #3B82F6;
+            border-radius: 8px;
+            padding: 10px;
+            min-width: 150px;
+            cursor: move;
+        }
+
+        .diagram-box.selected {
+            border-color: #8B5CF6;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1F2937;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #4B5563;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6B7280;
+        }
+        
+        
+        /* Story Planning Boxes */
+        .planning-box {
+            position: absolute;
+            background: rgba(51, 65, 85, 0.9);
+            border: 2px solid #3b82f6;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            min-width: 200px;
+            min-height: 100px;
+            resize: both;
+            overflow: auto;
+            cursor: move;
+        }
+
+        .planning-box:hover {
+            border-color: #60a5fa;
+        }
+
+        .planning-box .title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            padding-right: 20px;
+        }
+
+        .planning-box textarea {
+            width: 100%;
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 0.25rem;
+            padding: 0.5rem;
+            color: #e2e8f0;
+            resize: none;
+        }
+        
+        /* Add Button */
+        .add-button {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: #3b82f6;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .add-button:hover {
+            background: #2563eb;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans">
+    <div class="container mx-auto p-6">
+    
+    <!-- Sidebar Trigger -->
+    <div class="sidebar-trigger fixed top-0 left-0 h-full w-4 bg-transparent z-40"></div>
+
+    <!-- Sidebar -->
+        <aside id="sidebar" class="sidebar fixed top-0 left-0 h-full w-16 md:w-64 bg-gray-900 shadow-lg z-50">
+            <div class="p-4">
+                <h1 class="text-2xl font-bold text-white mb-8 hidden md:block">Inkwell</h1>
+                <!-- Mobile Logo -->
+                <h1 class="text-xl font-bold text-white mb-8 md:hidden">IW</h1>
+                
+                <nav class="space-y-6">
+                    <a href="Home" class="flex items-center space-x-3 text-gray-300 hover:text-white transition duration-200">
+                        <i class="fas fa-home text-accent-blue"></i>
+                        <span class="hidden md:inline">Home</span>
+                    </a>
+                    <a href="#" class="flex items-center space-x-3 text-gray-300 hover:text-white transition duration-200">
+                        <i class="fas fa-bookmark text-accent-purple"></i>
+                        <span class="hidden md:inline">Bookmarks</span>
+                    </a>
+                    <a href="Dashboard" class="flex items-center space-x-3 text-gray-300 hover:text-white transition duration-200">
+                        <i class="fas fa-book text-accent-blue"></i>
+                        <span class="hidden md:inline">My Stories</span>
+                    </a>
+                </nav>
+            </div>
+            
+            <!-- Profile Section (Bottom) -->
+            <div class="mt-auto p-4">
+                <button class="flex items-center space-x-3 text-gray-300 hover:text-white transition duration-200 w-full" onclick="window.location.href='/Profile'">
+                    <img src="/placeholder.svg?height=40&width=40" alt="Profile" class="w-10 h-10 rounded-full bg-gray-800">
+                    <span class="hidden md:inline">Your Profile</span>
+                </button>
+            </div>
+        </aside>
+    
+        <!-- Story Carousel -->
+        <div class="story-carousel bg-gray-800 rounded-lg mb-6">
+            <button class="carousel-button prev">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <button class="carousel-button next">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+            <div class="story-carousel-container">
+                <!-- Story Cards -->
+                <div class="story-card bg-gray-700 p-4 rounded-lg">
+                    <img src="/placeholder.svg?height=150&width=250" alt="Story Cover" class="w-full h-32 object-cover rounded-lg mb-3">
+                    <h3 class="font-semibold text-lg">The Lost Kingdom</h3>
+                    <p class="text-sm text-gray-400">Last edited: 2 days ago</p>
+                </div>
+                <div class="story-card bg-gray-700 p-4 rounded-lg">
+                    <img src="/placeholder.svg?height=150&width=250" alt="Story Cover" class="w-full h-32 object-cover rounded-lg mb-3">
+                    <h3 class="font-semibold text-lg">Dragon's Crown</h3>
+                    <p class="text-sm text-gray-400">Last edited: 5 days ago</p>
+                </div>
+                <div class="story-card bg-gray-700 p-4 rounded-lg">
+                    <img src="/placeholder.svg?height=150&width=250" alt="Story Cover" class="w-full h-32 object-cover rounded-lg mb-3">
+                    <h3 class="font-semibold text-lg">The Midnight Tales</h3>
+                    <p class="text-sm text-gray-400">Last edited: 1 week ago</p>
+                </div>
+                <div class="story-card bg-gray-700 p-4 rounded-lg">
+                    <img src="/placeholder.svg?height=150&width=250" alt="Story Cover" class="w-full h-32 object-cover rounded-lg mb-3">
+                    <h3 class="font-semibold text-lg">Echoes of Tomorrow</h3>
+                    <p class="text-sm text-gray-400">Last edited: 2 weeks ago</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Layout -->
+        <div class="content-layout">
+            <!-- Left Panel -->
+            <div class="left-panel bg-gray-800 rounded-lg p-4">
+                <!-- Tabs -->
+                <div class="flex flex-col space-y-2 mb-4">
+                    <button class="tab-button px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-left" data-tab="chapters">
+                        Chapters
+                    </button>
+                    <button class="tab-button px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-left" data-tab="characters">
+                        Characters
+                    </button>
+                    <button class="tab-button px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-left" data-tab="worldbuilding">
+                        World Building
+                    </button>
+                    <button class="tab-button px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-left" data-tab="storyplanning">
+                        Story Planning
+                    </button>
+                </div>
+
+                <!-- Add New Button -->
+                <button id="add-new-button" class="w-full px-4 py-2 bg-accent-blue rounded-lg hover:bg-accent-purple transition-colors mb-4 hidden">
+                    Add a new <span id="add-new-text"></span>
+                </button>
+
+                <!-- Tab Content -->
+                <div id="tab-content" class="space-y-2">
+                    <!-- Content will be dynamically inserted here -->
+                </div>
+            </div>
+
+            <!-- Right Panel -->
+            <div class="right-panel bg-gray-800 rounded-lg p-4">
+                <!-- Content Area -->
+                <div id="content-area" class="h-full">
+                    <!-- Default content -->
+                    <div id="text-content" class="h-full">
+                        <textarea class="w-full h-full bg-gray-700 rounded-lg p-4 text-gray-100 resize-none focus:outline-none focus:ring-2 focus:ring-accent-blue" placeholder="Select an item from the left panel to view or edit its content..."></textarea>
+                    </div>
+                    
+                    <!-- Diagram Area (initially hidden) -->
+                    <div id="diagram-area" class="diagram-container hidden">
+                        <!-- Diagram boxes will be added here dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Carousel Functionality
+        const carousel = document.querySelector('.story-carousel-container');
+        const prevButton = document.querySelector('.carousel-button.prev');
+        const nextButton = document.querySelector('.carousel-button.next');
+        const cardWidth = 266; // 250px + 16px gap
+        let currentPosition = 0;
+
+        prevButton.addEventListener('click', () => {
+            currentPosition = Math.min(currentPosition + cardWidth, 0);
+            updateCarouselPosition();
+        });
+
+        nextButton.addEventListener('click', () => {
+            const maxScroll = -(carousel.scrollWidth - carousel.clientWidth);
+            currentPosition = Math.max(currentPosition - cardWidth, maxScroll);
+            updateCarouselPosition();
+        });
+
+        function updateCarouselPosition() {
+            carousel.style.transform = `translateX(${currentPosition}px)`;
+        }
+
+        // Tab Functionality
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContent = document.getElementById('tab-content');
+        const contentArea = document.getElementById('content-area');
+        const textContent = document.getElementById('text-content');
+        const diagramArea = document.getElementById('diagram-area');
+        const addNewButton = document.getElementById('add-new-button');
+        const addNewText = document.getElementById('add-new-text');
+
+        const tabData = {
+            chapters: ['Chapter 1: The Beginning', 'Chapter 2: The Journey', 'Chapter 3: The Discovery'],
+            characters: ['Sarah - Protagonist', 'Marcus - Mentor', 'Elena - Antagonist'],
+            worldbuilding: ['The Kingdom of Aldoria', 'Magic System', 'Political Structure'],
+            storyplanning: []
+        };
+
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const tabId = button.getAttribute('data-tab');
+                
+                // Update active tab
+                tabButtons.forEach(btn => btn.classList.remove('bg-accent-blue'));
+                button.classList.add('bg-accent-blue');
+
+                // Update tab content
+                updateTabContent(tabId);
+
+                // Show/hide diagram area for story planning
+                if (tabId === 'storyplanning') {
+                    textContent.classList.add('hidden');
+                    diagramArea.classList.remove('hidden');
+                    addNewButton.classList.add('hidden');
+                } else {
+                    textContent.classList.remove('hidden');
+                    diagramArea.classList.add('hidden');
+                    addNewButton.classList.remove('hidden');
+                    addNewText.textContent = tabId.slice(0, -1); // Remove 's' from the end
+                }
+            });
+        });
+
+        function updateTabContent(tabId) {
+            tabContent.innerHTML = '';
+            tabData[tabId].forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'p-3 bg-gray-700 rounded-lg hover:bg-gray-600 cursor-pointer';
+                div.textContent = item;
+                div.addEventListener('click', () => {
+                    // Update right panel content
+                    textContent.querySelector('textarea').value = `Content for ${item}`;
+                });
+                tabContent.appendChild(div);
+            });
+        }
+
+        // Add new item functionality
+        addNewButton.addEventListener('click', () => {
+            const activeTab = document.querySelector('.tab-button.bg-accent-blue').getAttribute('data-tab');
+            const newItemName = prompt(`Enter name for new ${activeTab.slice(0, -1)}:`);
+            if (newItemName) {
+                tabData[activeTab].push(newItemName);
+                updateTabContent(activeTab);
+            }
+        });
+
+        // Story Planning Functionality
+        const addDiagramBox = document.createElement('button');
+        addDiagramBox.textContent = 'Add New Box';
+        addDiagramBox.className = 'px-4 py-2 bg-accent-blue rounded-lg hover:bg-accent-purple transition-colors mb-4';
+        diagramArea.appendChild(addDiagramBox);
+
+        let selectedBox = null;
+        let isDragging = false;
+        let currentX;
+        let currentY;
+        let initialX;
+        let initialY;
+        let xOffset = 0;
+        let yOffset = 0;
+
+        addDiagramBox.addEventListener('click', () => {
+            const box = document.createElement('div');
+            box.className = 'diagram-box';
+            box.innerHTML = `
+                <div class="text-white font-semibold mb-2">New Event</div>
+                <textarea class="w-full bg-transparent border border-gray-600 rounded p-2 text-sm" placeholder="Enter description..."></textarea>
+            `;
+            box.style.left = '20px';
+            box.style.top = '20px';
+            diagramArea.appendChild(box);
+
+            // Make box draggable
+            box.addEventListener('mousedown', dragStart);
+            box.addEventListener('click', () => {
+                document.querySelectorAll('.diagram-box').forEach(b => b.classList.remove('selected'));
+                box.classList.add('selected');
+                selectedBox = box;
+            });
+        });
+
+        function dragStart(e) {
+            if (e.target.tagName === 'TEXTAREA') return;
+            
+            initialX = e.clientX - xOffset;
+            initialY = e.clientY - yOffset;
+
+            if (e.target === selectedBox || e.target.parentNode === selectedBox) {
+                isDragging = true;
+            }
+        }
+
+        function drag(e) {
+            if (isDragging) {
+                e.preventDefault();
+
+                currentX = e.clientX - initialX;
+                currentY = e.clientY - initialY;
+
+                xOffset = currentX;
+                yOffset = currentY;
+
+                setTranslate(currentX, currentY, selectedBox);
+            }
+        }
+
+        function setTranslate(xPos, yPos, el) {
+            el.style.left = xPos + 'px';
+            el.style.top = yPos + 'px';
+        }
+
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        // Initialize first tab as active
+        tabButtons[0].click();
+        
+        
+        // Sidebar Script
+        const sidebar = document.getElementById('sidebar');
+        const sidebarTrigger = document.querySelector('.sidebar-trigger');
+        let timeoutId;
+
+        function openSidebar() {
+            sidebar.classList.add('open');
+            sidebarTrigger.style.opacity = '0';
+        }
+
+        function closeSidebar() {
+            sidebar.classList.remove('open');
+            sidebarTrigger.style.opacity = '1';
+        }
+
+        sidebarTrigger.addEventListener('mouseenter', () => {
+            timeoutId = setTimeout(openSidebar, 200); // Delay opening
+        });
+
+        sidebarTrigger.addEventListener('mouseleave', () => {
+            clearTimeout(timeoutId);
+        });
+
+        sidebar.addEventListener('mouseenter', openSidebar);
+
+        sidebar.addEventListener('mouseleave', () => {
+            timeoutId = setTimeout(closeSidebar, 300); // Delay closing
+        });
+
+        sidebar.addEventListener('mouseenter', () => {
+            clearTimeout(timeoutId);
+        });
+        
+        
+     // Story Planning Boxes
+        const addPlanningBox = document.getElementById('add-planning-box');
+        const planningContainer = document.getElementById('planning-container');
+        let activeBox = null;
+        let isResizing = false;
+
+        addPlanningBox.addEventListener('click', () => {
+            const box = document.createElement('div');
+            box.className = 'planning-box';
+            box.innerHTML = `
+                <div class="title">New Story Element</div>
+                <textarea placeholder="Enter your notes here..."></textarea>
+            `;
+            
+            // Set initial position
+            box.style.left = '50px';
+            box.style.top = '50px';
+            
+            planningContainer.appendChild(box);
+            setupDraggable(box);
+        });
+
+        function setupDraggable(element) {
+            let pos = { x: 0, y: 0 };
+            let isDragging = false;
+
+            element.addEventListener('mousedown', (e) => {
+                if (e.target.tagName === 'TEXTAREA') return;
+                
+                isDragging = true;
+                pos = {
+                    x: e.clientX - element.offsetLeft,
+                    y: e.clientY - element.offsetTop
+                };
+
+                // Bring to front
+                element.style.zIndex = '1000';
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+
+                element.style.left = (e.clientX - pos.x) + 'px';
+                element.style.top = (e.clientY - pos.y) + 'px';
+            });
+
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+                element.style.zIndex = '1';
+            });
+        }
+    </script>
+</body>
+</html>
+

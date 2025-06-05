@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Subscription Receipt - Inkwell</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #8B5CF6;
+        }
+        .receipt {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .receipt-header {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+        .receipt-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .thank-you {
+            text-align: center;
+            margin-top: 30px;
+        }
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #777;
+            margin-top: 30px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">Inkwell</div>
+        <p>Thank you for your subscription!</p>
+    </div>
+    
+    <div class="receipt">
+        <div class="receipt-header">
+            <h2>Subscription Receipt</h2>
+            <p th:text="'Date: ' + ${subscriptionDate}">Date: 2025-04-22</p>
+        </div>
+        
+        <div class="receipt-row">
+            <span>Subscriber:</span>
+            <span th:text="${subscriberName}">John Doe</span>
+        </div>
+        
+        <div class="receipt-row">
+            <span>Writer:</span>
+            <span th:text="${writerName}">Jane Author</span>
+        </div>
+        
+        <div class="receipt-row">
+            <span>Plan:</span>
+            <span th:text="${plan} == 'monthly' ? 'Monthly Subscription' : 'Annual Subscription'">Monthly Subscription</span>
+        </div>
+        
+        <div class="receipt-row">
+            <span>Amount:</span>
+            <span th:text="${amount}">$5.00</span>
+        </div>
+        
+        <div class="receipt-row">
+            <span>Subscription ID:</span>
+            <span th:text="${subscriptionId}">sub_12345</span>
+        </div>
+    </div>
+    
+    <div class="thank-you">
+        <p>Thank you for supporting writers on Inkwell!</p>
+        <p>You now have access to exclusive content from <span th:text="${writerName}">Jane Author</span>.</p>
+    </div>
+    
+    <div class="footer">
+        <p>Inkwell - Where Stories Come to Life</p>
+        <p>If you have any questions, contact us at support@inkwell.app</p>
+    </div>
+</body>
+</html>

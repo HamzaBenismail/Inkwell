@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Fantasy Background Elements Fragment</title>
+  <!-- Fantasy Elements Styles -->
+  <style th:fragment="fantasy-style">
+    /* Fantasy Background Elements - Can be toggled via user settings later */
+    .fantasy-elements {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 1;
+      overflow: hidden;
+    }
+
+    /* Magical Circle */
+    .magical-circle {
+      position: absolute;
+      border: 2px solid rgba(59, 130, 246, 0.2);
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 0.3;
+      z-index: 0;
+    }
+
+    @keyframes circleRotate {
+      0% { transform: translate(-50%, -50%) rotate(0deg); }
+      100% { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+
+    /* Magical Runes */
+    .magical-rune {
+      position: absolute;
+      font-family: 'Almendra', serif;
+      color: rgba(59, 130, 246, 0.3);
+      text-shadow: 0 0 5px rgba(59, 130, 246, 0.2);
+      opacity: 0.4;
+      z-index: 0;
+      font-size: 3rem;
+    }
+
+    /* Floating Orbs */
+    .floating-orb {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.8), rgba(59, 130, 246, 0.5));
+      box-shadow: 0 0 15px 5px rgba(59, 130, 246, 0.2);
+      opacity: 0.5;
+      z-index: 0;
+      animation: orbFloat 15s infinite ease-in-out;
+    }
+
+    @keyframes orbFloat {
+      0% { transform: translateY(0) translateX(0); }
+      50% { transform: translateY(-20px) translateX(10px); }
+      100% { transform: translateY(0) translateX(0); }
+    }
+
+    /* Magical Stars */
+    .magical-star {
+      position: absolute;
+      width: 3px;
+      height: 3px;
+      background-color: white;
+      border-radius: 50%;
+      opacity: 0.6;
+      z-index: 0;
+      animation: starTwinkle 3s infinite;
+    }
+
+    @keyframes starTwinkle {
+      0% { opacity: 0.2; transform: scale(1); }
+      50% { opacity: 0.8; transform: scale(1.5); }
+      100% { opacity: 0.2; transform: scale(1); }
+    }
+
+    /* Background Pattern */
+    .magical-pattern {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%233B82F6' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      opacity: 0.15;
+      z-index: 0;
+    }
+
+    /* Magical Scroll */
+    .magical-scroll {
+      position: absolute;
+      width: 120%;
+      height: 120%;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cpath d='M30,20 Q50,5 70,20 L70,80 Q50,95 30,80 Z' fill='none' stroke='rgba(59, 130, 246, 0.1)' stroke-width='1'/%3E%3C/svg%3E");
+      background-size: 100px 100px;
+      background-repeat: repeat;
+      opacity: 0.1;
+      transform: scale(1);
+      top: -10%;
+      left: -10%;
+      z-index: 0;
+    }
+
+    /* Quill Icon - Occasionally floating across screen */
+    .quill-icon {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='rgba(59, 130, 246, 0.4)' stroke-width='1' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 2C20 2 16 4 12 8C8 12 7 14 6 16C5 18 4 21 4 21C4 21 7 20 9 19C11 18 13 17 17 13C21 9 22 4 22 4'/%3E%3Cpath d='M18 2L22 6'/%3E%3Cpath d='M10 12L14 16'/%3E%3C/svg%3E");
+      background-size: contain;
+      background-repeat: no-repeat;
+      opacity: 0;
+      transform: rotate(-30deg);
+      z-index: 0;
+      animation: quillFloat 20s ease-in-out infinite;
+    }
+
+    @keyframes quillFloat {
+      0%, 100% { 
+        opacity: 0;
+        transform: translateX(-100px) translateY(30px) rotate(-30deg);
+      }
+      10%, 90% {
+        opacity: 0.4;
+        transform: translateX(calc(100vw + 100px)) translateY(-30px) rotate(15deg);
+      }
+    }
+
+    /* Make sure main content stays above magical background */
+    main, section, .hero-bg {
+      position: relative;
+      z-index: 1;
+    }
+  </style>
+</head>
+<body>
+  <!-- Fantasy Elements Container Fragment -->
+  <div th:fragment="fantasy-elements" class="fantasy-elements" id="fantasyElements">
+    <!-- These elements will be populated by JavaScript -->
+    <div class="magical-pattern"></div>
+    <div class="magical-scroll"></div>
+  </div>
+  
+  <!-- Fantasy Elements Script Fragment -->
+  <script th:fragment="fantasy-script">
+    document.addEventListener('DOMContentLoaded', function() {
+      initFantasyElements();
+      const savedTheme = localStorage.getItem('interfaceTheme') || 'none';
+        if (window.setTheme) {
+            window.setTheme(savedTheme);
+        }
+      
+    });
+    
+    window.setTheme = function(theme) {
+        const fantasyElements = document.getElementById('fantasyElements');
+        
+        if (!fantasyElements) return;
+        
+        switch(theme) {
+            case 'fantasy':
+                fantasyElements.style.display = 'block';
+                break;
+            case 'scifi':
+                // Future implementation for sci-fi theme
+                fantasyElements.style.display = 'none';
+                break;
+            case 'horror':
+                // Future implementation for horror theme
+                fantasyElements.style.display = 'none';
+                break;
+            case 'none':
+            default:
+                fantasyElements.style.display = 'none';
+                break;
+        }
+    };
+    function initFantasyElements() {
+      const fantasyElements = document.getElementById('fantasyElements');
+      if (!fantasyElements) return;
+      
+      // Add magical circles
+      for (let i = 0; i < 3; i++) {
+        const circle = document.createElement('div');
+        circle.className = 'magical-circle';
+        circle.style.width = (450 + i * 200) + 'px';
+        circle.style.height = (450 + i * 200) + 'px';
+        circle.style.animation = `circleRotate ${30 + i * 10}s linear infinite ${i % 2 === 0 ? '' : 'reverse'}`;
+        circle.style.opacity = 0.1 - i * 0.02;
+        fantasyElements.appendChild(circle);
+      }
+      
+      // Add magical runes
+      const runeSymbols = ['ᚠ', 'ᚢ', 'ᚦ', 'ᚨ', 'ᚱ', 'ᚲ', 'ᚷ', 'ᚹ', 'ᚺ', 'ᚾ', 'ᛁ', 'ᛃ', 'ᛇ', 'ᛈ', 'ᛉ', 'ᛊ', 'ᛏ', 'ᛒ', 'ᛖ', 'ᛗ', 'ᛚ', 'ᛜ', 'ᛞ', 'ᛟ'];
+      
+      for (let i = 0; i < 12; i++) {
+        const rune = document.createElement('div');
+        rune.className = 'magical-rune';
+        rune.textContent = runeSymbols[Math.floor(Math.random() * runeSymbols.length)];
+        rune.style.fontSize = (30 + Math.random() * 40) + 'px';
+        
+        // Position runes around the edges of the screen for subtlety
+        const posX = Math.random();
+        const posY = Math.random();
+        
+        // Keep most runes near edges
+        const x = posX < 0.5 ? 
+                  Math.random() * 20 + '%' : 
+                  (80 + Math.random() * 20) + '%';
+        const y = posY < 0.5 ?
+                  Math.random() * 20 + '%' :
+                  (80 + Math.random() * 20) + '%';
+        
+        rune.style.left = x;
+        rune.style.top = y;
+        
+        fantasyElements.appendChild(rune);
+      }
+      
+      // Add floating orbs
+      for (let i = 0; i < 15; i++) {
+        const orb = document.createElement('div');
+        orb.className = 'floating-orb';
+        
+        // Random size
+        const size = 3 + Math.random() * 12;
+        orb.style.width = size + 'px';
+        orb.style.height = size + 'px';
+        
+        // Position around the screen
+        orb.style.left = Math.random() * 100 + 'vw';
+        orb.style.top = Math.random() * 100 + 'vh';
+        
+        // Random animation timing
+        orb.style.animationDuration = (10 + Math.random() * 20) + 's';
+        orb.style.animationDelay = (Math.random() * 10) + 's';
+        
+        fantasyElements.appendChild(orb);
+      }
+      
+      // Add magical stars
+      for (let i = 0; i < 40; i++) {
+        const star = document.createElement('div');
+        star.className = 'magical-star';
+        
+        // Random size
+        const size = 1 + Math.random() * 3;
+        star.style.width = size + 'px';
+        star.style.height = size + 'px';
+        
+        // Position around the screen
+        star.style.left = Math.random() * 100 + 'vw';
+        star.style.top = Math.random() * 100 + 'vh';
+        
+        // Random animation timing
+        star.style.animationDuration = (2 + Math.random() * 4) + 's';
+        star.style.animationDelay = (Math.random() * 3) + 's';
+        
+        fantasyElements.appendChild(star);
+      }
+      
+      // Add a few quill icons that will occasionally float across screen
+      for (let i = 0; i < 3; i++) {
+        const quill = document.createElement('div');
+        quill.className = 'quill-icon';
+        
+        // Random starting position (off-screen left)
+        quill.style.left = '-50px';
+        quill.style.top = (20 + Math.random() * 60) + 'vh';
+        
+        // Random animation timing
+        quill.style.animationDuration = (30 + Math.random() * 30) + 's';
+        quill.style.animationDelay = (i * 20 + Math.random() * 10) + 's';
+        
+        fantasyElements.appendChild(quill);
+      }
+    }
+    
+    // This function can later be used to toggle between different themes
+    function setTheme(theme) {
+      const fantasyElements = document.getElementById('fantasyElements');
+      
+      if (!fantasyElements) return;
+      
+      switch(theme) {
+        case 'fantasy':
+          fantasyElements.style.display = 'block';
+          break;
+        case 'scifi':
+          // Future implementation for sci-fi theme
+          fantasyElements.style.display = 'none';
+          break;
+        case 'horror':
+          // Future implementation for horror theme
+          fantasyElements.style.display = 'none';
+          break;
+        case 'none':
+        default:
+          fantasyElements.style.display = 'none';
+          break;
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:if="${_csrf != null}" th:content="${_csrf.headerName}"/>
+    <title>Subscribe to Writer - Inkwell</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://js.stripe.com/v3/"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'accent-blue': '#3B82F6',
+                        'accent-purple': '#8B5CF6',
+                    }
+                }
+            }
+        }
+    </script>
+    <style th:replace="~{fragments/sidebar :: sidebar-style}"></style>
+    <style>
+        /* Card animations */
+        .payment-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .payment-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Plan selection styles */
+        .plan-card {
+            transition: all 0.2s ease;
+        }
+        .plan-card:hover {
+            transform: translateY(-2px);
+        }
+        .plan-card.selected {
+            border-color: #8B5CF6;
+        }
+        
+        /* Fade-in animation for content */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+        .delay-100 { animation-delay: 0.1s; }
+        .delay-200 { animation-delay: 0.2s; }
+        .delay-300 { animation-delay: 0.3s; }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans">
+    <div class="flex min-h-screen">
+        <!-- Sidebar Trigger -->
+        <div th:replace="~{fragments/sidebar :: sidebar-trigger}"></div>
+        
+        <!-- Sidebar -->
+        <aside th:replace="~{fragments/sidebar :: sidebar}"></aside>
+
+        <!-- Main Content -->
+        <div class="flex-1 overflow-auto">
+            <main class="py-6 lg:py-10">
+                <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <!-- Messages -->
+                    <div th:if="${errorMessage}" class="bg-red-700 text-white p-4 rounded-md mb-4">
+                        <div class="flex items-center">
+                            <i class="fas fa-exclamation-circle mr-2"></i>
+                            <span th:text="${errorMessage}">Error message</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Page Header -->
+                    <div class="text-center mb-8 animate-fade-in">
+                        <h1 class="text-3xl font-bold text-gray-100 mb-2">Subscribe to <span th:text="${writer != null ? writer.username : 'Writer'}">Writer</span></h1>
+                        <p class="text-gray-400">Support this creator and get access to exclusive content</p>
+                    </div>
+
+                    <!-- Subscription Content -->
+                    <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden payment-card animate-fade-in delay-100">
+                        <!-- Writer Info -->
+                        <div class="p-6 border-b border-gray-700">
+                            <div class="flex items-center">
+                                <div class="h-12 w-12 rounded-full overflow-hidden bg-gray-700 flex-shrink-0">
+                                    <img th:if="${writer != null && writer.profileImage != null}" th:src="${writer.profileImage}" alt="Profile" class="h-full w-full object-cover">
+                                    <div th:unless="${writer != null && writer.profileImage != null}" class="h-full w-full flex items-center justify-center text-gray-400">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                </div>
+                                <div class="ml-4 flex-1">
+                                    <h2 class="text-lg font-medium text-gray-100" th:text="${writer != null ? writer.username : 'Creator'}">Creator</h2>
+                                    <p class="text-sm text-gray-400" th:text="${writer != null && writer.bio != null ? writer.bio : 'No bio available'}">Creator bio</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Plans Selection -->
+                        <div class="p-6 border-b border-gray-700">
+                            <h3 class="text-lg font-medium text-gray-100 mb-4">Choose Your Plan</h3>
+                            <div class="space-y-4">
+                                <!-- Monthly Plan -->
+                                <div id="monthly-plan" th:class="${selectedPlan == 'monthly' ? 'plan-card bg-gray-700 rounded-lg p-4 border-2 border-accent-purple cursor-pointer selected' : 'plan-card bg-gray-700 rounded-lg p-4 border border-gray-600 cursor-pointer'}"
+                                     data-plan="monthly">
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <div class="text-white font-medium">Monthly Subscription</div>
+                                            <div class="text-gray-400 text-sm">$5.99 per month</div>
+                                            <div class="text-xs text-gray-400 mt-1">Billed monthly, cancel anytime</div>
+                                        </div>
+                                        <div>
+                                            <div class="h-6 w-6 rounded-full border border-accent-purple flex items-center justify-center">
+                                                <div th:if="${selectedPlan == 'monthly'}" class="h-3 w-3 rounded-full bg-accent-purple"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Annual Plan -->
+                                <div id="annual-plan" th:class="${selectedPlan == 'annual' ? 'plan-card bg-gray-700 rounded-lg p-4 border-2 border-accent-purple cursor-pointer selected' : 'plan-card bg-gray-700 rounded-lg p-4 border border-gray-600 cursor-pointer'}"
+                                     data-plan="annual">
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <div class="text-white font-medium flex items-center">
+                                                Annual Subscription
+                                                <span class="ml-2 text-xs bg-accent-blue px-2 py-0.5 rounded-full">SAVE 15%</span>
+                                            </div>
+                                            <div class="text-gray-400 text-sm">$59.99 per year</div>
+                                            <div class="text-xs text-gray-400 mt-1">Billed annually, cancel anytime</div>
+                                        </div>
+                                        <div>
+                                            <div class="h-6 w-6 rounded-full border border-accent-purple flex items-center justify-center">
+                                                <div th:if="${selectedPlan == 'annual'}" class="h-3 w-3 rounded-full bg-accent-purple"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Subscription Benefits -->
+                        <div class="p-6 border-b border-gray-700">
+                            <h3 class="text-lg font-medium text-gray-100 mb-4">Subscription Benefits</h3>
+                            <ul class="space-y-3">
+                                <li class="flex items-start">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-check text-green-500 mt-1"></i>
+                                    </div>
+                                    <p class="ml-3 text-gray-300">Access to exclusive content</p>
+                                </li>
+                                <li class="flex items-start">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-check text-green-500 mt-1"></i>
+                                    </div>
+                                    <p class="ml-3 text-gray-300">Direct messaging with the writer</p>
+                                </li>
+                                <li class="flex items-start">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-check text-green-500 mt-1"></i>
+                                    </div>
+                                    <p class="ml-3 text-gray-300">Early access to new stories</p>
+                                </li>
+                                <li class="flex items-start">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-check text-green-500 mt-1"></i>
+                                    </div>
+                                    <p class="ml-3 text-gray-300">Monthly newsletter with behind-the-scenes content</p>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <!-- Payment Actions -->
+                        <div class="p-6">
+                            <button id="checkout-button" class="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-accent-purple hover:bg-accent-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent-purple transition-colors duration-300 mb-4">
+                                <span id="button-text">Subscribe Now</span>
+                                <span id="button-loading" class="hidden">
+                                    <i class="fas fa-spinner fa-spin mr-2"></i> Processing...
+                                </span>
+                            </button>
+                            
+                            <div class="text-xs text-gray-400 text-center">
+                                <p class="mb-2">You can cancel your subscription at any time from your account settings.</p>
+                                <p>By subscribing, you agree to our <a href="#" class="text-accent-blue hover:text-accent-purple">Terms of Service</a> and <a href="#" class="text-accent-blue hover:text-accent-purple">Privacy Policy</a>.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Payment page script -->
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize variables
+            const stripePublicKey = /*[[${stripePublicKey}]]*/ 'pk_test';
+            const stripe = Stripe(stripePublicKey);
+            const checkoutButton = document.getElementById('checkout-button');
+            const buttonText = document.getElementById('button-text');
+            const buttonLoading = document.getElementById('button-loading');
+            
+            let selectedPlan = /*[[${selectedPlan}]]*/ 'monthly';
+            const writerId = /*[[${writer != null ? writer.id : null}]]*/ null;
+            
+            // Plan selection
+            const monthlyPlan = document.getElementById('monthly-plan');
+            const annualPlan = document.getElementById('annual-plan');
+            
+            monthlyPlan.addEventListener('click', function() {
+                selectPlan('monthly');
+            });
+            
+            annualPlan.addEventListener('click', function() {
+                selectPlan('annual');
+            });
+            
+            function selectPlan(plan) {
+                selectedPlan = plan;
+                
+                // Update UI
+                if (plan === 'monthly') {
+                    monthlyPlan.classList.add('selected', 'border-2', 'border-accent-purple');
+                    monthlyPlan.classList.remove('border', 'border-gray-600');
+                    annualPlan.classList.remove('selected', 'border-2', 'border-accent-purple');
+                    annualPlan.classList.add('border', 'border-gray-600');
+                    
+                    // Update dot indicator
+                    monthlyPlan.querySelector('.h-6.w-6').innerHTML = '<div class="h-3 w-3 rounded-full bg-accent-purple"></div>';
+                    annualPlan.querySelector('.h-6.w-6').innerHTML = '';
+                } else {
+                    annualPlan.classList.add('selected', 'border-2', 'border-accent-purple');
+                    annualPlan.classList.remove('border', 'border-gray-600');
+                    monthlyPlan.classList.remove('selected', 'border-2', 'border-accent-purple');
+                    monthlyPlan.classList.add('border', 'border-gray-600');
+                    
+                    // Update dot indicator
+                    annualPlan.querySelector('.h-6.w-6').innerHTML = '<div class="h-3 w-3 rounded-full bg-accent-purple"></div>';
+                    monthlyPlan.querySelector('.h-6.w-6').innerHTML = '';
+                }
+            }
+            
+            // Handle checkout button click
+            checkoutButton.addEventListener('click', function() {
+                // Show loading state
+                buttonText.classList.add('hidden');
+                buttonLoading.classList.remove('hidden');
+                checkoutButton.disabled = true;
+                
+                // Get CSRF token
+                const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+                const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+                
+                // Create checkout session
+                const headers = {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                };
+                
+                if (csrfHeader && csrfToken) {
+                    headers[csrfHeader] = csrfToken;
+                }
+                
+                // Create form data
+                const formData = new URLSearchParams();
+                formData.append('plan', selectedPlan);
+                formData.append('writerId', writerId);
+                
+                fetch('/payment/create-checkout-session', {
+                    method: 'POST',
+                    headers: headers,
+                    body: formData
+                })
+                .then(function(response) {
+                    return response.json();
+                })
+                .then(function(session) {
+                    if (session.error) {
+                        throw new Error(session.error);
+                    }
+                    
+                    // Redirect to Stripe Checkout
+                    return stripe.redirectToCheckout({ sessionId: session.sessionId });
+                })
+                .then(function(result) {
+                    if (result.error) {
+                        throw new Error(result.error.message);
+                    }
+                })
+                .catch(function(error) {
+                    console.error('Error:', error);
+                    
+                    // Show error message
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'bg-red-700 text-white p-4 rounded-md mt-4 mb-4';
+                    errorDiv.innerHTML = `
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-exclamation-circle"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium">Error processing payment: ${error.message}</p>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Insert error before the checkout button
+                    checkoutButton.parentNode.insertBefore(errorDiv, checkoutButton);
+                    
+                    // Reset button state
+                    buttonText.classList.remove('hidden');
+                    buttonLoading.classList.add('hidden');
+                    checkoutButton.disabled = false;
+                });
+            });
+        });
+    </script>
+    <script th:replace="~{fragments/sidebar :: sidebar-script}"></script>
+</body>
+</html>

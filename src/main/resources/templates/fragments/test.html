@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Page</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script th:fragment="test">
+  tailwind.config = {
+      theme: {
+          extend: {
+              colors: {
+                  'cyan': '#00BFFF',
+                  'cyan-dark': '#0099CC',
+                  'cyan-light': '#33CCFF',
+                  'black-pure': '#000000',
+                  'black-rich': '#0A0A0A',
+                  'black-off': '#121212',
+                  'gray-dark': '#1A1A1A',
+                  'gray-medium': '#333333',
+                  'gray-light': '#666666',
+              },
+              fontFamily: {
+                  'sans': ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+              },
+              animation: {
+                  'float': 'float 3s ease-in-out infinite',
+                  'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+              },
+              keyframes: {
+                  float: {
+                      '0%, 100%': { transform: 'translateY(0)' },
+                      '50%': { transform: 'translateY(-10px)' },
+                  }
+              }
+          }
+      }
+  }
+</script>
+    <style>
+
+    </style>
+</head>
+<body>
+
+    <header th:fragment="test" class="fixed top-0 left-0 right-0 z-50 bg-black-rich bg-opacity-80 backdrop-blur-md border-b border-gray-dark">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo -->
+                <div class="flex items-center">
+                    <a href="/Home" class="flex items-center space-x-2">
+                        <i class="fas fa-feather-alt text-cyan text-2xl"></i>
+                        <span class="text-xl font-bold gradient-text">Inkwell</span>
+                    </a>
+                </div>
+                
+                <!-- Navigation -->
+                <nav class="hidden md:flex space-x-8">
+                    <a href="/Home" class="text-white hover:text-cyan animated-underline">Home</a>
+                    <a href="/Library" class="text-white hover:text-cyan animated-underline">Library</a>
+                    <a href="/Dashboard" class="text-white hover:text-cyan animated-underline">Dashboard</a>
+                    <a href="/Writing" class="text-white hover:text-cyan animated-underline">Writing</a>
+                    <a href="/Statistics" class="text-white hover:text-cyan animated-underline">Statistics</a>
+                </nav>
+                
+                <!-- Mobile menu button -->
+                <div class="md:hidden">
+                    <button type="button" class="text-gray-light hover:text-white focus:outline-none" aria-label="Toggle menu">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                </div>
+                
+                <!-- User menu (if authenticated) -->
+                <div th:if="${isAuthenticated == true}" class="hidden md:flex items-center space-x-4">
+                    <a href="/notifications" class="text-gray-light hover:text-cyan">
+                        <i class="fas fa-bell"></i>
+                    </a>
+                    <a href="/profile" class="flex items-center space-x-2">
+                        <div class="w-8 h-8 rounded-full bg-gray-medium overflow-hidden">
+                            <!-- User avatar would go here -->
+                            <i class="fas fa-user flex items-center justify-center h-full text-white"></i>
+                        </div>
+                    </a>
+                </div>
+                
+                <!-- Auth buttons (if not authenticated) -->
+                <div th:if="${isAuthenticated == false}" class="hidden md:flex items-center space-x-4">
+                    <a href="/login" class="text-white hover:text-cyan animated-underline">Log in</a>
+                    <a href="/SignUp" class="px-4 py-2 rounded-md bg-cyan text-black font-medium hover:bg-cyan-dark transition-colors">Sign up</a>
+                </div>
+            </div>
+        </div>
+    </header>
+</body>
+
+
+<!--
+
+                <div class="mb-12 bg-black-rich rounded-xl p-6 shadow-lg border border-gray-dark">
+                    <h2 class="text-2xl font-bold mb-6 gradient-text">Discover Stories</h2>
+                    
+                    Search Bar
+                    <form action="/Home" method="get" class="relative mb-6">
+                        <div class="relative">
+                            <input type="text" 
+                                   name="search"
+                                   th:value="${currentSearch}"
+                                   placeholder="Search for stories, authors, or tags..." 
+                                   class="w-full bg-gray-dark border-2 border-gray-medium rounded-lg py-3 px-4 pl-12 text-white placeholder-gray-light focus:outline-none focus:border-cyan focus:ring-1 focus:ring-cyan transition-all duration-300"
+                                   aria-label="Search stories">
+                            <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-light"></i>
+                        </div>
+                        
+                        Advanced filters toggle
+                        <div class="mt-4">
+                            <button type="button" id="toggleFilters" class="text-sm text-cyan hover:text-cyan-light flex items-center">
+                                <i class="fas fa-sliders-h mr-2"></i>
+                                Advanced Filters
+                                <i class="fas fa-chevron-down ml-2 transition-transform duration-300" id="filterArrow"></i>
+                            </button>
+                        </div>
+                        
+                        Hidden inputs to preserve current filters when searching
+                        <input type="hidden" name="genre" th:value="${currentGenre}">
+                        <input type="hidden" name="sort" th:value="${currentSort}">
+                        <input type="hidden" name="size" th:value="${currentSize}">
+                    </form>
+
+                    Filters (collapsible)
+                    <div id="filterPanel" class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 hidden">
+                        Genre Filter
+                        <div class="space-y-2">
+                            <label for="genreFilter" class="block text-sm font-medium text-gray-300">Genre</label>
+                            <select id="genreFilter" onchange="applyFilters()" class="w-full bg-gray-dark border-2 border-gray-medium rounded-lg py-2 px-4 text-white focus:outline-none focus:border-cyan focus:ring-1 focus:ring-cyan transition-all duration-300">
+                                <option value="">All Genres</option>
+                                <option th:each="tag : ${allTags}" 
+                                        th:value="${tag.name}" 
+                                        th:text="${tag.name}"
+                                        th:selected="${tag.name == currentGenre}">
+                                    Genre
+                                </option>
+                            </select>
+                        </div>
+
+                        Sort Options
+                        <div class="space-y-2">
+                            <label for="sortFilter" class="block text-sm font-medium text-gray-300">Sort By</label>
+                            <select id="sortFilter" onchange="applyFilters()" class="w-full bg-gray-dark border-2 border-gray-medium rounded-lg py-2 px-4 text-white focus:outline-none focus:border-cyan focus:ring-1 focus:ring-cyan transition-all duration-300">
+                                <option value="trending" th:selected="${currentSort == 'trending'}">Trending</option>  
+                                <option value="recent" th:selected="${currentSort == 'recent'}">Most Recent</option>
+                                <option value="popular" th:selected="${currentSort == 'popular'}">Most Popular</option>
+                                <option value="updated" th:selected="${currentSort == 'updated'}">Recently Updated</option>
+                                <option value="highest_rated" th:selected="${currentSort == 'highest_rated'}">Highest Rated</option>
+                                <option value="lowest_rated" th:selected="${currentSort == 'lowest_rated'}">Lowest Rated</option>
+                            </select>
+                        </div>
+                        
+                        Page Size Options
+                        <div class="space-y-2">
+                            <label for="sizeFilter" class="block text-sm font-medium text-gray-300">Items Per Page</label>
+                            <select id="sizeFilter" onchange="applyFilters()" class="w-full bg-gray-dark border-2 border-gray-medium rounded-lg py-2 px-4 text-white focus:outline-none focus:border-cyan focus:ring-1 focus:ring-cyan transition-all duration-300">
+                                <option value="20" th:selected="${currentSize == 20}">20 per page</option>
+                                <option value="50" th:selected="${currentSize == 50}">50 per page</option>
+                                <option value="100" th:selected="${currentSize == 100}">100 per page</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+-->

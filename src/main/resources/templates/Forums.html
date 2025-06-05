@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Writers Forums - Inkwell</title>
+    <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:if="${_csrf != null}" th:content="${_csrf.headerName}"/>
+    
+    <!-- Use CDN links instead of local CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Match tailwind config from Home.html -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'accent-blue': '#0ea5e9',
+                        'accent-cyan': '#06b6d4',
+                        'bg-dark': '#030712',
+                        'bg-card': '#111827',
+                        'bg-card-hover': '#1f2937'
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <!-- Include essential styles from Home.html -->
+    <style>
+        /* Core Styles */
+        body {
+            background-color: #030712;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #111827;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #374151;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #0ea5e9;
+        }
+        
+        /* Writer card with immersive hover effects */
+        .writer-card {
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(145deg, #151e30, #0f1625);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            transition: all 0.4s cubic-bezier(0.33, 1, 0.68, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            transform: perspective(1000px) translateZ(0);
+        }
+        
+        /* Glow effect */
+        .writer-card::before {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            background: linear-gradient(90deg, transparent, rgba(14, 165, 233, 0.1), transparent);
+            z-index: -1;
+            opacity: 0;
+            border-radius: 14px;
+            transition: opacity 0.5s ease-in-out;
+            filter: blur(8px);
+        }
+        
+        /* Top border accent */
+        .writer-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(14, 165, 233, 0.3), transparent);
+            transform: scaleX(0);
+            transition: transform 0.6s cubic-bezier(0.33, 1, 0.68, 1);
+        }
+        
+        /* Main card transform effect */
+        .writer-card:hover {
+            transform: perspective(1000px) translateY(-8px) rotateX(2deg) translateZ(10px);
+            border-color: rgba(14, 165, 233, 0.15);
+            box-shadow: 
+                0 15px 30px rgba(0, 0, 0, 0.4),
+                0 0 20px rgba(14, 165, 233, 0.1);
+        }
+        
+        /* Activate glow and border accent */
+        .writer-card:hover::before {
+            opacity: 1;
+        }
+        
+        .writer-card:hover::after {
+            transform: scaleX(1);
+        }
+        
+        /* Gradient text */
+        .gradient-text {
+            background: linear-gradient(90deg, #0ea5e9, #06b6d4);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        /* Fancy buttons */
+        .btn-primary {
+            background: linear-gradient(90deg, #0ea5e9, #06b6d4);
+            color: white;
+            border-radius: 8px;
+            padding: 0.5rem 1.5rem;
+            font-weight: 500;
+            transition: all 0.3s;
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+        }
+        
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            transition: width 0.3s ease;
+            z-index: -1;
+        }
+        
+        .btn-primary:hover::before {
+            width: 100%;
+        }
+        
+        .btn-primary:hover {
+            box-shadow: 0 0 20px rgba(14, 165, 233, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        /* Fade-in animation for content */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+        
+        .delay-100 { animation-delay: 0.1s; }
+        .delay-200 { animation-delay: 0.2s; }
+        .delay-300 { animation-delay: 0.3s; }
+    </style>
+    
+    <style th:replace="fragments/sidebar :: sidebar-style"></style>
+    <style th:replace="fragments/FantasyBackground :: fantasy-style"></style>
+</head>
+<body class="bg-bg-dark text-gray-100 font-sans">
+    <div class="flex min-h-screen">
+        <!-- Fantasy Background -->
+        <div th:replace="fragments/FantasyBackground :: fantasy-elements"></div>
+        
+        <!-- Sidebar Trigger -->
+        <div th:replace="fragments/sidebar :: sidebar-trigger"></div>
+        
+        <!-- Sidebar -->
+        <aside th:replace="fragments/sidebar :: sidebar"></aside>
+
+        <!-- Main Content -->
+        <div class="flex-1 overflow-auto">
+            <main class="py-6 lg:py-10 px-4">
+                <div class="max-w-7xl mx-auto">
+                    <div class="mb-10 animate-fade-in">
+                        <h1 class="text-4xl font-bold mb-2">Writers <span class="gradient-text">Forums</span></h1>
+                        <p class="text-gray-400 text-lg">Access exclusive communities from writers you've subscribed to</p>
+                    </div>
+                    
+                    <!-- No subscriptions message -->
+                    <div th:if="${subscriptions == null || subscriptions.isEmpty()}" class="writer-card p-10 text-center animate-fade-in delay-100">
+                        <div class="text-6xl text-gray-500 mb-6">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        <h2 class="text-2xl font-semibold mb-3">No Writer Subscriptions</h2>
+                        <p class="text-gray-400 mb-6">Subscribe to writers to access their exclusive forums and content.</p>
+                        <a href="/library" class="btn-primary inline-flex items-center gap-2">
+                            <i class="fas fa-compass"></i> Explore Library
+                        </a>
+                    </div>
+                    
+                    <!-- Writers grid -->
+                    <div th:if="${subscriptions != null && !subscriptions.isEmpty()}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div th:each="subscription, stat : ${subscriptions}" th:class="${'writer-card animate-fade-in delay-' + (stat.index % 3 * 100)}">
+                            <div class="p-6">
+                                <div class="flex items-center mb-4">
+                                    <div class="w-14 h-14 rounded-full overflow-hidden mr-4 border-2 border-accent-blue shadow-lg">
+                                        <img th:if="${subscription.writer.profileImage}" th:src="@{'/images/profile/' + ${subscription.writer.profileImage}}" class="w-full h-full object-cover" alt="Profile" onerror="this.src='https://via.placeholder.com/150?text=Writer';">
+                                        <div th:unless="${subscription.writer.profileImage}" class="w-full h-full bg-accent-blue flex items-center justify-center text-xl font-bold">
+                                            <span th:text="${subscription.writer.username.substring(0,1).toUpperCase()}"></span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h2 class="text-xl font-semibold text-white" th:text="${subscription.writer.username}">Writer Name</h2>
+                                        <p class="text-sm text-gray-400" th:text="'Subscribed since ' + ${#temporals.format(subscription.startDate, 'MMM dd, yyyy')}">Subscription date</p>
+                                    </div>
+                                </div>
+                                
+                                <p class="text-gray-300 mb-6 line-clamp-2 min-h-[48px]" th:text="${subscription.writer.bio != null ? subscription.writer.bio : 'No bio available'}">Writer bio...</p>
+                                
+                                <div class="grid grid-cols-2 gap-4 mb-6">
+                                    <div class="bg-bg-card bg-opacity-70 rounded-lg p-3 text-center">
+                                        <div class="text-lg font-bold text-accent-blue">
+                                            <span th:text="${subscription.writer.stories != null ? subscription.writer.stories.size() : '0'}">0</span>
+                                        </div>
+                                        <div class="text-xs text-gray-400">Stories</div>
+                                    </div>
+                                    <div class="bg-bg-card bg-opacity-70 rounded-lg p-3 text-center">
+                                        <div class="text-lg font-bold text-green-500">
+                                            <span th:text="${subscription.plan}">Monthly</span>
+                                        </div>
+                                        <div class="text-xs text-gray-400">Subscription</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex justify-between items-center mt-2">
+                                    <a th:href="@{'/writer/' + ${subscription.writer.username}}" class="text-accent-blue hover:text-accent-cyan transition-colors">
+                                        <i class="fas fa-user mr-1"></i> View Profile
+                                    </a>
+                                    <a th:href="@{'/forums/' + ${subscription.writer.username}}" class="btn-primary inline-flex items-center gap-2 py-2 px-4">
+                                        <i class="fas fa-comments"></i> Visit Forum
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Footer -->
+            <footer class="bg-bg-card py-10 mt-auto border-t border-gray-800">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="grid md:grid-cols-4 gap-8">
+                        <div class="md:col-span-2">
+                            <a href="/Home" class="text-2xl font-bold gradient-text inline-block mb-3">Inkwell</a>
+                            <p class="text-gray-400 max-w-md">
+                                A platform for writers and readers to connect through the power of storytelling. 
+                                Create, share, and discover stories that captivate and inspire.
+                            </p>
+                            <div class="flex mt-6 space-x-4">
+                                <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">
+                                    <i class="fab fa-twitter text-xl"></i>
+                                </a>
+                                <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">
+                                    <i class="fab fa-facebook text-xl"></i>
+                                </a>
+                                <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">
+                                    <i class="fab fa-instagram text-xl"></i>
+                                </a>
+                                <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">
+                                    <i class="fab fa-github text-xl"></i>
+                                </a>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold mb-4 text-white">Navigation</h3>
+                            <ul class="space-y-2">
+                                <li>
+                                    <a href="/Home" class="text-gray-400 hover:text-accent-blue transition-colors">Home</a>
+                                </li>
+                                <li>
+                                    <a href="/Library" class="text-gray-400 hover:text-accent-blue transition-colors">Library</a>
+                                </li>
+                                <li>
+                                    <a href="/Dashboard" class="text-gray-400 hover:text-accent-blue transition-colors">Dashboard</a>
+                                </li>
+                                <li>
+                                    <a href="/Writing" class="text-gray-400 hover:text-accent-blue transition-colors">Write</a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold mb-4 text-white">Legal</h3>
+                            <ul class="space-y-2">
+                                <li>
+                                    <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">Terms of Service</a>
+                                </li>
+                                <li>
+                                    <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">Privacy Policy</a>
+                                </li>
+                                <li>
+                                    <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">Copyright</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="mt-8 pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center">
+                        <p class="text-gray-400 text-sm">
+                            &copy; 2023-2025 Inkwell. All rights reserved.
+                        </p>
+                        <div class="mt-4 md:mt-0">
+                            <a href="#" class="text-sm text-accent-blue hover:underline">Back to top</a>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <script th:replace="fragments/sidebar :: sidebar-script"></script>
+    <script th:replace="fragments/FantasyBackground :: fantasy-script"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Apply 3D hover effect to writer cards
+            const writerCards = document.querySelectorAll('.writer-card');
+            
+            writerCards.forEach(card => {
+                card.addEventListener('mousemove', function(e) {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+                    
+                    const rotateY = ((x - centerX) / centerX) * 3;
+                    const rotateX = -((y - centerY) / centerY) * 3;
+                    
+                    card.style.transform = `perspective(1000px) translateY(-8px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(10px)`;
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    card.style.transform = 'perspective(1000px) translateZ(0)';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

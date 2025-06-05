@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="${story.title} + ' - Inkwell'">Story Title - Inkwell</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+      tailwind.config = {
+          theme: {
+              extend: {
+                  colors: {
+                      'accent-blue': '#0ea5e9',
+                      'accent-cyan': '#06b6d4',
+                      'bg-dark': '#030712',
+                      'bg-card': '#111827',
+                      'bg-card-hover': '#1f2937'
+                  },
+                  fontFamily: {
+                      'sans': ['Inter', 'sans-serif'],
+                  },
+              }
+          }
+      }
+  </script>
+  <style>
+    /* Core Styles */
+    body {
+        background-color: #030712;
+        font-family: 'Inter', sans-serif;
+    }
+    
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: #111827;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: #374151;
+        border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: #0ea5e9;
+    }
+
+    /* Story card with immersive hover effects */
+    .story-card {
+        display: flex;
+        flex-direction: column;
+        background: linear-gradient(145deg, #151e30, #0f1625);
+        border: 1px solid rgba(255, 255, 255, 0.03);
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Simplified glow effect */
+    .story-card::before {
+        content: '';
+        position: absolute;
+        inset: -2px;
+        background: linear-gradient(90deg, transparent, rgba(14, 165, 233, 0.08), transparent);
+        z-index: -1;
+        opacity: 0;
+        border-radius: 14px;
+        transition: opacity 0.3s ease-in-out;
+        filter: blur(8px);
+    }
+
+    /* Top border accent - simplified */
+    .story-card::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, rgba(14, 165, 233, 0.2), transparent);
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
+    }
+
+    /* Reduced transform effect */
+    .story-card:hover {
+        transform: translateY(-4px);
+        border-color: rgba(14, 165, 233, 0.15);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* Activate glow and border accent */
+    .story-card:hover::before {
+        opacity: 1;
+    }
+    
+    .story-card:hover::after {
+        transform: scaleX(1);
+    }
+
+    /* Chapter card with hover effects */
+    .chapter-card {
+        display: flex;
+        background: linear-gradient(145deg, #1a2235, #141c2b);
+        border: 1px solid rgba(255, 255, 255, 0.03);
+        border-radius: 10px;
+        transition: all 0.2s ease;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .chapter-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(14, 165, 233, 0.2);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Comment card with hover effects */
+    .comment-card {
+        background: linear-gradient(145deg, #1a2235, #141c2b);
+        border: 1px solid rgba(255, 255, 255, 0.03);
+        border-radius: 12px;
+        transition: all 0.2s ease;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .comment-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(14, 165, 233, 0.15);
+    }
+
+    /* Cover image with reduced effects */
+    .cover-container {
+        position: relative;
+        overflow: hidden;
+        border-radius: 12px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        transition: all 0.3s ease;
+    }
+
+    .cover-container:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+    }
+
+    .cover-image {
+        transition: all 0.5s ease;
+    }
+
+    .cover-container:hover .cover-image {
+        transform: scale(1.03);
+    }
+
+    /* Rating star animation */
+    .rating-star {
+        transition: transform 0.3s ease, filter 0.3s ease, color 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .rating-container:hover .rating-star {
+        filter: drop-shadow(0 0 2px rgba(250, 204, 21, 0.2));
+    }
+    
+    .rating-star:hover {
+        transform: scale(1.2);
+        filter: drop-shadow(0 0 4px rgba(250, 204, 21, 0.4));
+    }
+    
+    /* Like button effects */
+    #likeButton {
+        transition: all 0.2s ease;
+        overflow: hidden;
+        position: relative;
+        z-index: 1;
+    }
+
+    #likeButton:hover {
+        transform: translateY(-1px);
+    }
+
+    #likeIcon.text-red-500 {
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% {
+            filter: drop-shadow(0 0 0 rgba(239, 68, 68, 0));
+        }
+        50% {
+            filter: drop-shadow(0 0 3px rgba(239, 68, 68, 0.4));
+        }
+    }
+
+    /* Gradient text */
+    .gradient-text {
+        background: linear-gradient(90deg, #0ea5e9, #06b6d4);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    /* Fancy buttons */
+    .btn-primary {
+        background: linear-gradient(90deg, #0ea5e9, #06b6d4);
+        color: white;
+        border-radius: 8px;
+        padding: 0.5rem 1.5rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        position: relative;
+        z-index: 1;
+    }
+
+    .btn-primary:hover {
+        box-shadow: 0 0 15px rgba(14, 165, 233, 0.4);
+        transform: translateY(-1px);
+    }
+    
+    .btn-primary::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 0;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.1);
+        transition: width 0.3s ease;
+        z-index: -1;
+    }
+    
+    .btn-primary:hover {
+        box-shadow: 0 0 20px rgba(14, 165, 233, 0.5);
+        transform: translateY(-2px);
+    }
+    
+    .btn-secondary {
+        background: rgba(14, 165, 233, 0.1);
+        color: #0ea5e9;
+        border: 1px solid rgba(14, 165, 233, 0.3);
+        border-radius: 8px;
+        padding: 0.5rem 1.5rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .btn-secondary:hover {
+        background: rgba(14, 165, 233, 0.15);
+        transform: translateY(-1px);
+    }
+    
+    /* Comment form */
+    .comment-textarea {
+        background: rgba(17, 24, 39, 0.8);
+        backdrop-filter: blur(5px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        color: white;
+        transition: all 0.3s;
+        resize: none;
+    }
+    
+    .comment-textarea:focus {
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+        outline: none;
+    }
+    
+    /* Reading status dropdown */
+    .status-dropdown {
+        background: linear-gradient(145deg, #1a2235, #141c2b);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        animation: fadeIn 0.15s ease;
+    }
+
+    .status-option {
+        transition: all 0.15s ease;
+    }
+
+    .status-option:hover {
+        background: rgba(14, 165, 233, 0.1);
+        transform: translateX(2px);
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-5px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Tag styling */
+    .tag {
+        background: rgba(14, 165, 233, 0.1);
+        color: #0ea5e9;
+        border: 1px solid rgba(14, 165, 233, 0.2);
+        transition: all 0.2s ease;
+    }
+
+    .tag:hover {
+        background: rgba(14, 165, 233, 0.15);
+        transform: translateY(-1px);
+    }
+  </style>
+  <style th:replace="fragments/sidebar :: sidebar-style"></style>
+  <style th:replace="fragments/FantasyBackground :: fantasy-style"></style>
+</head>
+<body class="bg-bg-dark text-gray-100 font-sans">
+  <div class="flex min-h-screen">
+      <!-- Fantasy Background -->
+      <div th:replace="fragments/FantasyBackground :: fantasy-elements"></div>
+      
+      <!-- Sidebar Trigger -->
+      <div th:replace="fragments/sidebar :: sidebar-trigger"></div>
+      
+      <!-- Sidebar -->
+      <aside th:replace="fragments/sidebar :: sidebar"></aside>
+
+      <!-- Main Content -->
+      <div class="flex-1 overflow-auto">
+          <main class="max-w-4xl mx-auto py-10 px-4 sm:px-6 lg:px-8 relative z-10">
+              <!-- Story Header -->
+              <div class="mb-8">
+                  <div class="flex flex-col md:flex-row gap-8">
+                      <!-- Story Cover -->
+                      <div class="md:w-1/3">
+                          <div class="cover-container">
+                              <img th:if="${story.coverImage}" th:src="${story.coverImage}" th:alt="${story.title + ' cover'}" class="cover-image w-full rounded-lg shadow-lg" onerror="this.src='https://placehold.co/400x600/1f2937/cccccc?text=No+Cover'">
+                              <img th:unless="${story.coverImage}" src="https://placehold.co/400x600/1f2937/cccccc?text=No+Cover" th:alt="${story.title + ' cover'}" class="cover-image w-full rounded-lg shadow-lg">
+                          </div>
+
+                          <div class="mt-6 p-4 bg-bg-card rounded-lg border border-gray-800">
+                                <div class="flex items-center space-x-1 rating-container">
+                                    <input type="hidden" id="ratingValue" value="0">
+                                    <span class="rating-star cursor-pointer text-2xl text-gray-400">★</span>
+                                    <span class="rating-star cursor-pointer text-2xl text-gray-400">★</span>
+                                    <span class="rating-star cursor-pointer text-2xl text-gray-400">★</span>
+                                    <span class="rating-star cursor-pointer text-2xl text-gray-400">★</span>
+                                    <span class="rating-star cursor-pointer text-2xl text-gray-400">★</span>
+                                    <span id="averageRating" class="text-gray-400 text-lg ml-2">
+                                    <span th:if="${story.averageRating != null && story.averageRating > 0}"
+                                          th:text="'(' + ${#numbers.formatDecimal(story.averageRating, 1, 1)} + ')'">
+                                        (0.0)
+                                    </span>
+                                </span>
+                                </div>
+                                <div class="mt-2">
+                                    <span id="ratingStatus" class="text-sm hidden"></span>
+                                </div>
+                            </div>
+                      </div>
+                      
+                      <!-- Story Details -->
+                      <div class="md:w-2/3">
+                        <div class="flex items-center space-x-4 mb-4">
+                          <h1 class="text-3xl font-bold gradient-text" th:text="${story.title}">Story Title</h1>
+                            <button id="likeButton" class="flex items-center space-x-2 bg-bg-card hover:bg-bg-card-hover rounded-full px-3 py-1.5 border border-gray-700 transition-all">
+                                <i id="likeIcon" class="fas fa-heart text-gray-400"></i>
+                                <span id="likeCount" class="text-sm">0</span>
+                            </button>
+                        </div>
+                          
+                          <p class="text-gray-400 mb-4">
+                                By <a th:href="@{/profile/{username}(username=${story.author.username})}" class="text-accent-blue hover:text-accent-cyan transition-colors duration-200" th:text="${story.author.username}">Author</a>
+                            </p>
+                          
+                          <div class="flex flex-wrap gap-2 mb-4">
+                              <span th:each="tag : ${story.tags}" 
+                                    class="tag text-xs px-3 py-1.5 rounded-full"
+                                    th:text="${tag.name}">
+                                  Tag
+                              </span>
+                          </div>
+                          
+                          <p class="text-gray-300 mb-6" th:text="${story.description}">Story description...</p>
+                          
+                          <div class="flex items-center gap-6 text-sm text-gray-400 mb-6">
+                              <div>
+                                  <i class="fas fa-eye mr-1"></i>
+                                  <span th:text="${story.readCount}">0</span> reads
+                              </div>
+                              <div>
+                                  <i class="fas fa-calendar-alt mr-1"></i>
+                                  <span th:text="${#temporals.format(story.lastUpdated, 'MMM dd, yyyy')}">Date</span>
+                              </div>
+                          </div>
+                          
+                          <!-- Reading Status Dropdown (for authenticated users) -->
+                          <div th:if="${isAuthenticated}" class="mt-2">
+                              <div class="relative inline-block text-left">
+                                  <button id="readingStatusButton" type="button" class="inline-flex justify-center w-full rounded-md border border-gray-700 shadow-sm px-4 py-2 bg-bg-card text-sm font-medium text-gray-300 hover:bg-bg-card-hover focus:outline-none transition-colors">
+                                      <span id="currentStatus" th:text="${readingStatus != null ? readingStatus : 'Add to Library'}">Add to Library</span>
+                                      <svg class="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                          <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                      </svg>
+                                  </button>
+                                  <div id="readingStatusDropdown" class="hidden status-dropdown origin-top-right absolute right-0 mt-2 w-56 rounded-lg shadow-lg bg-bg-card ring-1 ring-black ring-opacity-5 z-10">
+                                      <div class="py-1" role="menu" aria-orientation="vertical" aria-labelledby="readingStatusButton">
+                                          <button class="status-option text-left block w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-700" role="menuitem" data-status="READING">Currently Reading</button>
+                                          <button class="status-option text-left block w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-700" role="menuitem" data-status="ON_HOLD">On Hold</button>
+                                          <button class="status-option text-left block w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-700" role="menuitem" data-status="PLAN_TO_READ">Plan to Read</button>
+                                          <button class="status-option text-left block w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-700" role="menuitem" data-status="COMPLETED">Completed</button>
+                                          <button class="status-option text-left block w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-700" role="menuitem" data-status="DROPPED">Dropped</button>
+                                      </div>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+              
+              <!-- Chapter List -->
+              <div class="story-card p-6 mb-8">
+                  <h2 class="text-xl font-bold mb-4">Chapters</h2>
+                  
+                  <div th:if="${chapters.isEmpty()}" class="text-center py-8">
+                      <div class="text-5xl text-gray-600 mb-4">
+                          <i class="fas fa-book-open"></i>
+                      </div>
+                      <p class="text-gray-400">No chapters available yet.</p>
+                      <p class="text-gray-500 text-sm mt-2">Check back later for updates!</p>
+                  </div>
+                  
+                  <div th:unless="${chapters.isEmpty()}" class="space-y-3">
+                      <div th:each="chapter : ${chapters}" class="chapter-card p-4 transition-all">
+                          <a th:href="@{/story/{storyId}/chapter/{chapterId}(storyId=${story.id},chapterId=${chapter.id})}" class="flex justify-between items-center w-full">
+                              <div>
+                                  <h3 class="font-medium text-gray-100 group-hover:text-accent-blue transition-colors" th:text="${chapter.title}">Chapter Title</h3>
+                                  <p class="text-sm text-gray-400" th:text="${'Updated: ' + #temporals.format(chapter.lastUpdated, 'MMM dd, yyyy')}">Date</p>
+                              </div>
+                              <div class="text-sm text-gray-400 flex items-center gap-2">
+                                  <i class="fas fa-eye"></i>
+                                  <span th:text="${chapter.readCount}">0</span>
+                              </div>
+                          </a>
+                      </div>
+                  </div>
+              </div>
+            
+              <!-- Comments Section -->
+              <div class="story-card p-6 mb-8">
+                  <h2 class="text-xl font-bold mb-4">Comments</h2>
+                  
+                  <!-- Comment Form (for authenticated users) -->
+                  <div th:if="${isAuthenticated}" class="mb-6">
+                      <form id="commentForm" class="space-y-4" th:data-story-id="${story.id}">
+                          <div>
+                              <label for="commentContent" class="block text-sm font-medium text-gray-300 mb-2">Add a comment</label>
+                              <textarea id="commentContent" name="content" rows="3" 
+                                  class="comment-textarea w-full"
+                                  placeholder="Share your thoughts..."></textarea>
+                          </div>
+                          <div>
+                              <button type="submit" 
+                                  class="btn-primary inline-flex items-center gap-2">
+                                  <i class="fas fa-paper-plane"></i>
+                                  Post Comment
+                              </button>
+                          </div>
+                      </form>
+                  </div>
+                  
+                  <!-- Login prompt for non-authenticated users -->
+                  <div th:unless="${isAuthenticated}" class="mb-6 p-6 bg-bg-card rounded-lg text-center border border-gray-800">
+                      <p class="text-gray-300 mb-4">Sign in to leave a comment</p>
+                      <a href="/signin" class="btn-primary inline-flex items-center gap-2">
+                          <i class="fas fa-sign-in-alt"></i>
+                          Sign In
+                      </a>
+                  </div>
+                  
+                  <!-- Comments List -->
+                  <div id="commentsList" class="space-y-4">
+                      <!-- Comments will be loaded here -->
+                      <div th:if="${comments != null && !comments.isEmpty()}" th:each="comment : ${comments}" class="comment-card p-4">
+                          <div class="flex items-start gap-3">
+                              <div class="flex-shrink-0">
+                                  <img th:if="${comment.user.profileImage}" th:src="${comment.user.profileImage}" alt="Profile" class="w-10 h-10 rounded-full object-cover" onerror="this.src='/images/default-profile.png'">
+                                  <img th:unless="${comment.user.profileImage}" src="/images/default-profile.png" alt="Profile" class="w-10 h-10 rounded-full object-cover">
+                              </div>
+                              <div class="flex-1">
+                                  <div class="flex justify-between items-start">
+                                      <div>
+                                          <h4 class="font-medium text-accent-blue" th:text="${comment.user.username}">Username</h4>
+                                          <p class="text-xs text-gray-400" th:text="${#temporals.format(comment.createdAt, 'MMM dd, yyyy h:mm a')}">Date</p>
+                                      </div>
+                                      <!-- Delete button (only for comment owner or admin) -->
+                                      <button th:if="${isAuthenticated && (comment.user.id == currentUser.id || #authorization.expression('hasRole(''ADMIN'')'))}" 
+                                              class="delete-comment text-gray-400 hover:text-red-500 transition-colors" 
+                                              th:data-comment-id="${comment.id}">
+                                          <i class="fas fa-trash-alt"></i>
+                                      </button>
+                                  </div>
+                                  <p class="mt-2 text-gray-200" th:text="${comment.content}">Comment content goes here...</p>
+                              </div>
+                          </div>
+                      </div>
+                      
+                      <!-- No comments message -->
+                      <div th:if="${comments == null || comments.isEmpty()}" class="text-center py-8">
+                          <div class="text-5xl text-gray-600 mb-4">
+                              <i class="fas fa-comments"></i>
+                          </div>
+                          <p class="text-gray-400 mb-2">No comments yet.</p>
+                          <p class="text-gray-500 text-sm">Be the first to share your thoughts!</p>
+                      </div>
+                  </div>
+                  
+                  <!-- Load More Comments Button -->
+                  <div th:if="${comments != null && !comments.isEmpty() && hasMoreComments}" class="text-center mt-6">
+                      <button id="loadMoreComments" class="btn-secondary inline-flex items-center gap-2">
+                          <i class="fas fa-sync-alt"></i>
+                          Load More Comments
+                      </button>
+                  </div>
+              </div>
+          </main>
+
+          <!-- Footer -->
+          <footer class="bg-bg-card py-10 mt-auto border-t border-gray-800">
+              <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                  <div class="grid md:grid-cols-4 gap-8">
+                      <div class="md:col-span-2">
+                          <a href="/Home" class="text-2xl font-bold gradient-text inline-block mb-3">Inkwell</a>
+                          <p class="text-gray-400 max-w-md">
+                              A platform for writers and readers to connect through the power of storytelling. 
+                              Create, share, and discover stories that captivate and inspire.
+                          </p>
+                          <div class="flex mt-6 space-x-4">
+                              <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">
+                                  <i class="fab fa-twitter text-xl"></i>
+                              </a>
+                              <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">
+                                  <i class="fab fa-facebook text-xl"></i>
+                              </a>
+                              <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">
+                                  <i class="fab fa-instagram text-xl"></i>
+                              </a>
+                              <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">
+                                  <i class="fab fa-github text-xl"></i>
+                              </a>
+                          </div>
+                      </div>
+                      <div>
+                          <h3 class="text-lg font-semibold mb-4 text-white">Navigation</h3>
+                          <ul class="space-y-2">
+                              <li>
+                                  <a href="/Home" class="text-gray-400 hover:text-accent-blue transition-colors">Home</a>
+                              </li>
+                              <li>
+                                  <a href="/Library" class="text-gray-400 hover:text-accent-blue transition-colors">Library</a>
+                              </li>
+                              <li>
+                                  <a href="/Dashboard" class="text-gray-400 hover:text-accent-blue transition-colors">Dashboard</a>
+                              </li>
+                              <li>
+                                  <a href="/Writing" class="text-gray-400 hover:text-accent-blue transition-colors">Write</a>
+                              </li>
+                          </ul>
+                      </div>
+                      <div>
+                          <h3 class="text-lg font-semibold mb-4 text-white">Legal</h3>
+                          <ul class="space-y-2">
+                              <li>
+                                  <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">Terms of Service</a>
+                              </li>
+                              <li>
+                                  <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">Privacy Policy</a>
+                              </li>
+                              <li>
+                                  <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">Copyright</a>
+                              </li>
+                          </ul>
+                      </div>
+                  </div>
+                  <div class="mt-8 pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center">
+                      <p class="text-gray-400 text-sm">
+                          &copy; 2023-2025 Inkwell. All rights reserved.
+                      </p>
+                      <div class="mt-4 md:mt-0">
+                          <a href="#" class="text-sm text-accent-blue hover:underline">Back to top</a>
+                      </div>
+                  </div>
+              </div>
+          </footer>
+      </div>
+  </div>
+
+  <script th:replace="fragments/sidebar :: sidebar-script"></script>
+  <script th:replace="fragments/FantasyBackground :: fantasy-script"></script>
+  <script th:inline="javascript">
+  document.addEventListener('DOMContentLoaded', function() {
+      // Extract story ID from the current URL
+      const pathParts = window.location.pathname.split('/');
+      const storyId = /*[[${story.id}]]*/ 0;
+      const isAuthenticated = /*[[${isAuthenticated}]]*/ false;
+      
+      // Safely get an element, returns null if not found
+      function getElement(id) {
+          return document.getElementById(id);
+      }
+      
+      // Safely add event listener, checks if element exists first
+      function addClickListener(elementId, handler) {
+          const element = getElement(elementId);
+          if (element) {
+              element.addEventListener('click', handler);
+          }
+      }
+
+      // Add this helper function to your JavaScript
+      function fetchAPI(url, options = {}) {
+          // Set default headers if not provided
+          if (!options.headers) {
+              options.headers = {
+                  'Content-Type': 'application/json'
+              };
+          }
+          
+          return fetch(url, options)
+              .then(response => {
+                  // Check if response is okay
+                  if (!response.ok) {
+                      return response.text().then(text => {
+                          throw new Error(text || `HTTP error! status: ${response.status}`);
+                      });
+                  }
+                  
+                  // Check content type
+                  const contentType = response.headers.get('content-type');
+                  if (contentType && contentType.includes('application/json')) {
+                      return response.json();
+                  } else {
+                      return response.text();
+                  }
+              });
+      }
+      
+      // Show a status message and hide after delay
+      function showStatusMessage(element, message, isError = false) {
+          if (!element) return;
+          
+          element.textContent = message;
+          
+          if (isError) {
+              element.classList.remove('text-green-500');
+              element.classList.add('text-red-500');
+          } else {
+              element.classList.remove('text-red-500');
+              element.classList.add('text-green-500');
+          }
+          
+          element.classList.remove('hidden');
+          
+          setTimeout(() => {
+              element.classList.add('hidden');
+          }, 2000);
+      }
+      
+      // Track page view
+      if (storyId && isAuthenticated) {
+          fetch(`/api/reading/track?storyId=${storyId}`, {
+              method: 'POST',
+              credentials: 'same-origin'
+          }).catch(error => console.error('Error tracking story view:', error));
+      }
+      
+      // ===== READING STATUS FUNCTIONALITY =====
+      function initReadingStatus() {
+          const statusButton = getElement('readingStatusButton');
+          const statusDropdown = getElement('readingStatusDropdown');
+          const statusOptions = document.querySelectorAll('.status-option');
+          const currentStatus = getElement('currentStatus');
+          
+          if (!statusButton || !statusDropdown) return;
+          
+          // Format initial status if it exists
+          if (currentStatus && currentStatus.textContent && currentStatus.textContent !== 'Add to Library') {
+              const initialStatus = currentStatus.textContent;
+              const formattedInitialStatus = initialStatus
+                  .split('_')
+                  .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                  .join(' ');
+              currentStatus.textContent = formattedInitialStatus;
+          }
+          
+          // Toggle dropdown
+          statusButton.addEventListener('click', () => {
+              statusDropdown.classList.toggle('hidden');
+          });
+          
+          // Close dropdown when clicking outside
+          document.addEventListener('click', (event) => {
+              if (!statusButton.contains(event.target) && !statusDropdown.contains(event.target)) {
+                  statusDropdown.classList.add('hidden');
+              }
+          });
+          
+          // Handle status options
+          statusOptions.forEach(option => {
+              option.addEventListener('click', function() {
+                  const status = this.dataset.status;
+                  
+                  fetch('/api/reading/status', {
+                      method: 'POST',
+                      headers: {
+                          'Content-Type': 'application/x-www-form-urlencoded',
+                      },
+                      body: `storyId=${storyId}&status=${status}`
+                  })
+                  .then(response => response.json())
+                  .then(data => {
+                      if (data.success) {
+                          const formattedStatus = status
+                              .split('_')
+                              .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                              .join(' ');
+                          currentStatus.textContent = formattedStatus;
+                          statusDropdown.classList.add('hidden');
+                      } else {
+                          console.error('Error updating reading status:', data.error || data.message);
+                      }
+                  })
+                  .catch(error => {
+                      console.error('Error updating reading status:', error);
+                  });
+              });
+          });
+      }
+      
+      // ===== RATING FUNCTIONALITY =====
+      function initRatingSystem() {
+          const ratingStars = document.querySelectorAll('.rating-star');
+          const ratingValue = getElement('ratingValue');
+          const ratingStatus = getElement('ratingStatus');
+          
+          if (!ratingStars.length) return;
+          
+          // Check if user has already rated this story
+          fetchAPI(`/api/ratings/story/${storyId}/user`)
+              .then(data => {
+                  if (data.hasRated && data.rating) {
+                      // Pre-select user's existing rating
+                      const userRating = data.rating.rating;
+                      ratingValue.value = userRating;
+                      
+                      // Highlight stars up to user's rating
+                      ratingStars.forEach((star, index) => {
+                          if (index < userRating) {
+                              star.classList.add('text-yellow-400');
+                          } else {
+                              star.classList.remove('text-yellow-400');
+                          }
+                      });
+                  }
+              })
+              .catch(error => {
+                  console.error('Error fetching user rating:', error);
+              });
+          
+          // Handle star hover and click
+          ratingStars.forEach((star, index) => {
+              // Highlight stars on hover
+              star.addEventListener('mouseenter', () => {
+                  for (let i = 0; i <= index; i++) {
+                      ratingStars[i].classList.add('text-yellow-400');
+                  }
+                  for (let i = index + 1; i < ratingStars.length; i++) {
+                      ratingStars[i].classList.remove('text-yellow-400');
+                  }
+              });
+              
+              // Set rating value and submit on click
+              star.addEventListener('click', () => {
+                  const rating = index + 1;
+                  ratingValue.value = rating;
+                  
+                  // Submit rating automatically
+                  submitRating(rating);
+              });
+          });
+          
+          // Reset stars on mouse leave
+          const ratingContainer = document.querySelector('.rating-container');
+          if (ratingContainer) {
+              ratingContainer.addEventListener('mouseleave', () => {
+                  const currentRating = parseInt(ratingValue.value) || 0;
+                  ratingStars.forEach((star, index) => {
+                      if (index < currentRating) {
+                          star.classList.add('text-yellow-400');
+                      } else {
+                          star.classList.remove('text-yellow-400');
+                      }
+                  });
+              });
+          }
+          
+          // Function to submit rating
+          function submitRating(rating) {
+              fetchAPI(`/api/ratings/story/${storyId}`, {
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ rating: rating })
+              })
+              .then(data => {
+                  if (data.success) {
+                      if (ratingStatus) showStatusMessage(ratingStatus, 'Rating submitted!');
+                      
+                      // Update average rating display if available
+                      const avgRatingDisplay = document.getElementById('averageRating');
+                      if (avgRatingDisplay && data.averageRating) {
+                          // Format to one decimal place and add parentheses
+                          avgRatingDisplay.textContent = `(${data.averageRating.toFixed(1)})`;
+                      }
+                  }
+              })
+              .catch(error => {
+                  console.error('Error submitting rating:', error);
+                  if (ratingStatus) showStatusMessage(ratingStatus, 'Failed to submit rating', true);
+              });
+          }
+      }
+      
+      // ===== LIKE FUNCTIONALITY =====
+      function initLikeButton() {
+          const likeButton = getElement('likeButton');
+          const likeIcon = getElement('likeIcon');
+          const likeCount = getElement('likeCount');
+          
+          if (!likeButton || !likeIcon || !likeCount) return;
+          
+          // Update like UI
+          function updateLikeUI(liked, count) {
+              if (liked) {
+                  likeIcon.classList.remove('text-gray-400');
+                  likeIcon.classList.add('text-red-500');
+              } else {
+                  likeIcon.classList.remove('text-red-500');
+                  likeIcon.classList.add('text-gray-400');
+              }
+              likeCount.textContent = count;
+          }
+          
+          // Get initial like status
+          fetch(`/api/likes/story/${storyId}`)
+              .then(response => {
+                  // If endpoint isn't implemented, handle gracefully
+                  if (!response.ok) return { liked: false, likeCount: 0 };
+                  return response.json();
+              })
+              .then(data => {
+                  updateLikeUI(data.liked, data.likeCount);
+              })
+              .catch(() => {
+                  // Fail silently, display defaults
+              });
+          
+          // Handle like button click
+          likeButton.addEventListener('click', function() {
+              if (!isAuthenticated) {
+                  window.location.href = '/signin';
+                  return;
+              }
+              
+              fetch(`/api/likes/story/${storyId}`, {
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/json'
+                  }
+              })
+              .then(response => {
+                  // If endpoint isn't implemented, toggle state locally
+                  if (!response.ok) {
+                      const isCurrentlyLiked = likeIcon.classList.contains('text-red-500');
+                      const currentCount = parseInt(likeCount.textContent) || 0;
+                      return { 
+                          liked: !isCurrentlyLiked, 
+                          likeCount: isCurrentlyLiked ? currentCount - 1 : currentCount + 1 
+                      };
+                  }
+                  return response.json();
+              })
+              .then(data => {
+                  updateLikeUI(data.liked, data.likeCount);
+              })
+              .catch(() => {
+                  // Fail silently
+              });
+          });
+      }
+      
+      // ===== COMMENTS FUNCTIONALITY =====
+      function initCommentsSystem() {
+          const commentForm = getElement('commentForm');
+          const commentsList = getElement('commentsList');
+          const loadMoreCommentsBtn = getElement('loadMoreComments');
+          let currentPage = 0;
+          
+          // Handle comment form submission
+          if (commentForm) {
+              commentForm.addEventListener('submit', function(e) {
+                  e.preventDefault();
+                  
+                  const content = getElement('commentContent').value.trim();
+                  if (!content) {
+                      alert('Please enter a comment');
+                      return;
+                  }
+                  
+                  fetch('/api/comments', {
+                      method: 'POST',
+                      headers: {
+                          'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({
+                          storyId: storyId,
+                          content: content
+                      })
+                  })
+                  .then(response => response.json())
+                  .then(data => {
+                      if (data.success) {
+                          // Clear form
+                          getElement('commentContent').value = '';
+                          
+                          // Add comment to list
+                          if (data.comment) {
+                              addCommentToList(data.comment);
+                          } else {
+                              loadComments(true);
+                          }
+                      } else {
+                          alert('Error posting comment: ' + data.message);
+                      }
+                  })
+                  .catch(error => {
+                      console.error('Error:', error);
+                      alert('Error posting comment');
+                  });
+              });
+          }
+          
+          // Add comment to the list
+          function addCommentToList(comment) {
+              if (!commentsList) return;
+              
+              // Remove "no comments" message if it exists
+              const noCommentsMsg = commentsList.querySelector('.text-center.py-8');
+              if (noCommentsMsg) {
+                  noCommentsMsg.remove();
+              }
+              
+              // Create comment element
+              const commentEl = document.createElement('div');
+              commentEl.className = 'comment-card p-4';
+              commentEl.innerHTML = `
+                  <div class="flex items-start gap-3">
+                      <div class="flex-shrink-0">
+                          <img src="${comment.user.profileImage || '/images/default-profile.png'}" 
+                               alt="Profile" class="w-10 h-10 rounded-full object-cover"
+                               onerror="this.src='/images/default-profile.png'">
+                      </div>
+                      <div class="flex-1">
+                          <div class="flex justify-between items-start">
+                              <div>
+                                  <h4 class="font-medium text-accent-blue">${comment.user.username}</h4>
+                                  <p class="text-xs text-gray-400">${new Date(comment.createdAt).toLocaleString()}</p>
+                              </div>
+                              ${comment.canDelete ? `
+                                  <button class="delete-comment text-gray-400 hover:text-red-500 transition-colors" data-comment-id="${comment.id}">
+                                      <i class="fas fa-trash-alt"></i>
+                                  </button>
+                              ` : ''}
+                          </div>
+                          <p class="mt-2 text-gray-200">${comment.content}</p>
+                      </div>
+                  </div>
+              `;
+              
+              // Add to the top of the list
+              if (commentsList.firstChild) {
+                  commentsList.insertBefore(commentEl, commentsList.firstChild);
+              } else {
+                  commentsList.appendChild(commentEl);
+              }
+              
+              // Setup delete button
+              const deleteBtn = commentEl.querySelector('.delete-comment');
+              if (deleteBtn) {
+                  setupDeleteButton(deleteBtn);
+              }
+          }
+          
+          // Load comments
+          function loadComments(reset = false) {
+              if (!commentsList) return;
+              
+              if (reset) {
+                  currentPage = 0;
+                  // Keep the "no comments" message if it exists
+                  const noCommentsMsg = commentsList.querySelector('.text-center.py-8');
+                  if (noCommentsMsg) {
+                      commentsList.innerHTML = '';
+                      commentsList.appendChild(noCommentsMsg);
+                  } else {
+                      commentsList.innerHTML = '';
+                  }
+              }
+              
+              fetch(`/api/comments?storyId=${storyId}&page=${currentPage}`)
+                  .then(response => response.json())
+                  .then(data => {
+                      if (data.success) {
+                          // Remove no comments message if we have comments
+                          const noCommentsMsg = commentsList.querySelector('.text-center.py-8');
+                          if (noCommentsMsg && data.comments.length > 0) {
+                              noCommentsMsg.remove();
+                          }
+                          
+                          // Add comments
+                          data.comments.forEach(comment => {
+                              const commentEl = document.createElement('div');
+                              commentEl.className = 'comment-card p-4';
+                              commentEl.innerHTML = `
+                                  <div class="flex items-start gap-3">
+                                      <div class="flex-shrink-0">
+                                          <img src="${comment.user.profileImage || '/images/default-profile.png'}" 
+                                               alt="Profile" class="w-10 h-10 rounded-full object-cover"
+                                               onerror="this.src='/images/default-profile.png'">
+                                      </div>
+                                      <div class="flex-1">
+                                          <div class="flex justify-between items-start">
+                                              <div>
+                                                  <h4 class="font-medium text-accent-blue">${comment.user.username}</h4>
+                                                  <p class="text-xs text-gray-400">${new Date(comment.createdAt).toLocaleString()}</p>
+                                              </div>
+                                              ${comment.canDelete ? `
+                                                  <button class="delete-comment text-gray-400 hover:text-red-500 transition-colors" data-comment-id="${comment.id}">
+                                                      <i class="fas fa-trash-alt"></i>
+                                                  </button>
+                                              ` : ''}
+                                          </div>
+                                          <p class="mt-2 text-gray-200">${comment.content}</p>
+                                      </div>
+                                  </div>
+                              `;
+                              commentsList.appendChild(commentEl);
+                          });
+                          
+                          // Update load more button
+                          if (loadMoreCommentsBtn) {
+                              loadMoreCommentsBtn.style.display = data.hasMore ? 'inline-block' : 'none';
+                          }
+                          
+                          // Increment page
+                          currentPage++;
+                          
+                          // Setup delete buttons
+                          setupDeleteButtons();
+                      }
+                  })
+                  .catch(error => {
+                      console.error('Error loading comments:', error);
+                  });
+          }
+          
+          // Setup delete buttons
+          function setupDeleteButtons() {
+              document.querySelectorAll('.delete-comment').forEach(button => {
+                  setupDeleteButton(button);
+              });
+          }
+          
+          // Setup a single delete button
+          function setupDeleteButton(button) {
+              button.addEventListener('click', function() {
+                  const commentId = this.dataset.commentId;
+                  if (confirm('Are you sure you want to delete this comment?')) {
+                      fetch(`/api/comments/${commentId}`, {
+                          method: 'DELETE'
+                      })
+                      .then(response => response.json())
+                      .then(data => {
+                          if (data.success) {
+                              // Remove comment from UI
+                              const commentEl = this.closest('.comment-card');
+                              if (commentEl) {
+                                  commentEl.remove();
+                              }
+                              
+                              // If no comments left, show "no comments" message
+                              if (commentsList.children.length === 0) {
+                                  const noCommentsMsg = document.createElement('div');
+                                  noCommentsMsg.className = 'text-center py-8';
+                                  noCommentsMsg.innerHTML = `
+                                      <div class="text-5xl text-gray-600 mb-4">
+                                          <i class="fas fa-comments"></i>
+                                      </div>
+                                      <p class="text-gray-400 mb-2">No comments yet.</p>
+                                      <p class="text-gray-500 text-sm">Be the first to share your thoughts!</p>
+                                  `;
+                                  commentsList.appendChild(noCommentsMsg);
+                              }
+                          } else {
+                              alert('Error deleting comment: ' + data.message);
+                          }
+                      })
+                      .catch(error => {
+                          console.error('Error:', error);
+                          alert('Error deleting comment');
+                      });
+                  }
+              });
+          }
+          
+          // Load more comments button
+          if (loadMoreCommentsBtn) {
+              loadMoreCommentsBtn.addEventListener('click', () => {
+                  loadComments();
+              });
+          }
+          
+          // Initial setup
+          setupDeleteButtons();
+      }
+
+      // Theme setup
+      const savedTheme = localStorage.getItem('interfaceTheme') || 'none';
+      if (window.setTheme) {
+          window.setTheme(savedTheme);
+      }
+      
+      // Initialize all features
+      initReadingStatus();
+      initRatingSystem();
+      initLikeButton();
+      initCommentsSystem();
+  });
+  </script>
+</body>
+</html>

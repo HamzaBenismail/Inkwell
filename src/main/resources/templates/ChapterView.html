@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title th:text="${chapter.title} + ' - ' + ${story.title} + ' - Inkwell'">Chapter Title - Story Title - Inkwell</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- SoundCloud API -->
+<script src="https://connect.soundcloud.com/sdk/sdk-3.3.2.js"></script>
+<script src="https://w.soundcloud.com/player/api.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                colors: {
+                    'accent-blue': '#0ea5e9',
+                    'accent-cyan': '#06b6d4',
+                    'bg-dark': '#030712',
+                    'bg-card': '#111827',
+                    'bg-card-hover': '#1f2937'
+                },
+                fontFamily: {
+                    'sans': ['Inter', 'sans-serif'],
+                },
+            }
+        }
+    }
+</script>
+<style>
+    /* Core Styles */
+    body {
+        background-color: #030712;
+        font-family: 'Inter', sans-serif;
+    }
+    
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: #111827;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: #374151;
+        border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: #0ea5e9;
+    }
+    
+    .chapter-content {
+        line-height: 1.8;
+        font-size: 1.1rem;
+    }
+    
+    .chapter-content p {
+        margin-bottom: 1.5rem;
+    }
+    
+    .chapter-content h1, .chapter-content h2, .chapter-content h3 {
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+        font-weight: bold;
+    }
+    
+    .chapter-content h1 {
+        font-size: 1.8rem;
+    }
+    
+    .chapter-content h2 {
+        font-size: 1.5rem;
+    }
+    
+    .chapter-content h3 {
+        font-size: 1.3rem;
+    }
+    
+    .chapter-content ul, .chapter-content ol {
+        margin-left: 2rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .chapter-content ul {
+        list-style-type: disc;
+    }
+    
+    .chapter-content ol {
+        list-style-type: decimal;
+    }
+    
+    .chapter-content li {
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Music player styles */
+    .music-player {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.75rem;
+        background: linear-gradient(145deg, #151e30, #0f1625);
+        border: 1px solid rgba(255, 255, 255, 0.03);
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .music-player:hover {
+        border-color: rgba(14, 165, 233, 0.15);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+    
+    .music-player-icon {
+        font-size: 2rem;
+        color: #0ea5e9;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .music-player-icon:hover {
+        color: #06b6d4;
+        transform: scale(1.1);
+    }
+    
+    .music-player-info {
+        flex: 1;
+    }
+    
+    .music-player-title {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+    
+    .music-player-artist {
+        font-size: 0.875rem;
+        color: #9ca3af;
+    }
+    
+    .music-player-controls {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .music-player-volume {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .music-player-volume-slider {
+        width: 80px;
+        height: 4px;
+        -webkit-appearance: none;
+        background: rgba(156, 163, 175, 0.5);
+        border-radius: 2px;
+        outline: none;
+    }
+    
+    .music-player-volume-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 12px;
+        height: 12px;
+        background: #0ea5e9;
+        border-radius: 50%;
+        cursor: pointer;
+    }
+    
+    .music-player-volume-slider::-moz-range-thumb {
+        width: 12px;
+        height: 12px;
+        background: #0ea5e9;
+        border-radius: 50%;
+        cursor: pointer;
+        border: none;
+    }
+    
+    .music-player-minimize {
+        color: #9ca3af;
+        cursor: pointer;
+        transition: color 0.2s;
+    }
+    
+    .music-player-minimize:hover {
+        color: #f3f4f6;
+    }
+    
+    .music-player.minimized {
+        width: 50px;
+        height: 50px;
+        overflow: hidden;
+        padding: 0;
+        position: fixed;
+        bottom: 1rem;
+        right: 1rem;
+        z-index: 10;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+    }
+    
+    .music-player.minimized .music-player-icon {
+        margin: 0;
+        font-size: 1.5rem;
+    }
+    
+    .music-player.minimized .music-player-info,
+    .music-player.minimized .music-player-controls,
+    .music-player.minimized .music-player-minimize {
+        display: none;
+    }
+    
+    /* Rating star animation */
+    .rating-star {
+        transition: transform 0.2s ease, color 0.2s ease;
+        cursor: pointer;
+    }
+    
+    .rating-star:hover {
+        transform: scale(1.1);
+    }
+    
+    /* Comment card with hover effects */
+    .comment-item {
+        background: linear-gradient(145deg, #1a2235, #141c2b);
+        border: 1px solid rgba(255, 255, 255, 0.03);
+        border-radius: 12px;
+        transition: all 0.2s ease;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    .comment-item:hover {
+        transform: translateY(-2px);
+        border-color: rgba(14, 165, 233, 0.15);
+    }
+    
+    /* Gradient text */
+    .gradient-text {
+        background: linear-gradient(90deg, #0ea5e9, #06b6d4);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    /* Fancy buttons */
+    .btn-primary {
+        background: linear-gradient(90deg, #0ea5e9, #06b6d4);
+        color: white;
+        border-radius: 8px;
+        padding: 0.5rem 1.5rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .btn-primary:hover {
+        box-shadow: 0 0 15px rgba(14, 165, 233, 0.4);
+        transform: translateY(-1px);
+    }
+    
+    .btn-secondary {
+        background: rgba(14, 165, 233, 0.1);
+        color: #0ea5e9;
+        border: 1px solid rgba(14, 165, 233, 0.3);
+        border-radius: 8px;
+        padding: 0.5rem 1.5rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-secondary:hover {
+        background: rgba(14, 165, 233, 0.15);
+        transform: translateY(-1px);
+    }
+    
+    /* Comment form */
+    .comment-textarea {
+        background: rgba(17, 24, 39, 0.8);
+        backdrop-filter: blur(5px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        color: white;
+        transition: all 0.3s;
+        resize: none;
+    }
+    
+    .comment-textarea:focus {
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+        outline: none;
+    }
+    
+    /* Chapter content card */
+    .chapter-card {
+        background: linear-gradient(145deg, #151e30, #0f1625);
+        border: 1px solid rgba(255, 255, 255, 0.03);
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .chapter-card:hover {
+        border-color: rgba(14, 165, 233, 0.15);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* Navigation buttons */
+    .nav-btn {
+        background: linear-gradient(145deg, #151e30, #0f1625);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        transition: all 0.2s ease;
+    }
+    
+    .nav-btn:hover {
+        background: linear-gradient(145deg, #1a2235, #141c2b);
+        border-color: rgba(14, 165, 233, 0.2);
+        transform: translateY(-2px);
+    }
+</style>
+<style th:replace="fragments/sidebar :: sidebar-style"></style>
+<style th:replace="fragments/FantasyBackground :: fantasy-style"></style>
+</head>
+<body class="bg-bg-dark text-gray-100 font-sans min-h-screen">
+<div class="flex min-h-screen">
+    <!-- Fantasy Background -->
+    <div th:replace="fragments/FantasyBackground :: fantasy-elements"></div>
+    
+    <!-- Sidebar Trigger -->
+    <div th:replace="fragments/sidebar :: sidebar-trigger"></div>
+    
+    <!-- Sidebar -->
+    <aside th:replace="fragments/sidebar :: sidebar"></aside>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col overflow-auto relative">
+        <main class="max-w-5xl mx-auto py-10 px-4 sm:px-6 lg:px-8 flex-grow relative z-10">
+            <!-- Story Navigation -->
+            <div class="mb-6 flex justify-between items-center">
+                <a th:href="@{/story/{id}(id=${story.id})}" class="text-accent-blue hover:text-accent-cyan transition-colors flex items-center">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    <span>Back to Story</span>
+                </a>
+            </div>
+            
+            <!-- Chapter Header with Rating -->
+            <div class="mb-8">
+                <div class="flex items-center gap-4">
+                    <h1 class="text-3xl font-bold gradient-text" th:text="${chapter.title}">Chapter Title</h1>
+                    
+                    <!-- Simplified Rating Component -->
+                    <div class="flex items-center space-x-2">
+                        <div class="flex items-center space-x-1 rating-container">
+                            <input type="hidden" id="ratingValue" value="0">
+                            <span class="rating-star cursor-pointer text-2xl text-gray-400" data-rating="1">★</span>
+                            <span class="rating-star cursor-pointer text-2xl text-gray-400" data-rating="2">★</span>
+                            <span class="rating-star cursor-pointer text-2xl text-gray-400" data-rating="3">★</span>
+                            <span class="rating-star cursor-pointer text-2xl text-gray-400" data-rating="4">★</span>
+                            <span class="rating-star cursor-pointer text-2xl text-gray-400" data-rating="5">★</span>
+                            <span id="averageRating" class="text-gray-400 text-lg ml-2">
+                                <span th:text="${chapterRating != null && chapterRating > 0 ? 
+                                            '(' + #numbers.formatDecimal(chapterRating, 1, 1) + ')' : 
+                                            '(0.0)'}">
+                                    (0.0)
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+                    <input type="hidden" id="userratingValue" value="0">
+                    <span id="ratingStatus" class="text-sm hidden ml-2 mt-1 inline-block"></span>
+                </div>
+            </div>
+
+            <!-- Chapter Navigation -->
+            <div class="flex justify-between mb-8">
+                <a th:if="${prevChapter}" th:href="@{/story/{storyId}/chapter/{chapterId}(storyId=${story.id},chapterId=${prevChapter.id})}" class="nav-btn text-white px-4 py-2 rounded-lg flex items-center">
+                    <i class="fas fa-chevron-left mr-2"></i>
+                    Previous Chapter
+                </a>
+                <div th:unless="${prevChapter}"></div>
+                
+                <a th:if="${nextChapter}" th:href="@{/story/{storyId}/chapter/{chapterId}(storyId=${story.id},chapterId=${nextChapter.id})}" class="nav-btn text-white px-4 py-2 rounded-lg flex items-center">
+                    Next Chapter
+                    <i class="fas fa-chevron-right ml-2"></i>
+                </a>
+                <div th:unless="${nextChapter}"></div>
+            </div>
+
+            <!-- SoundCloud Player -->
+            <div th:if="${chapter.soundCloudTrackUrl != null}" id="musicPlayer" class="music-player mb-6 transition-all duration-300">
+                <div class="flex items-center justify-between w-full">
+                    <div class="flex items-center">
+                        <button id="playPauseButton" class="w-10 h-10 flex items-center justify-center bg-accent-blue hover:bg-accent-cyan text-white rounded-full mr-4 transition-colors">
+                            <i class="fas fa-play" id="playIcon"></i>
+                            <i class="fas fa-pause hidden" id="pauseIcon"></i>
+                        </button>
+                        <div class="music-player-info">
+                            <div id="trackTitle" class="font-semibold text-gray-100">Loading track...</div>
+                            <div id="trackArtist" class="text-sm text-gray-400"></div>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="flex items-center mr-4">
+                            <i class="fas fa-volume-down mr-2 text-gray-400"></i>
+                            <input type="range" id="volumeSlider" min="0" max="100" value="80" class="music-player-volume-slider">
+                        </div>
+                        <button id="minimizeButton" class="music-player-minimize">
+                            <i class="fas fa-chevron-up"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="soundCloudPlayer" class="hidden"></div>
+            </div>
+            
+            <!-- Chapter Content -->
+            <div class="chapter-card p-8 mb-8">
+                <div class="chapter-content" th:utext="${chapter.content}">
+                    Chapter content goes here...
+                </div>
+            </div>
+            
+            <!-- Chapter Navigation -->
+            <div class="flex justify-between mb-8">
+                <a th:if="${prevChapter}" th:href="@{/story/{storyId}/chapter/{chapterId}(storyId=${story.id},chapterId=${prevChapter.id})}" class="nav-btn text-white px-4 py-2 rounded-lg flex items-center">
+                    <i class="fas fa-chevron-left mr-2"></i>
+                    Previous Chapter
+                </a>
+                <div th:unless="${prevChapter}"></div>
+                
+                <a th:if="${nextChapter}" th:href="@{/story/{storyId}/chapter/{chapterId}(storyId=${story.id},chapterId=${nextChapter.id})}" class="nav-btn text-white px-4 py-2 rounded-lg flex items-center">
+                    Next Chapter
+                    <i class="fas fa-chevron-right ml-2"></i>
+                </a>
+                <div th:unless="${nextChapter}"></div>
+            </div>
+            
+            <!-- Comments Section -->
+            <div class="chapter-card p-6 mb-8">
+                <h2 class="text-xl font-bold mb-4">Comments</h2>
+                
+                <!-- Comment Form (for authenticated users) -->
+                <div th:if="${isAuthenticated}" class="mb-6">
+                    <form id="commentForm" class="space-y-4" th:data-story-id="${story.id}" th:data-chapter-id="${chapter.id}">
+                        <div>
+                            <label for="commentContent" class="block text-sm font-medium text-gray-300 mb-1">Add a comment</label>
+                            <textarea id="commentContent" name="content" rows="3" 
+                                class="comment-textarea w-full"
+                                placeholder="Share your thoughts on this chapter..."></textarea>
+                        </div>
+                        <div>
+                            <button type="submit" 
+                                class="btn-primary inline-flex items-center gap-2">
+                                <i class="fas fa-paper-plane"></i>
+                                Post Comment
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Login prompt for non-authenticated users -->
+                <div th:unless="${isAuthenticated}" class="mb-6 p-4 bg-bg-card rounded-lg text-center border border-gray-800">
+                    <p class="text-gray-300 mb-2">Sign in to leave a comment</p>
+                    <a href="/signin" class="btn-primary inline-flex items-center gap-2">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Sign In
+                    </a>
+                </div>
+                
+                <!-- Comments List -->
+                <div id="commentsList" class="space-y-4">
+                    <!-- Comments will be loaded here -->
+                    <div th:if="${comments != null && !comments.isEmpty()}" th:each="comment : ${comments}" class="comment-item p-4">
+                        <div class="flex items-start gap-3">
+                            <div class="flex-shrink-0">
+                                <img th:if="${comment.user.profileImage}" th:src="${comment.user.profileImage}" alt="Profile" class="w-10 h-10 rounded-full object-cover" onerror="this.src='/images/default-profile.png'">
+                                <img th:unless="${comment.user.profileImage}" src="/images/default-profile.png" alt="Profile" class="w-10 h-10 rounded-full object-cover">
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h4 class="font-medium text-accent-blue" th:text="${comment.user.username}">Username</h4>
+                                        <p class="text-xs text-gray-400" th:text="${#temporals.format(comment.createdAt, 'MMM dd, yyyy h:mm a')}">Date</p>
+                                    </div>
+                                    <!-- Delete button (only for comment owner or admin) -->
+                                    <button th:if="${isAuthenticated && (comment.user.id == currentUser.id || #authorization.expression('hasRole(''ADMIN'')'))}" 
+                                            class="delete-comment text-gray-400 hover:text-red-500 transition-colors" 
+                                            th:data-comment-id="${comment.id}">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                                <p class="mt-2 text-gray-200" th:text="${comment.content}">Comment content goes here...</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- No comments message -->
+                    <div th:if="${comments == null || comments.isEmpty()}" class="text-center py-4">
+                        <div class="text-5xl text-gray-600 mb-4">
+                            <i class="fas fa-comments"></i>
+                        </div>
+                        <p class="text-gray-400 mb-2">No comments yet.</p>
+                        <p class="text-gray-500 text-sm">Be the first to share your thoughts on this chapter!</p>
+                    </div>
+                </div>
+                
+                <!-- Load More Comments Button -->
+                <div th:if="${comments != null && !comments.isEmpty() && hasMoreComments}" class="text-center mt-6">
+                    <button id="loadMoreComments" class="btn-secondary inline-flex items-center gap-2">
+                        <i class="fas fa-sync-alt"></i>
+                        Load More Comments
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-bg-card py-10 mt-auto border-t border-gray-800">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="grid md:grid-cols-4 gap-8">
+                    <div class="md:col-span-2">
+                        <a href="/Home" class="text-2xl font-bold gradient-text inline-block mb-3">Inkwell</a>
+                        <p class="text-gray-400 max-w-md">
+                            A platform for writers and readers to connect through the power of storytelling. 
+                            Create, share, and discover stories that captivate and inspire.
+                        </p>
+                        <div class="flex mt-6 space-x-4">
+                            <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">
+                                <i class="fab fa-twitter text-xl"></i>
+                            </a>
+                            <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">
+                                <i class="fab fa-facebook text-xl"></i>
+                            </a>
+                            <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">
+                                <i class="fab fa-instagram text-xl"></i>
+                            </a>
+                            <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">
+                                <i class="fab fa-github text-xl"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4 text-white">Navigation</h3>
+                        <ul class="space-y-2">
+                            <li>
+                                <a href="/Home" class="text-gray-400 hover:text-accent-blue transition-colors">Home</a>
+                            </li>
+                            <li>
+                                <a href="/Library" class="text-gray-400 hover:text-accent-blue transition-colors">Library</a>
+                            </li>
+                            <li>
+                                <a href="/Dashboard" class="text-gray-400 hover:text-accent-blue transition-colors">Dashboard</a>
+                            </li>
+                            <li>
+                                <a href="/Writing" class="text-gray-400 hover:text-accent-blue transition-colors">Write</a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4 text-white">Legal</h3>
+                        <ul class="space-y-2">
+                            <li>
+                                <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">Terms of Service</a>
+                            </li>
+                            <li>
+                                <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">Privacy Policy</a>
+                            </li>
+                            <li>
+                                <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">Copyright</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="mt-8 pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center">
+                    <p class="text-gray-400 text-sm">
+                        &copy; 2023-2025 Inkwell. All rights reserved.
+                    </p>
+                    <div class="mt-4 md:mt-0">
+                        <a href="#" class="text-sm text-accent-blue hover:underline">Back to top</a>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+</div>
+
+<script th:replace="fragments/sidebar :: sidebar-script"></script>
+<script th:replace="fragments/FantasyBackground :: fantasy-script"></script>
+<script th:inline="javascript">
+document.addEventListener('DOMContentLoaded', function() {
+    // Get story and chapter IDs from the URL
+    const pathParts = window.location.pathname.split('/');
+    const storyId = pathParts[2]; // /story/{storyId}/chapter/{chapterId}
+    const chapterId = pathParts[4];
+    const isAuthenticated = /*[[${isAuthenticated}]]*/ false;
+    
+    // Track reading progress
+    if (storyId && chapterId) {
+        fetch(`/api/reading/track?storyId=${storyId}&chapterId=${chapterId}`, {
+            method: 'POST',
+            credentials: 'same-origin' // Include cookies for authentication
+        }).catch(error => console.error('Error tracking reading progress:', error));
+    }
+
+    // Track unique view
+    if (chapterId) {
+        fetch(`/api/tracking/chapter-view?chapterId=${chapterId}`, {
+            method: 'POST',
+            credentials: 'same-origin' // Include cookies for authentication
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log("View tracking result:", data.uniqueView ? "New unique view" : "Repeated view");
+        })
+        .catch(error => console.error('Error tracking view:', error));
+    }
+    
+    // Initialize the rating system
+    initRatingSystem();
+    
+    // Initialize SoundCloud player
+    initSoundCloudPlayer();
+    
+    // Initialize comments system
+    initCommentsSystem();
+    
+    // Theme setup
+    const savedTheme = localStorage.getItem('interfaceTheme') || 'none';
+    if (window.setTheme) {
+        window.setTheme(savedTheme);
+    }
+
+    // Function to handle the chapter rating system
+    function initRatingSystem() {
+        const ratingStars = document.querySelectorAll('.rating-star');
+        const ratingValue = document.getElementById('ratingValue');
+        const ratingStatus = document.getElementById('ratingStatus');
+        const averageRatingSpan = document.getElementById('averageRating').querySelector('span'); // Target the inner span
+
+        if (!ratingStars.length || !ratingValue) {
+            console.log("Rating elements not found");
+            return;
+        }
+
+        let currentUserRating = 0; // Store the user's current rating
+
+        // Function to update stars based on a rating value
+        function updateStars(rating) {
+            ratingStars.forEach((star, index) => {
+                if (index < rating) {
+                    star.classList.add('text-yellow-400');
+                    star.classList.remove('text-gray-400');
+                } else {
+                    star.classList.remove('text-yellow-400');
+                    star.classList.add('text-gray-400');
+                }
+            });
+        }
+
+        // Fetch user's existing rating if authenticated
+        if (isAuthenticated) {
+            fetch(`/api/ratings/chapter/${chapterId}/user`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log("User rating data:", data);
+                    // Check for existing rating using both possible response formats
+                    if (data.success && ((data.hasRated || data.hasRating) && (data.rating || data.rating?.rating))) {
+                        // Get rating value, handling both possible formats
+                        currentUserRating = typeof data.rating === 'object' ? data.rating.rating : data.rating;
+                        console.log("Found existing user rating:", currentUserRating);
+                        
+                        // Update UI
+                        ratingValue.value = currentUserRating;
+                        updateStars(currentUserRating);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching user rating:', error);
+                });
+        }
+
+        // Handle star hover and click only if authenticated
+        if (isAuthenticated) {
+            ratingStars.forEach((star, index) => {
+                const rating = index + 1;
+
+                // Highlight stars on hover
+                star.addEventListener('mouseenter', () => {
+                    updateStars(rating);
+                });
+
+                // Set rating value and submit on click
+                star.addEventListener('click', () => {
+                    currentUserRating = rating; 
+                    ratingValue.value = currentUserRating;
+                    submitRating(currentUserRating);
+                });
+            });
+
+            // Reset stars on mouse leave to the actual current rating
+            const ratingContainer = document.querySelector('.rating-container');
+            if (ratingContainer) {
+                ratingContainer.addEventListener('mouseleave', () => {
+                    updateStars(currentUserRating); // Reset to the saved/clicked rating
+                });
+            }
+        } else {
+            // Optional: Add visual indication that rating is disabled for non-logged-in users
+            ratingStars.forEach(star => star.style.cursor = 'not-allowed');
+        }
+    }
+
+    // Function to submit rating
+    function submitRating(rating) {
+        console.log("Submitting rating:", rating);
+        const ratingStatus = document.getElementById('ratingStatus');
+
+        const payload = {
+            rating: rating,
+            containsSpoilers: false  // Default value
+        };
+
+        fetch(`/api/ratings/chapter/${chapterId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log("Rating submission response:", data);
+            if (data.success) {
+                showStatusMessage(ratingStatus, 'Rating submitted!', false);
+                updateAverageRatingDisplay(data.averageRating);
+            } else {
+                showStatusMessage(ratingStatus, data.message || 'Failed to submit rating.', true);
+            }
+        })
+        .catch(error => {
+            console.error('Error submitting rating:', error);
+            showStatusMessage(ratingStatus, `Error: ${error.message}`, true);
+        });
+    }
+
+    // Function to update the average rating display dynamically
+    function updateAverageRatingDisplay(newAverage) {
+        console.log("Updating average rating display to:", newAverage);
+        const averageRatingElement = document.getElementById('averageRating');
+        const averageRatingSpan = averageRatingElement?.querySelector('span');
+        
+        if (averageRatingSpan && newAverage !== null && newAverage > 0) {
+            averageRatingSpan.textContent = '(' + parseFloat(newAverage).toFixed(1) + ')';
+            averageRatingElement.classList.remove('hidden');
+        } else if (averageRatingElement) {
+            averageRatingElement.classList.add('hidden');
+        }
+    }
+
+    // Show a status message and hide after delay
+    function showStatusMessage(element, message, isError = false) {
+        if (!element) return;
+        
+        element.textContent = message;
+        element.classList.remove('hidden', 'text-green-500', 'text-red-500');
+        element.classList.add(isError ? 'text-red-500' : 'text-green-500');
+        
+        // Debounce hiding mechanism
+        clearTimeout(element.hideTimeout);
+        element.hideTimeout = setTimeout(() => {
+            element.classList.add('hidden');
+        }, 3000); // Hide after 3 seconds
+    }
+    
+    // Initialize SoundCloud player
+    function initSoundCloudPlayer() {
+        const trackUrl = /*[[${chapter.soundCloudTrackUrl}]]*/ null;
+        let player = null;
+        let isPlaying = false;
+        let isMinimized = false;
+
+        if (trackUrl) {
+            const musicPlayer = document.getElementById('musicPlayer');
+            const playPauseButton = document.getElementById('playPauseButton');
+            const playIcon = document.getElementById('playIcon');
+            const pauseIcon = document.getElementById('pauseIcon');
+            const volumeSlider = document.getElementById('volumeSlider');
+            const minimizeButton = document.getElementById('minimizeButton');
+            const trackTitle = document.getElementById('trackTitle');
+            const trackArtist = document.getElementById('trackArtist');
+            const soundCloudPlayer = document.getElementById('soundCloudPlayer');
+            
+            // Initialize SoundCloud SDK
+            fetch(`https://soundcloud.com/oembed?url=${encodeURIComponent(trackUrl)}&format=json`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Invalid SoundCloud URL');
+                    return response.json();
+                })
+                .then(data => {
+                    // Update track info
+                    trackTitle.textContent = data.title || 'Unknown Track';
+                    trackArtist.textContent = data.author_name || 'Unknown Artist';
+                    
+                    // Create iframe for the player
+                    const iframe = document.createElement('iframe');
+                    iframe.src = `https://w.soundcloud.com/player/?url=${encodeURIComponent(trackUrl)}&color=%230ea5e9&auto_play=false`;
+                    iframe.width = '100%';
+                    iframe.height = '166';
+                    iframe.frameBorder = '0';
+                    iframe.allow = 'autoplay';
+                    
+                    // Add the iframe to our player container
+                    soundCloudPlayer.appendChild(iframe);
+                    
+                    // Get the widget
+                    player = SC.Widget(iframe);
+                    
+                    // Set up event listeners
+                    player.bind(SC.Widget.Events.READY, () => {
+                        console.log('Player ready');
+                        player.setVolume(volumeSlider.value);
+                    });
+                    
+                    player.bind(SC.Widget.Events.FINISH, () => {
+                        isPlaying = false;
+                        playIcon.classList.remove('hidden');
+                        pauseIcon.classList.add('hidden');
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading track:', error);
+                    trackTitle.textContent = 'Error loading track';
+                    trackArtist.textContent = 'Please try again later';
+                });
+            
+            // Play/Pause button
+            playPauseButton.addEventListener('click', () => {
+                if (!player) return;
+                
+                if (isPlaying) {
+                    player.pause();
+                    playIcon.classList.remove('hidden');
+                    pauseIcon.classList.add('hidden');
+                } else {
+                    player.play();
+                    playIcon.classList.add('hidden');
+                    pauseIcon.classList.remove('hidden');
+                }
+                
+                isPlaying = !isPlaying;
+            });
+            
+            // Volume slider
+            volumeSlider.addEventListener('input', () => {
+                if (player) {
+                    player.setVolume(volumeSlider.value);
+                }
+            });
+            
+            // Minimize button
+            minimizeButton.addEventListener('click', () => {
+                if (isMinimized) {
+                    musicPlayer.classList.remove('h-12', 'overflow-hidden');
+                    minimizeButton.innerHTML = '<i class="fas fa-chevron-up"></i>';
+                } else {
+                    musicPlayer.classList.add('h-12', 'overflow-hidden');
+                    minimizeButton.innerHTML = '<i class="fas fa-chevron-down"></i>';
+                }
+                
+                isMinimized = !isMinimized;
+            });
+        }
+    }
+    
+    // Comments functionality
+    function initCommentsSystem() {
+        const commentForm = document.getElementById('commentForm');
+        const commentsList = document.getElementById('commentsList');
+        const loadMoreCommentsBtn = document.getElementById('loadMoreComments');
+        let currentPage = 0;
+        
+        if (commentForm) {
+            commentForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const content = document.getElementById('commentContent').value.trim();
+                if (!content) {
+                    alert('Please enter a comment');
+                    return;
+                }
+                
+                fetch('/api/comments', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        storyId: storyId,
+                        chapterId: chapterId,
+                        content: content
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Clear the form
+                        document.getElementById('commentContent').value = '';
+                        
+                        // Add the new comment to the list
+                        if (data.comment) {
+                            addCommentToList(data.comment);
+                        } else {
+                            // Reload comments if the comment object isn't returned
+                            loadComments(true);
+                        }
+                    } else {
+                        alert('Error posting comment: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error posting comment: ' + error);
+                });
+            });
+        }
+        
+        // Function to add a new comment to the list
+        function addCommentToList(comment) {
+            // Remove the "no comments" message if it exists
+            const noCommentsMsg = commentsList.querySelector('.text-center.py-4');
+            if (noCommentsMsg) {
+                noCommentsMsg.remove();
+            }
+            
+            // Create the comment element
+            const commentEl = document.createElement('div');
+            commentEl.className = 'comment-item p-4';
+            commentEl.innerHTML = `
+                <div class="flex items-start gap-3">
+                    <div class="flex-shrink-0">
+                        <img src="${comment.user.profileImage || '/images/default-profile.png'}" 
+                             alt="Profile" class="w-10 h-10 rounded-full object-cover"
+                             onerror="this.src='/images/default-profile.png'">
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="font-medium text-accent-blue">${comment.user.username}</h4>
+                                <p class="text-xs text-gray-400">${new Date(comment.createdAt).toLocaleString()}</p>
+                            </div>
+                            ${comment.canDelete ? `
+                                <button class="delete-comment text-gray-400 hover:text-red-500 transition-colors" data-comment-id="${comment.id}">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                        <p class="mt-2 text-gray-200">${comment.content}</p>
+                    </div>
+                </div>
+            `;
+            
+            // Add to the top of the list
+            if (commentsList.firstChild) {
+                commentsList.insertBefore(commentEl, commentsList.firstChild);
+            } else {
+                commentsList.appendChild(commentEl);
+            }
+            
+            // Setup delete button if present
+            const deleteBtn = commentEl.querySelector('.delete-comment');
+            if (deleteBtn) {
+                setupDeleteButton(deleteBtn);
+            }
+        }
+        
+        // Load comments function
+        function loadComments(reset = false) {
+            if (reset) {
+                currentPage = 0;
+                commentsList.innerHTML = '';
+            }
+            
+            fetch(`/api/comments?storyId=${storyId}&chapterId=${chapterId}&page=${currentPage}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Add comments to the list
+                        if (data.comments.length > 0) {
+                            data.comments.forEach(comment => {
+                                const commentEl = document.createElement('div');
+                                commentEl.className = 'comment-item p-4';
+                                commentEl.innerHTML = `
+                                    <div class="flex items-start gap-3">
+                                        <div class="flex-shrink-0">
+                                            <img src="${comment.user.profileImage || '/images/default-profile.png'}" 
+                                                 alt="Profile" class="w-10 h-10 rounded-full object-cover"
+                                                 onerror="this.src='/images/default-profile.png'">
+                                        </div>
+                                        <div class="flex-1">
+                                            <div class="flex justify-between items-start">
+                                                <div>
+                                                    <h4 class="font-medium text-accent-blue">${comment.user.username}</h4>
+                                                    <p class="text-xs text-gray-400">${new Date(comment.createdAt).toLocaleString()}</p>
+                                                </div>
+                                                ${comment.canDelete ? `
+                                    <button class="delete-comment text-gray-400 hover:text-red-500 transition-colors" data-comment-id="${comment.id}">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                ` : ''}
+                                            </div>
+                                            <p class="mt-2 text-gray-200">${comment.content}</p>
+                                        </div>
+                                    </div>
+                                `;
+                                commentsList.appendChild(commentEl);
+                            });
+                            
+                            // Update load more button visibility
+                            if (loadMoreCommentsBtn) {
+                                loadMoreCommentsBtn.style.display = data.hasMore ? 'inline-block' : 'none';
+                            }
+                            
+                            // Increment page for next load
+                            currentPage++;
+                        } else if (reset) {
+                            // Show no comments message
+                            commentsList.innerHTML = `
+                                <div class="text-center py-4">
+                                    <div class="text-5xl text-gray-600 mb-4">
+                                        <i class="fas fa-comments"></i>
+                                    </div>
+                                    <p class="text-gray-400 mb-2">No comments yet.</p>
+                                    <p class="text-gray-500 text-sm">Be the first to share your thoughts on this chapter!</p>
+                                </div>
+                            `;
+                            
+                            if (loadMoreCommentsBtn) {
+                                loadMoreCommentsBtn.style.display = 'none';
+                            }
+                        }
+                        
+                        // Add event listeners to delete buttons
+                        setupDeleteButtons();
+                    } else {
+                        console.error('Error loading comments:', data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading comments:', error);
+                });
+        }
+        
+        // Setup delete comment buttons
+        function setupDeleteButtons() {
+            document.querySelectorAll('.delete-comment').forEach(button => {
+                setupDeleteButton(button);
+            });
+        }
+        
+        // Setup a single delete button
+        function setupDeleteButton(button) {
+            button.addEventListener('click', function() {
+                const commentId = this.dataset.commentId;
+                if (confirm('Are you sure you want to delete this comment?')) {
+                    fetch(`/api/comments/${commentId}`, {
+                        method: 'DELETE'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Remove comment from UI
+                            const commentEl = this.closest('.comment-item');
+                            if (commentEl) {
+                                commentEl.remove();
+                            }
+                            
+                            // If no comments left, show no comments message
+                            if (commentsList.children.length === 0) {
+                                const noCommentsMsg = document.createElement('div');
+                                noCommentsMsg.className = 'text-center py-4';
+                                noCommentsMsg.innerHTML = `
+                                    <div class="text-5xl text-gray-600 mb-4">
+                                        <i class="fas fa-comments"></i>
+                                    </div>
+                                    <p class="text-gray-400 mb-2">No comments yet.</p>
+                                    <p class="text-gray-500 text-sm">Be the first to share your thoughts on this chapter!</p>
+                                `;
+                                commentsList.appendChild(noCommentsMsg);
+                            }
+                        } else {
+                            alert('Error deleting comment: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error deleting comment:', error);
+                        alert('Error deleting comment. Please try again.');
+                    });
+                }
+            });
+        }
+        
+        // Load more comments button
+        if (loadMoreCommentsBtn) {
+            loadMoreCommentsBtn.addEventListener('click', function() {
+                loadComments();
+            });
+        }
+        
+        // Initial load of comments
+        loadComments();
+    }
+});
+</script>
+</body>
+</html>

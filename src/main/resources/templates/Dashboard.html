@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inkwell Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+      tailwind.config = {
+          theme: {
+              extend: {
+                  colors: {
+                      'accent-blue': '#0ea5e9',
+                      'accent-cyan': '#06b6d4',
+                      'bg-dark': '#030712',
+                      'bg-card': '#111827',
+                      'bg-card-hover': '#1e293b'
+                  },
+                  fontFamily: {
+                      'sans': ['Inter', 'sans-serif'],
+                  },
+              }
+          }
+      }
+  </script>
+  <style>
+    :root {
+        --bg-dark: #030712;
+        --bg-panel: #111827;
+        --bg-panel-lighter: #1e293b;
+        --text-primary: #e2e8f0;
+        --text-secondary: #94a3b8;
+        --accent-blue: #0ea5e9;
+        --accent-cyan: #06b6d4;
+    }
+
+    body {
+        background-color: var(--bg-dark);
+        color: var(--text-primary);
+        font-family: 'Inter', sans-serif;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: #111827;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: #374151;
+        border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--accent-blue);
+    }
+      
+    /* Enhanced Modal */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(3, 7, 18, 0.85);
+        backdrop-filter: blur(5px);
+        transition: all 0.3s ease;
+    }
+    
+    .modal-content {
+        background: linear-gradient(145deg, #151e30, #0f1625);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        margin: 5% auto;
+        width: 90%;
+        max-width: 600px;
+        border-radius: 12px;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+        animation: modalFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        transform-origin: center;
+    }
+    
+    @keyframes modalFadeIn {
+        from { opacity: 0; transform: scale(0.95) translateY(-30px); }
+        to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    
+    .close {
+        color: var(--text-secondary);
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: color 0.2s ease;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+    }
+    
+    .close:hover, .close:focus {
+        color: white;
+        text-decoration: none;
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    /* Enhanced Carousel */
+    .carousel-container {
+        position: relative;
+        overflow: hidden;
+        border-radius: 12px;
+        background: rgba(17, 24, 39, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        transform-style: preserve-3d;
+        perspective: 1000px;
+    }
+    
+    .carousel {
+        display: flex;
+        transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        min-height: 280px;
+    }
+    
+    .carousel-item {
+        flex: 0 0 100%;
+        padding: 1.5rem;
+        transform-style: preserve-3d;
+    }
+    
+    .carousel-nav {
+        position: absolute;
+        top: 50%;
+        width: 40px;
+        height: 40px;
+        transform: translateY(-50%);
+        background: rgba(17, 24, 39, 0.7);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-primary);
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        z-index: 10;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+    
+    .carousel-nav:hover {
+        background: rgba(14, 165, 233, 0.2);
+        border-color: var(--accent-blue);
+        color: var(--accent-blue);
+        transform: translateY(-50%) scale(1.1);
+    }
+    
+    .carousel-nav.prev {
+        left: 15px;
+    }
+    
+    .carousel-nav.next {
+        right: 15px;
+    }
+    
+    /* Story Card in Carousel */
+    .story-carousel-card {
+        display: flex;
+        background: linear-gradient(145deg, #151e30, #0f1625);
+        border: 1px solid rgba(255, 255, 255, 0.03);
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        transform: translateZ(0);
+    }
+    
+    .story-carousel-card:hover {
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25), 0 0 15px rgba(14, 165, 233, 0.1);
+        transform: translateY(-5px) scale(1.01);
+        border-color: rgba(14, 165, 233, 0.15);
+    }
+    
+    .story-cover {
+        width: 180px;
+        min-width: 180px;
+        height: 240px;
+        object-fit: cover;
+        transition: all 0.5s ease;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    .story-carousel-card:hover .story-cover {
+        transform: scale(1.05);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    }
+    
+    .story-info {
+        padding: 1rem 1.5rem;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .story-title {
+        color: white;
+        font-weight: 700;
+        font-size: 1.25rem;
+        margin-bottom: 0.5rem;
+        position: relative;
+        transition: all 0.3s ease;
+        padding-bottom: 0.5rem;
+    }
+    
+    .story-title::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 50px;
+        height: 2px;
+        background: linear-gradient(90deg, var(--accent-blue), transparent);
+        transition: all 0.5s ease;
+        opacity: 0.7;
+    }
+    
+    .story-carousel-card:hover .story-title {
+        color: var(--accent-blue);
+    }
+    
+    .story-carousel-card:hover .story-title::after {
+        width: 100px;
+        opacity: 1;
+    }
+    
+    /* Enhanced Tags */
+    .tag {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        margin: 0.25rem 0.25rem 0.25rem 0;
+        background: rgba(14, 165, 233, 0.1);
+        color: var(--accent-blue);
+        border: 1px solid rgba(14, 165, 233, 0.2);
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .tag:hover {
+        background: rgba(14, 165, 233, 0.2);
+        transform: translateY(-2px);
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Tag selectors in modal */
+    .tag-selector {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+    
+    .tag-chip {
+        position: relative;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    
+    .tag-chip input[type="checkbox"] {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+    }
+    
+    .tag-chip span {
+        display: inline-block;
+        padding: 0.35rem 0.75rem;
+        background: rgba(14, 165, 233, 0.1);
+        color: var(--accent-blue);
+        border: 1px solid rgba(14, 165, 233, 0.2);
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+    }
+    
+    .tag-chip:hover span {
+        background: rgba(14, 165, 233, 0.2);
+        transform: translateY(-2px);
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .tag-chip input[type="checkbox"]:checked + span {
+        background: linear-gradient(90deg, rgba(14, 165, 233, 0.2), rgba(6, 182, 212, 0.2));
+        border-color: var(--accent-blue);
+        color: white;
+        box-shadow: 0 0 0 1px rgba(14, 165, 233, 0.5);
+        transform: translateY(-2px);
+    }
+    
+    .selected-tag {
+        filter: brightness(1.2);
+    }
+    
+    /* Enhanced Statistics Cards */
+    .stat-card {
+        background: linear-gradient(145deg, #151e30, #0f1625);
+        border: 1px solid rgba(255, 255, 255, 0.03);
+        border-radius: 12px;
+        padding: 1.5rem;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        inset: -2px;
+        background: linear-gradient(90deg, transparent, rgba(14, 165, 233, 0.05), transparent);
+        z-index: -1;
+        opacity: 0;
+        border-radius: 14px;
+        transition: opacity 0.5s ease-in-out;
+        filter: blur(8px);
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-8px);
+        border-color: rgba(14, 165, 233, 0.15);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 0 10px rgba(14, 165, 233, 0.1);
+    }
+    
+    .stat-card:hover::before {
+        opacity: 1;
+    }
+    
+    .stat-circle {
+        width: 5rem;
+        height: 5rem;
+        border-radius: 9999px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1.5rem;
+        margin: 0 auto;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        transition: all 0.5s ease;
+        background-size: 200% 200%;
+        animation: subtle-pulse 4s ease infinite;
+        position: relative;
+    }
+    
+    .stat-card:hover .stat-circle {
+        transform: scale(1.1);
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+    }
+    
+    .stat-circle.reads {
+        background: linear-gradient(135deg, rgba(14, 165, 233, 0.15), rgba(14, 165, 233, 0.05));
+        color: var(--accent-blue);
+    }
+    
+    .stat-circle.likes {
+        background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(168, 85, 247, 0.05));
+        color: #a855f7;
+    }
+    
+    .stat-circle.comments {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(34, 197, 94, 0.05));
+        color: #22c55e;
+    }
+    
+    @keyframes subtle-pulse {
+        0% {
+            background-position: 0% 0%;
+        }
+        50% {
+            background-position: 100% 100%;
+        }
+        100% {
+            background-position: 0% 0%;
+        }
+    }
+    
+    /* Activity Feed */
+    .activity-list {
+        overflow-y: auto;
+        max-height: 300px;
+    }
+    
+    .activity-item {
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        position: relative;
+        background: rgba(17, 24, 39, 0.3);
+        margin-bottom: 0.75rem;
+        border-left: 3px solid var(--accent-blue);
+    }
+    
+    .activity-item:hover {
+        background: rgba(17, 24, 39, 0.6);
+        transform: translateX(5px);
+    }
+    
+    /* Buttons */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1.25rem;
+        font-weight: 500;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan));
+        color: white;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15), 0 0 0 2px rgba(14, 165, 233, 0.1);
+    }
+    
+    .btn-secondary {
+        background: rgba(17, 24, 39, 0.6);
+        color: var(--text-primary);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .btn-secondary:hover {
+        background: rgba(17, 24, 39, 0.8);
+        border-color: var(--text-secondary);
+        transform: translateY(-2px);
+    }
+    
+    .btn-success {
+        background: linear-gradient(90deg, #22c55e, #16a34a);
+        color: white;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15), 0 0 0 2px rgba(34, 197, 94, 0.1);
+    }
+    
+    .btn-disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    
+    .btn-disabled:hover {
+        transform: none;
+    }
+    
+    /* Form Controls */
+    .form-input {
+        width: 100%;
+        background: rgba(17, 24, 39, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        color: var(--text-primary);
+        transition: all 0.3s ease;
+    }
+    
+    .form-input:focus {
+        outline: none;
+        border-color: var(--accent-blue);
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
+        background: rgba(17, 24, 39, 0.7);
+    }
+    
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    textarea.form-input {
+        min-height: 100px;
+        resize: vertical;
+    }
+    
+    .upload-container {
+        border: 2px dashed rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 1.5rem 1rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .upload-container:hover {
+        border-color: var(--accent-blue);
+        background: rgba(14, 165, 233, 0.05);
+    }
+    
+    /* Enhanced section headers */
+    .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        position: relative;
+    }
+    
+    .section-title {
+        font-weight: 700;
+        position: relative;
+        padding-left: 1rem;
+    }
+    
+    .section-title::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        height: 1.2em;
+        width: 3px;
+        background: linear-gradient(to bottom, var(--accent-blue), var(--accent-cyan));
+        border-radius: 4px;
+    }
+    
+    .section-header::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 1px;
+        background: linear-gradient(90deg, var(--accent-blue), transparent);
+        opacity: 0.3;
+    }
+    
+    /* Gradient text */
+    .gradient-text {
+        background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan));
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    /* Empty state */
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1.5rem;
+    }
+    
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 1.5rem;
+        color: rgba(255, 255, 255, 0.1);
+        transition: all 0.5s ease;
+    }
+    
+    .empty-state:hover .empty-state-icon {
+        color: var(--accent-blue);
+        transform: scale(1.1);
+    }
+  </style>
+  <style th:replace="fragments/sidebar :: sidebar-style"></style>
+  <style th:replace="fragments/FantasyBackground :: fantasy-style"></style>
+</head>
+
+<body class="min-h-screen bg-bg-dark text-white">
+  <div class="flex h-screen">
+    <!-- Fantasy Background -->
+    <div th:replace="fragments/FantasyBackground :: fantasy-elements"></div>
+    
+    <!-- Sidebar Trigger -->
+    <div th:replace="fragments/sidebar :: sidebar-trigger"></div>
+    
+    <!-- Sidebar -->
+    <aside th:replace="fragments/sidebar :: sidebar"></aside>
+
+    <!-- Main Content -->
+    <div class="flex-1 overflow-auto">
+      <div class="container mx-auto p-8">
+          <!-- Page Header -->
+          <div class="mb-8">
+              <h1 class="text-3xl font-bold gradient-text flex items-center gap-3">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Writer Dashboard</span>
+              </h1>
+              <p class="text-text-secondary mt-2">Manage your stories, track your metrics, and get insights about your audience.</p>
+          </div>
+
+          <!-- Story Carousel Section -->
+          <div class="mb-12">
+              <div class="section-header">
+                  <h2 class="text-2xl section-title">Your Stories</h2>
+                  <button id="createStoryBtn" class="btn btn-primary">
+                      <i class="fas fa-plus"></i>
+                      <span>Create Story</span>
+                  </button>
+              </div>
+
+              <div class="carousel-container p-4">
+                  <div id="storyCarousel" class="carousel">
+                      <!-- Story items will be inserted here by JavaScript -->
+                  </div>
+                  <button id="prevSlide" class="carousel-nav prev">
+                      <i class="fas fa-chevron-left"></i>
+                  </button>
+                  <button id="nextSlide" class="carousel-nav next">
+                      <i class="fas fa-chevron-right"></i>
+                  </button>
+              </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <!-- Statistics Section -->
+              <div class="stat-card">
+                  <div class="section-header">
+                      <h3 class="text-xl section-title">Stats Overview</h3>
+                      <a href="/Statistics" class="text-accent-blue hover:underline flex items-center gap-1">
+                          <span>More Details</span>
+                          <i class="fas fa-external-link-alt text-sm"></i>
+                      </a>
+                  </div>
+                  
+                  <div class="grid grid-cols-3 gap-4 mt-6">
+                      <div class="text-center">
+                          <div class="stat-circle reads">
+                              <span th:text="${userStats.totalReads}">0</span>
+                          </div>
+                          <p class="mt-3 text-sm text-text-secondary">Total Reads</p>
+                      </div>
+                      <div class="text-center">
+                          <div class="stat-circle likes">
+                              <span th:text="${userStats.totalLikes}">0</span>
+                          </div>
+                          <p class="mt-3 text-sm text-text-secondary">Total Likes</p>
+                      </div>
+                      <div class="text-center">
+                          <div class="stat-circle comments">
+                              <span th:text="${userStats.totalComments}">0</span>
+                          </div>
+                          <p class="mt-3 text-sm text-text-secondary">Comments</p>
+                      </div>
+                  </div>
+              </div>
+
+              <!-- Activity Feed -->
+              <div class="stat-card">
+                  <div class="section-header">
+                      <h3 class="text-xl section-title">Recent Activity</h3>
+                  </div>
+                  
+                  <div class="activity-list mt-4">
+                      <div th:if="${userStories.isEmpty()}" class="empty-state">
+                          <i class="fas fa-history empty-state-icon"></i>
+                          <p class="text-lg font-medium mb-2">No activity yet</p>
+                          <p class="text-text-secondary">Start writing and publishing to see your activity here</p>
+                      </div>
+                      
+                      <div th:unless="${userStories.isEmpty()}" th:each="story, iterStat : ${userStories}" 
+                           th:if="${iterStat.index < 3}" class="activity-item">
+                          <div class="flex items-center gap-3">
+                              <i class="fas fa-pen-fancy text-accent-blue"></i>
+                              <div>
+                                  <p class="font-medium" th:text="${'Updated story: ' + story.title}">Story update</p>
+                                  <p class="text-sm text-text-secondary" th:text="${#temporals.format(story.lastUpdated, 'MMM dd, yyyy')}">Date</p>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Story Modal -->
+  <div id="createStoryModal" class="modal">
+    <div class="modal-content p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold gradient-text">Create New Story</h2>
+            <span class="close">&times;</span>
+        </div>
+        
+        <form id="createStoryForm" th:action="@{/api/stories/create}" method="post" enctype="multipart/form-data" class="space-y-6">
+            <!-- Story Title -->
+            <div class="form-group">
+                <label for="title" class="form-label">Story Title</label>
+                <input type="text" id="title" name="title" class="form-input" placeholder="Enter a captivating title..." required>
+            </div>
+            
+            <!-- Cover Image -->
+            <div class="form-group">
+                <label class="form-label">Cover Image</label>
+                <div class="upload-container">
+                    <input type="file" id="cover" name="coverImage" accept="image/*" class="hidden">
+                    <label for="cover" class="cursor-pointer">
+                        <div class="flex flex-col items-center">
+                            <i class="fas fa-image text-text-secondary text-4xl mb-2"></i>
+                            <p class="text-text-secondary">Click to upload cover</p>
+                            <p class="text-sm text-gray-500 mt-1">Recommended size: 600×800px</p>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Genre -->
+            <div class="form-group">
+                <label for="genre" class="form-label">Genre</label>
+                <select id="genre" name="genre" class="form-input">
+                    <option value="">Select a genre</option>
+                    <option value="Fantasy">Fantasy</option>
+                    <option value="Sci-Fi">Sci-Fi</option>
+                    <option value="Romance">Romance</option>
+                    <option value="Mystery">Mystery</option>
+                    <option value="Horror">Horror</option>
+                    <option value="Thriller">Thriller</option>
+                    <option value="Historical Fiction">Historical Fiction</option>
+                    <option value="Young Adult">Young Adult</option>
+                    <option value="Fan Fiction">Fan Fiction</option>
+                    <option value="Adventure">Adventure</option>
+                    <option value="Comedy">Comedy</option>
+                    <option value="Drama">Drama</option>
+                    <option value="Poetry">Poetry</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            
+            <!-- Tags -->
+            <div class="form-group">
+                <label class="form-label">Tags</label>
+                <div id="tagContainer" class="flex flex-wrap gap-2 mb-3">
+                    <label class="tag-chip">
+                        <input type="checkbox" name="tags" value="Adventure" class="hidden">
+                        <span>Adventure</span>
+                    </label>
+                    <label class="tag-chip">
+                        <input type="checkbox" name="tags" value="Magic" class="hidden">
+                        <span>Magic</span>
+                    </label>
+                    <label class="tag-chip">
+                        <input type="checkbox" name="tags" value="Epic" class="hidden">
+                        <span>Epic</span>
+                    </label>
+                    <label class="tag-chip">
+                        <input type="checkbox" name="tags" value="Romance" class="hidden">
+                        <span>Romance</span>
+                    </label>
+                    <label class="tag-chip">
+                        <input type="checkbox" name="tags" value="Action" class="hidden">
+                        <span>Action</span>
+                    </label>
+                </div>
+                
+                <!-- Custom tag input -->
+                <div class="flex items-center">
+                    <input type="text" id="customTag" class="form-input mr-2" placeholder="Add custom tag...">
+                    <button type="button" id="addTagBtn" class="btn btn-secondary">
+                        <i class="fas fa-plus"></i>
+                        <span>Add</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Synopsis -->
+            <div class="form-group">
+                <label for="description" class="form-label">Synopsis</label>
+                <textarea id="description" name="description" class="form-input" placeholder="Write a compelling summary of your story..." required></textarea>
+            </div>
+            
+            <!-- Submit Button -->
+            <div class="flex justify-end pt-4 border-t border-gray-700">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-pen-nib"></i>
+                    <span>Create & Start Writing</span>
+                </button>
+            </div>
+        </form>
+    </div>
+  </div>
+
+  <script th:replace="fragments/sidebar :: sidebar-script"></script>
+  <script th:replace="fragments/FantasyBackground :: fantasy-script"></script>
+  <script th:inline="javascript">
+      // Get stories from Thymeleaf model
+      let stories = [];
+      try {
+        const storiesData = /*[[${simplifiedStories}]]*/ '[]';
+        // Always treat as string and parse it safely
+        if (typeof storiesData === 'string') {
+            stories = JSON.parse(storiesData || '[]');
+        } else if (Array.isArray(storiesData)) {
+            stories = storiesData;
+        }
+      } catch (e) {
+          console.error("Error parsing stories:", e);
+          stories = [];
+      }
+      console.log("Stories loaded from server:", stories);
+      
+      // Carousel functionality
+      let currentSlide = 0;
+      const carousel = document.getElementById('storyCarousel');
+      const prevButton = document.getElementById('prevSlide');
+      const nextButton = document.getElementById('nextSlide');
+
+      function renderStories() {
+          console.log("Rendering stories:", stories);
+          
+          if (!stories || stories.length === 0) {
+              console.log("No stories found, showing empty state");
+              carousel.innerHTML = `
+                  <div class="carousel-item">
+                      <div class="empty-state">
+                          <i class="fas fa-book-open empty-state-icon"></i>
+                          <h3 class="text-xl font-bold mb-3">No stories yet</h3>
+                          <p class="text-text-secondary mb-6">Begin your writing journey by creating your first story</p>
+                          <button id="emptyStateCreateBtn" class="btn btn-primary">
+                              <i class="fas fa-pen-nib"></i>
+                              <span>Start Writing</span>
+                          </button>
+                      </div>
+                  </div>
+              `;
+              
+              // Add event listener to the empty state button
+              setTimeout(() => {
+                  const emptyStateBtn = document.getElementById('emptyStateCreateBtn');
+                  if (emptyStateBtn) {
+                      emptyStateBtn.addEventListener('click', () => {
+                          document.getElementById('createStoryBtn').click();
+                      });
+                  }
+              }, 0);
+              
+              return;
+          }
+          
+          carousel.innerHTML = stories.map(story => {
+              // Safely handle tags that might be null or undefined
+              const tagsHtml = story.tags && Array.isArray(story.tags) 
+                  ? story.tags.slice(0, 4).map(tag => `<span class="tag">${tag.name || ''}</span>`).join('') 
+                  : '';
+              
+              const moreTagsText = story.tags && story.tags.length > 4 
+                  ? `<span class="text-text-secondary text-xs">+${story.tags.length - 4} more</span>`
+                  : '';
+              
+              // Format the date
+              const lastUpdated = story.lastUpdated 
+                  ? new Date(story.lastUpdated).toLocaleDateString() 
+                  : 'Unknown date';
+              
+              // Handle cover image with proper error handling
+              let coverImageUrl = 'https://placehold.co/300x400/1f2937/cccccc?text=No+Cover';
+              if (story.coverImage) {
+                  console.log("Story has cover image:", story.coverImage);
+                  coverImageUrl = story.coverImage;
+              }
+                  
+              return `
+                  <div class="carousel-item">
+                      <div class="story-carousel-card">
+                          <img src="${coverImageUrl}" alt="${story.title}" class="story-cover" 
+                               onerror="this.src='https://placehold.co/300x400/1f2937/cccccc?text=No+Cover'">
+                          <div class="story-info">
+                              <h3 class="story-title">${story.title}</h3>
+                              <p class="text-text-secondary text-sm mb-4">Last updated: ${lastUpdated}</p>
+                              <p class="text-sm mb-4 line-clamp-3">${story.description || ''}</p>
+                              <div class="mb-4">
+                                  ${tagsHtml}
+                                  ${moreTagsText}
+                              </div>
+                              <div class="flex gap-3 mt-auto">
+                                  <a href="/Writing?storyId=${story.id}" class="btn btn-primary">
+                                      <i class="fas fa-pen"></i>
+                                      <span>Edit</span>
+                                  </a>
+                                  <button class="publish-story-btn ${story.published ? 'btn btn-secondary btn-disabled' : 'btn btn-success'}" 
+                                          data-story-id="${story.id}"
+                                          ${story.published ? 'disabled' : ''}>
+                                      <i class="fas ${story.published ? 'fa-check' : 'fa-globe'}"></i>
+                                      <span>${story.published ? 'Published' : 'Publish'}</span>
+                                  </button>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              `;
+          }).join('');
+          
+          // Add event listeners to the newly created publish buttons
+          document.querySelectorAll('.publish-story-btn').forEach(button => {
+              if (!button.disabled) {
+                  button.addEventListener('click', handlePublishClick);
+              }
+          });
+      }
+
+      function showSlide(index) {
+          if (!stories || stories.length === 0) return;
+          carousel.style.transform = `translateX(-${index * 100}%)`;
+      }
+      
+      function handlePublishClick() {
+          if (this.disabled) return;
+          
+          const storyId = this.dataset.storyId;
+          
+          // Show confirmation
+          if (!confirm('Are you sure you want to publish this story? Published stories will be visible to all users.')) {
+              return;
+          }
+          
+          // Show publishing state
+          const originalText = this.querySelector('span').textContent;
+          const originalIcon = this.querySelector('i').className;
+          
+          this.querySelector('span').textContent = 'Publishing...';
+          this.querySelector('i').className = 'fas fa-spinner fa-spin';
+          this.disabled = true;
+          
+          // Send publish request
+          fetch(`/api/stories/${storyId}/publish`, {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json'
+              }
+          })
+          .then(response => response.json())
+          .then(data => {
+              if (data.success) {
+                  this.querySelector('span').textContent = 'Published';
+                  this.querySelector('i').className = 'fas fa-check';
+                  this.classList.remove('btn-success');
+                  this.classList.add('btn-secondary', 'btn-disabled');
+              } else {
+                  this.querySelector('span').textContent = 'Failed';
+                  this.querySelector('i').className = 'fas fa-times';
+                  
+                  setTimeout(() => {
+                      this.querySelector('span').textContent = originalText;
+                      this.querySelector('i').className = originalIcon;
+                      this.disabled = false;
+                  }, 2000);
+              }
+          })
+          .catch(error => {
+              console.error('Error publishing story:', error);
+              this.querySelector('span').textContent = 'Failed';
+              this.querySelector('i').className = 'fas fa-times';
+              
+              setTimeout(() => {
+                  this.querySelector('span').textContent = originalText;
+                  this.querySelector('i').className = originalIcon;
+                  this.disabled = false;
+              }, 2000);
+          });
+      }
+
+      prevButton.addEventListener('click', () => {
+          if (!stories || stories.length === 0) return;
+          currentSlide = (currentSlide - 1 + stories.length) % stories.length;
+          showSlide(currentSlide);
+      });
+
+      nextButton.addEventListener('click', () => {
+          if (!stories || stories.length === 0) return;
+          currentSlide = (currentSlide + 1) % stories.length;
+          showSlide(currentSlide);
+      });
+
+      // Initialize
+      document.addEventListener('DOMContentLoaded', function() {
+          console.log("DOM loaded, rendering stories");
+          renderStories();
+          
+          // Page theme setup
+          const savedTheme = localStorage.getItem('interfaceTheme') || 'none';
+          if (window.setTheme) {
+              window.setTheme(savedTheme);
+          }
+
+          // Initialize tag chips
+          document.querySelectorAll('.tag-chip').forEach(chip => {
+              chip.addEventListener('click', function() {
+                  const checkbox = this.querySelector('input[type="checkbox"]');
+                  checkbox.checked = !checkbox.checked;
+                  updateTagChipAppearance(this, checkbox.checked);
+              });
+          });
+
+          // Add tag button functionality
+          const addTagBtn = document.getElementById('addTagBtn');
+          if (addTagBtn) {
+              addTagBtn.addEventListener('click', function() {
+                  addCustomTag();
+              });
+          }
+
+          // Handle Enter key in the custom tag input
+          const customTagInput = document.getElementById('customTag');
+          if (customTagInput) {
+              customTagInput.addEventListener('keypress', function(e) {
+                  if (e.key === 'Enter') {
+                      e.preventDefault();
+                      addCustomTag();
+                  }
+              });
+          }
+
+          // Preview uploaded cover image
+          const coverInput = document.getElementById('cover');
+          if (coverInput) {
+              coverInput.addEventListener('change', function(event) {
+                  const file = event.target.files[0];
+                  if (file) {
+                      const reader = new FileReader();
+                      reader.onload = function(e) {
+                          const uploadLabel = document.querySelector('label[for="cover"]');
+                          uploadLabel.innerHTML = `
+                              <div class="flex flex-col items-center">
+                                  <img src="${e.target.result}" alt="Cover preview" class="w-32 h-32 object-cover rounded">
+                                  <p class="text-text-secondary mt-3">Click to change</p>
+                              </div>
+                          `;
+                      };
+                      reader.readAsDataURL(file);
+                  }
+              });
+          }
+          
+          // Add parallax effect to stat cards
+          document.querySelectorAll('.stat-card').forEach(card => {
+              card.addEventListener('mousemove', function(e) {
+                  const rect = this.getBoundingClientRect();
+                  const x = e.clientX - rect.left;
+                  const y = e.clientY - rect.top;
+                  
+                  // Calculate position relative to center of the card
+                  const xPercent = (x / rect.width) - 0.5;
+                  const yPercent = (y / rect.height) - 0.5;
+                  
+                  // Apply transform for subtle tilt effect
+                  this.style.transform = `translateY(-8px) rotateX(${yPercent * -5}deg) rotateY(${xPercent * 5}deg)`;
+                  
+                  // Add light effect based on cursor position
+                  const circles = this.querySelectorAll('.stat-circle');
+                  circles.forEach(circle => {
+                      circle.style.boxShadow = `${xPercent * 10}px ${yPercent * 10}px 15px rgba(0, 0, 0, 0.2)`;
+                  });
+              });
+              
+              card.addEventListener('mouseleave', function() {
+                  this.style.transform = '';
+                  const circles = this.querySelectorAll('.stat-circle');
+                  circles.forEach(circle => {
+                      circle.style.boxShadow = '';
+                  });
+              });
+          });
+          
+          // Add animation to activity items
+          document.querySelectorAll('.activity-item').forEach((item, index) => {
+              item.style.opacity = '0';
+              item.style.transform = 'translateX(20px)';
+              
+              setTimeout(() => {
+                  item.style.transition = 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
+                  item.style.opacity = '1';
+                  item.style.transform = 'translateX(0)';
+              }, 100 + (index * 100));
+          });
+      });
+
+      // Modal functionality
+      const modal = document.getElementById('createStoryModal');
+      const createStoryBtn = document.getElementById('createStoryBtn');
+      const closeBtn = document.querySelector('.close');
+
+      createStoryBtn.addEventListener('click', () => {
+          modal.style.display = 'block';
+          document.body.style.overflow = 'hidden';
+      });
+
+      closeBtn.addEventListener('click', () => {
+          modal.style.display = 'none';
+          document.body.style.overflow = '';
+      });
+
+      window.addEventListener('click', (e) => {
+          if (e.target === modal) {
+              modal.style.display = 'none';
+              document.body.style.overflow = '';
+          }
+      });
+
+      // Function to add custom tag
+      function addCustomTag() {
+          const customTagInput = document.getElementById('customTag');
+          const tagValue = customTagInput.value.trim();
+          
+          if (tagValue) {
+              // Check if tag already exists
+              const existingTags = Array.from(document.querySelectorAll('.tag-chip input[type="checkbox"]'))
+                  .map(checkbox => checkbox.value.toLowerCase());
+              
+              if (existingTags.includes(tagValue.toLowerCase())) {
+                  // Show an elegant tooltip or message
+                  const input = document.getElementById('customTag');
+                  input.classList.add('border-red-500');
+                  input.placeholder = "Tag already exists!";
+                  
+                  setTimeout(() => {
+                      input.classList.remove('border-red-500');
+                      input.placeholder = "Add custom tag...";
+                  }, 2000);
+                  
+                  return;
+              }
+              
+              // Create new tag element
+              const tagContainer = document.getElementById('tagContainer');
+              const newTag = document.createElement('label');
+              newTag.className = 'tag-chip';
+              newTag.innerHTML = `
+                  <input type="checkbox" name="tags" value="${tagValue}" class="hidden" checked>
+                  <span>${tagValue}</span>
+              `;
+              
+              // Add event listener to toggle the new tag
+              newTag.addEventListener('click', function() {
+                  const checkbox = this.querySelector('input[type="checkbox"]');
+                  checkbox.checked = !checkbox.checked;
+                  updateTagChipAppearance(this, checkbox.checked);
+              });
+              
+              // Add with animation
+              newTag.style.opacity = '0';
+              newTag.style.transform = 'scale(0.8)';
+              tagContainer.appendChild(newTag);
+              
+              setTimeout(() => {
+                  newTag.style.transition = 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)';
+                  newTag.style.opacity = '1';
+                  newTag.style.transform = 'scale(1)';
+              }, 10);
+              
+              // Clear input
+              customTagInput.value = '';
+              updateTagChipAppearance(newTag, true);
+          }
+      }
+
+      // Function to update tag appearance based on selection state
+      function updateTagChipAppearance(tagChip, isSelected) {
+          const span = tagChip.querySelector('span');
+          
+          if (isSelected) {
+              span.classList.add('selected-tag');
+          } else {
+              span.classList.remove('selected-tag');
+          }
+      }
+  </script>
+</body>
+</html>

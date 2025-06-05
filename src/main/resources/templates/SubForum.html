@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:if="${_csrf != null}" th:content="${_csrf.headerName}"/>
+    <title th:text="${subforum.name + ' - ' + forum.name}">Subforum - Forum</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'accent-blue': '#0ea5e9',
+                        'accent-cyan': '#06b6d4',
+                        'bg-dark': '#030712',
+                        'bg-card': '#111827',
+                        'bg-card-hover': '#1f2937'
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style th:replace="~{fragments/sidebar :: sidebar-style}"></style>
+    <style th:replace="~{fragments/FantasyBackground :: fantasy-style}"></style>
+    <style>
+      /* Core Styles */
+      body {
+          background-color: #030712;
+          font-family: 'Inter', sans-serif;
+      }
+      
+      /* Custom scrollbar */
+      ::-webkit-scrollbar {
+          width: 8px;
+          height: 8px;
+      }
+      
+      ::-webkit-scrollbar-track {
+          background: #111827;
+      }
+      
+      ::-webkit-scrollbar-thumb {
+          background: #374151;
+          border-radius: 4px;
+      }
+      
+      ::-webkit-scrollbar-thumb:hover {
+          background: #0ea5e9;
+      }
+      
+      /* Forum card with subtle hover effects */
+      .forum-card {
+        background: linear-gradient(145deg, #151e30, #0f1625);
+        border: 1px solid rgba(255, 255, 255, 0.03);
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      }
+      
+      .forum-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(14, 165, 233, 0.15);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+      }
+      
+      /* Topic card with hover effects */
+      .topic-card {
+        background: linear-gradient(145deg, #161e2e, #111827);
+        transition: all 0.2s ease;
+      }
+      
+      .topic-card:hover {
+        background: linear-gradient(145deg, #1a2338, #15203a);
+      }
+      
+      /* Gradient text */
+      .gradient-text {
+        background: linear-gradient(90deg, #0ea5e9, #06b6d4);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      
+      /* Fancy buttons */
+      .btn-primary {
+        background: linear-gradient(90deg, #0ea5e9, #06b6d4);
+        color: white;
+        border-radius: 8px;
+        padding: 0.5rem 1.5rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        position: relative;
+        z-index: 1;
+      }
+      
+      .btn-primary:hover {
+        box-shadow: 0 0 15px rgba(14, 165, 233, 0.4);
+        transform: translateY(-1px);
+      }
+    </style>
+</head>
+<body class="bg-bg-dark text-gray-100 font-sans">
+    <div class="flex min-h-screen">
+        <!-- Fantasy Background -->
+        <div th:replace="~{fragments/FantasyBackground :: fantasy-elements}"></div>
+        
+        <!-- Sidebar Trigger -->
+        <div th:replace="~{fragments/sidebar :: sidebar-trigger}"></div>
+        
+        <!-- Sidebar -->
+        <aside th:replace="~{fragments/sidebar :: sidebar}"></aside>
+
+        <!-- Main Content -->
+        <div class="flex-1 overflow-auto">
+            <main class="py-6 lg:py-10 relative z-10">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    
+                    <!-- Breadcrumb navigation -->
+                    <nav class="flex mb-6" aria-label="Breadcrumb">
+                        <ol class="flex items-center space-x-2">
+                            <li>
+                                <a th:href="@{/forums}" class="text-gray-400 hover:text-accent-blue transition-colors">Forums</a>
+                            </li>
+                            <li class="flex items-center">
+                                <svg class="h-5 w-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                                <a th:href="@{'/forums/' + ${writer.username}}" class="ml-2 text-gray-400 hover:text-accent-blue transition-colors" th:text="${forum.name}">Forum Name</a>
+                            </li>
+                            <li class="flex items-center">
+                                <svg class="h-5 w-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="ml-2 text-gray-300 font-medium" th:text="${subforum.name}">Subforum Name</span>
+                            </li>
+                        </ol>
+                    </nav>
+                    
+                    <!-- Subforum Header -->
+                    <div class="forum-card mb-6 p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 mr-4">
+                                <div th:class="'h-14 w-14 rounded-lg ' + ${subforum.iconBgClass} + ' flex items-center justify-center ' + ${#strings.replace(subforum.iconClass, 'fa-', 'text-')}">
+                                    <i th:class="${subforum.iconClass + ' fa-lg'}"></i>
+                                </div>
+                            </div>
+                            <div class="flex-1">
+                                <h1 class="text-2xl font-bold text-white" th:text="${subforum.name}">Subforum Name</h1>
+                                <p class="text-gray-400 mt-1" th:text="${subforum.description}">Subforum description...</p>
+                                <div th:if="${subforum.story != null}" class="mt-2">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent-blue bg-opacity-20 text-accent-blue">
+                                        <i class="fas fa-book mr-1.5"></i>
+                                        Linked to story: 
+                                        <a th:href="@{'/stories/' + ${subforum.story.slug}}" class="ml-1 underline" th:text="${subforum.story.title}">Story Title</a>
+                                    </span>
+                                </div>
+                            </div>
+                            <div>
+                                <a th:href="@{'/forums/' + ${writer.username} + '/' + ${subforum.slug} + '/new-topic'}" 
+                                class="btn-primary inline-flex items-center">
+                                    <i class="fas fa-plus mr-2"></i>
+                                    New Topic
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Auto-created notification -->
+                    <div th:if="${autoCreatedForum}" class="forum-card animate-fade-in mb-6 bg-blue-900 bg-opacity-20 border border-blue-700">
+                        <div class="p-4 flex items-center">
+                            <div class="flex-shrink-0 mr-3 text-blue-400">
+                                <i class="fas fa-magic text-2xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-blue-400">Forum Automatically Created!</h3>
+                                <p class="text-gray-300 text-sm">This is the first visit to this writer's forum - subforums for their stories have been created.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Topic Sorting options -->
+                    <div class="mb-6 forum-card">
+                        <div class="p-4 flex items-center justify-between">
+                            <div>
+                                <span class="text-gray-400">Sort by: </span>
+                                <a th:href="@{'/forums/' + ${writer.username} + '/' + ${subforum.slug}(sort='latest')}" 
+                                th:class="${currentSort == 'latest' ? 'font-semibold text-accent-blue' : 'text-gray-300 hover:text-accent-blue'}">Latest</a>
+                                <span class="mx-2 text-gray-600">•</span>
+                                <a th:href="@{'/forums/' + ${writer.username} + '/' + ${subforum.slug}(sort='activity')}" 
+                                th:class="${currentSort == 'activity' ? 'font-semibold text-accent-blue' : 'text-gray-300 hover:text-accent-blue'}">Activity</a>
+                                <span class="mx-2 text-gray-600">•</span>
+                                <a th:href="@{'/forums/' + ${writer.username} + '/' + ${subforum.slug}(sort='popular')}" 
+                                th:class="${currentSort == 'popular' ? 'font-semibold text-accent-blue' : 'text-gray-300 hover:text-accent-blue'}">Popular</a>
+                            </div>
+                            <div class="text-gray-400">
+                                <span th:text="${subforum.topicCount + ' topics'}">0 topics</span>
+                                <span class="mx-2 text-gray-600">•</span>
+                                <span th:text="${subforum.postCount + ' posts'}">0 posts</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Pinned Topics -->
+                    <div th:if="${pinnedTopics != null && !pinnedTopics.isEmpty()}" class="mb-6">
+                        <div class="flex items-center mb-3">
+                            <i class="fas fa-thumbtack text-accent-blue mr-2"></i>
+                            <h2 class="text-lg font-semibold text-gray-300">Pinned Topics</h2>
+                        </div>
+                        <div class="forum-card">
+                            <div th:each="topic, iterStat : ${pinnedTopics}" 
+                                th:class="${iterStat.last ? '' : 'border-b border-gray-800'}"
+                                class="topic-card">
+                                <div class="p-4 flex items-start">
+                                    <div class="flex-grow">
+                                        <div class="flex items-center">
+                                            <i class="fas fa-thumbtack text-amber-500 mr-2"></i>
+                                            <a th:href="@{'/forums/' + ${writer.username} + '/' + ${subforum.slug} + '/topics/' + ${topic.id}}"
+                                            class="font-medium text-lg text-accent-blue hover:text-blue-400" th:text="${topic.title}">
+                                                Topic Title
+                                            </a>
+                                        </div>
+                                        <div class="flex text-sm text-gray-500 mt-1">
+                                            <span>Started by</span>
+                                            <a th:href="@{'/profile/' + ${topic.author.username}}" class="ml-1 text-accent-cyan" th:text="${topic.author.username}">username</a>
+                                            <span class="mx-1">•</span>
+                                            <span th:text="${#temporals.format(topic.createdAt, 'MMM d, yyyy')}">Jan 1, 2025</span>
+                                            <span th:if="${topic.isLocked}" class="ml-2 text-red-400 flex items-center">
+                                                <i class="fas fa-lock text-xs mr-1"></i>
+                                                Locked
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-gray-300 font-medium" th:text="${topic.replyCount + ' replies'}">0 replies</div>
+                                        <div class="text-gray-500 text-sm" th:text="${topic.viewCount + ' views'}">0 views</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Regular Topics -->
+                    <div th:if="${regularTopics != null && !regularTopics.isEmpty()}" class="mb-6">
+                        <div class="flex items-center mb-3">
+                            <i class="fas fa-comments text-accent-blue mr-2"></i>
+                            <h2 class="text-lg font-semibold text-gray-300">Topics</h2>
+                        </div>
+                        <div class="forum-card">
+                            <div th:each="topic, iterStat : ${regularTopics}" 
+                                th:class="${iterStat.last ? '' : 'border-b border-gray-800'}"
+                                class="topic-card">
+                                <div class="p-4 flex items-start hover:bg-bg-card-hover">
+                                    <div class="flex-grow">
+                                        <a th:href="@{'/forums/' + ${writer.username} + '/' + ${subforum.slug} + '/topics/' + ${topic.id}}"
+                                        class="font-medium text-lg text-accent-blue hover:text-blue-400" th:text="${topic.title}">
+                                            Topic Title
+                                        </a>
+                                        <div class="flex text-sm text-gray-500 mt-1">
+                                            <span>Started by</span>
+                                            <a th:href="@{'/profile/' + ${topic.author.username}}" class="ml-1 text-accent-cyan" th:text="${topic.author.username}">username</a>
+                                            <span class="mx-1">•</span>
+                                            <span th:text="${#temporals.format(topic.createdAt, 'MMM d, yyyy')}">Jan 1, 2025</span>
+                                            <span th:if="${topic.isLocked}" class="ml-2 text-red-400 flex items-center">
+                                                <i class="fas fa-lock text-xs mr-1"></i>
+                                                Locked
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-gray-300 font-medium" th:text="${topic.replyCount + ' replies'}">0 replies</div>
+                                        <div class="text-gray-500 text-sm" th:text="${topic.viewCount + ' views'}">0 views</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Pagination -->
+                        <div th:if="${totalPages > 1}" class="flex items-center justify-center mt-6">
+                            <nav class="relative z-0 inline-flex rounded-md -space-x-px" aria-label="Pagination">
+                                <a th:href="@{'/forums/' + ${writer.username} + '/' + ${subforum.slug}(page=${currentPage - 1}, sort=${currentSort})}" 
+                                th:class="${currentPage == 0 ? 'cursor-not-allowed opacity-50' : ''}"
+                                class="relative inline-flex items-center px-3 py-2 rounded-l-md border border-gray-700 bg-bg-card text-sm font-medium text-gray-400 hover:bg-bg-card-hover">
+                                    <span class="sr-only">Previous</span>
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                                
+                                <th:block th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+                                    <a th:href="@{'/forums/' + ${writer.username} + '/' + ${subforum.slug}(page=${i}, sort=${currentSort})}" 
+                                    th:class="${i == currentPage ? 'relative inline-flex items-center px-4 py-2 border border-accent-blue bg-bg-card-hover text-sm font-medium text-accent-blue' : 'relative inline-flex items-center px-4 py-2 border border-gray-700 bg-bg-card text-sm font-medium text-gray-300 hover:bg-bg-card-hover'}"
+                                    th:text="${i + 1}">1</a>
+                                </th:block>
+                                
+                                <a th:href="@{'/forums/' + ${writer.username} + '/' + ${subforum.slug}(page=${currentPage + 1}, sort=${currentSort})}" 
+                                th:class="${currentPage == totalPages - 1 ? 'cursor-not-allowed opacity-50' : ''}"
+                                class="relative inline-flex items-center px-3 py-2 rounded-r-md border border-gray-700 bg-bg-card text-sm font-medium text-gray-400 hover:bg-bg-card-hover">
+                                    <span class="sr-only">Next</span>
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </nav>
+                        </div>
+                    </div>
+                    
+                    <!-- No Topics Message -->
+                    <div th:if="${regularTopics == null || regularTopics.isEmpty() && (pinnedTopics == null || pinnedTopics.isEmpty())}" class="forum-card p-8 text-center">
+                        <div class="text-5xl text-gray-600 mb-5">
+                            <i class="fas fa-comments"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-3">Be the First to Start a Discussion</h3>
+                        <p class="text-gray-400 mb-6 max-w-xl mx-auto">No topics have been created in this subforum yet. Start a conversation about this topic!</p>
+                        <a th:href="@{'/forums/' + ${writer.username} + '/' + ${subforum.slug} + '/new-topic'}" 
+                        class="btn-primary inline-flex items-center">
+                            <i class="fas fa-plus mr-2"></i>
+                            Create the First Topic
+                        </a>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Footer -->
+            <footer class="bg-bg-card py-10 mt-auto border-t border-gray-800">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="grid md:grid-cols-4 gap-8">
+                        <div class="md:col-span-2">
+                            <a href="/Home" class="text-2xl font-bold gradient-text inline-block mb-3">Inkwell</a>
+                            <p class="text-gray-400 max-w-md">
+                                A platform for writers and readers to connect through the power of storytelling. 
+                                Create, share, and discover stories that captivate and inspire.
+                            </p>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold mb-4 text-white">Navigation</h3>
+                            <ul class="space-y-2">
+                                <li>
+                                    <a href="/Home" class="text-gray-400 hover:text-accent-blue transition-colors">Home</a>
+                                </li>
+                                <li>
+                                    <a href="/Library" class="text-gray-400 hover:text-accent-blue transition-colors">Library</a>
+                                </li>
+                                <li>
+                                    <a href="/Dashboard" class="text-gray-400 hover:text-accent-blue transition-colors">Dashboard</a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold mb-4 text-white">Legal</h3>
+                            <ul class="space-y-2">
+                                <li>
+                                    <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">Terms of Service</a>
+                                </li>
+                                <li>
+                                    <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">Privacy Policy</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="mt-8 pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center">
+                        <p class="text-gray-400 text-sm">
+                            &copy; 2023-2025 Inkwell. All rights reserved.
+                        </p>
+                        <div class="mt-4 md:mt-0">
+                            <a href="#" class="text-sm text-accent-blue hover:underline">Back to top</a>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Loading overlay -->
+    <div id="loadingOverlay" class="hidden fixed inset-0 bg-bg-dark bg-opacity-80 flex items-center justify-center z-50">
+        <div class="text-center">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent-blue mb-4"></div>
+            <p class="text-lg text-white">Loading topics...</p>
+        </div>
+    </div>
+
+    <script th:replace="~{fragments/sidebar :: sidebar-script}"></script>
+    <script th:replace="~{fragments/FantasyBackground :: fantasy-script}"></script>
+</body>
+</html>

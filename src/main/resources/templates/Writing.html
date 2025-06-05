@@ -1,0 +1,2571 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inkwell - Writing Studio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Add more font options -->
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,700;1,400;1,700&family=Open+Sans:ital,wght@0,400;0,600;1,400;1,600&family=Source+Code+Pro:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://w.soundcloud.com/player/api.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/typo.js/1.2.2/typo.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366F1',
+                        'primary-dark': '#4F46E5',
+                        'primary-light': '#A5B4FC',
+                        secondary: '#10B981',
+                        'secondary-dark': '#059669',
+                        dark: '#1F2937',
+                        'dark-light': '#374151',
+                        light: '#F9FAFB',
+                        'light-dark': '#E5E7EB'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        serif: ['Merriweather', 'Georgia', 'serif']
+                    },
+                    boxShadow: {
+                        'inner-glow': 'inset 0 2px 4px 0 rgba(255,255,255,0.05)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300;1,400&display=swap');
+
+        body {
+            background-color: #111827;
+            color: #F9FAFB;
+            font-family: 'Inter', sans-serif;
+            line-height: 1.5;
+        }
+
+        .main-content {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 100%;
+        }
+
+        /* When sidebar is expanded, slide main content */
+        .main-content.sidebar-expanded {
+            transform: translateX(250px); /* Same as sidebar width */
+        }
+
+        /* Collapse stories sidebar when main sidebar is expanded */
+        .stories-sidebar {
+            transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .main-content.sidebar-expanded .stories-sidebar {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Writing page specific sidebar overrides */
+        .writing-page .sidebar.collapsed + .main-content {
+            margin-left: 10px; /* Collapsed width */
+        }
+        
+        .writing-page .sidebar:not(.collapsed) + .main-content {
+            margin-left: 0; /* No margin when expanded as we're sliding */
+        }
+        
+        /* Position the toggle differently for this page */
+        .writing-page .sidebar-toggle {
+            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s ease;
+            z-index: 70;
+        }
+
+        .writing-page .sidebar.collapsed ~ .sidebar-toggle {
+            transform: translateX(0);
+        }
+
+        .writing-page .sidebar:not(.collapsed) ~ .sidebar-toggle {
+            transform: translateX(0);
+        }
+
+        .sidebar-transition {
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-stories-list::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .sidebar-stories-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .sidebar-stories-list::-webkit-scrollbar-thumb {
+            background: rgba(156, 163, 175, 0.3);
+            border-radius: 4px;
+        }
+
+        .sidebar-stories-list::-webkit-scrollbar-thumb:hover {
+            background: rgba(156, 163, 175, 0.5);
+        }
+
+        .sidebar-stories-list .text-light {
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .glass-panel:hover {
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .editor-content {
+            font-family: 'Lora', Georgia, serif;
+            background-color: #1F2937;
+            color: #F9FAFB;
+            min-height: 400px;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            line-height: 1.7;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .editor-content:focus {
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.4);
+            outline: none;
+        }
+
+        .toolbar-button {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            color: #e2e8f0;
+            transition: all 0.3s cubic-bezier(0.33, 1, 0.68, 1);
+            border: 1px solid transparent;
+        }
+
+        .toolbar-button:hover {
+            background: rgba(14, 165, 233, 0.1);
+            color: #ffffff;
+            transform: translateY(-1px);
+        }
+
+        .toolbar-button.active {
+            background: linear-gradient(90deg, rgba(14, 165, 233, 0.2), rgba(6, 182, 212, 0.2));
+            color: #0ea5e9;
+            border-color: rgba(14, 165, 233, 0.3);
+        }
+
+        .tab-button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.33, 1, 0.68, 1);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: transparent;
+            border: 1px solid transparent;
+        }
+
+        .tab-button:hover {
+            background: rgba(14, 165, 233, 0.05);
+            transform: translateY(-1px);
+        }
+
+        .tab-button.active {
+            background: linear-gradient(90deg, rgba(14, 165, 233, 0.2), rgba(6, 182, 212, 0.2));
+            border: 1px solid rgba(14, 165, 233, 0.3);
+            color: #0ea5e9;
+        }
+
+        .sidebar-item {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            transition: all 0.3s cubic-bezier(0.33, 1, 0.68, 1);
+            cursor: pointer;
+            margin-bottom: 0.5rem;
+            border: 1px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sidebar-item:hover {
+            background: rgba(14, 165, 233, 0.05);
+            border-color: rgba(14, 165, 233, 0.1);
+            transform: translateX(2px);
+        }
+
+        .sidebar-item.active {
+            background: rgba(14, 165, 233, 0.1);
+            border-left: 3px solid #0ea5e9;
+        }
+
+        .action-button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.3s cubic-bezier(0.33, 1, 0.68, 1);
+            white-space: nowrap;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .action-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .primary-button {
+            background: linear-gradient(90deg, #0ea5e9, #06b6d4);
+            color: white;
+            box-shadow: 0 4px 6px rgba(14, 165, 233, 0.15);
+        }
+
+        .primary-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(14, 165, 233, 0.25), 0 0 0 2px rgba(14, 165, 233, 0.1);
+        }
+
+        .primary-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.7s ease;
+            z-index: -1;
+        }
+
+        .primary-button:hover::before {
+            left: 100%;
+        }
+
+        .secondary-button {
+            background: rgba(14, 165, 233, 0.1);
+            color: #0ea5e9;
+            border: 1px solid rgba(14, 165, 233, 0.3);
+        }
+
+        .secondary-button:hover:not(:disabled) {
+            background: rgba(14, 165, 233, 0.2);
+            border-color: #0ea5e9;
+            transform: translateY(-2px);
+        }
+
+        .ghost-button {
+            background: rgba(17, 24, 39, 0.6);
+            color: #e2e8f0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .ghost-button:hover:not(:disabled) {
+            background: rgba(17, 24, 39, 0.8);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .planning-box {
+            position: absolute;
+            background: linear-gradient(145deg, #151e30, #0f1625);
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            padding: 1rem;
+            min-width: 200px;
+            min-height: 120px;
+            resize: both;
+            overflow: auto;
+            border: 2px solid #0ea5e9;
+            transition: all 0.3s ease;
+        }
+
+        .planning-box:hover {
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25), 0 0 15px rgba(14, 165, 233, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .planning-box:focus-within {
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.4);
+        }
+
+        .planning-box .title {
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: #F9FAFB;
+        }
+
+        .planning-box textarea {
+            width: 100%;
+            height: calc(100% - 40px);
+            background-color: #374151;
+            color: #F9FAFB;
+            border: none;
+            border-radius: 0.25rem;
+            padding: 0.75rem;
+            resize: none;
+        }
+
+        .planning-box textarea:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.4);
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.75);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+
+        .modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: #1F2937;
+            border-radius: 0.75rem;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            transform: scale(0.95);
+            transition: transform 0.3s;
+        }
+
+        .modal.show .modal-content {
+            transform: scale(1);
+        }
+
+        .version-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            background-color: #374151;
+            transition: all 0.2s;
+        }
+
+        .version-item:hover {
+            background-color: #4B5563;
+        }
+
+        .version-item.current {
+            border-left: 3px solid #6366F1;
+        }
+
+        .selected-track {
+            display: flex;
+            align-items: center;
+            background-color: rgba(99, 102, 241, 0.1);
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .selected-track img {
+            width: 60px;
+            height: 60px;
+            border-radius: 0.375rem;
+            margin-right: 1rem;
+            object-fit: cover;
+        }
+
+        .selected-track .track-info {
+            flex: 1;
+        }
+
+        .selected-track .title {
+            font-weight: 600;
+            font-size: 1.125rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .selected-track .artist {
+            color: #A1A1AA;
+        }
+
+        .selected-track .remove-btn {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 9999px;
+            color: #EF4444;
+            transition: all 0.2s;
+        }
+
+        .selected-track .remove-btn:hover {
+            background-color: rgba(239, 68, 68, 0.1);
+        }
+
+        .version-badge {
+            background-color: #6366F1;
+            color: white;
+            border-radius: 9999px;
+            padding: 0.25rem 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .warning-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background-color: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            color: #F59E0B;
+            border-radius: 0.5rem;
+            padding: 0.5rem 1rem;
+            margin-top: 1rem;
+        }
+
+        /* Spell check styles */
+        .editor-content.spellcheck-enabled {
+            spellcheck: true;
+        }
+
+        .editor-content.spellcheck-enabled ::spelling-error {
+            text-decoration: wavy underline #EF4444;
+        }
+
+        .autocorrect-highlight {
+            background-color: rgba(99, 102, 241, 0.1);
+            border-radius: 2px;
+            transition: background-color 1s ease;
+        }
+
+        #storiesSidebar {
+            max-height: 80vh;
+            transition: opacity 0.3s ease;
+        }
+
+        #storiesSidebar:hover {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .truncate {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease forwards;
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .animate-slide-in {
+            animation: slideInRight 0.3s ease forwards;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+    <style th:replace="fragments/SideBar :: sidebar-style"></style>
+</head>
+<body class="min-h-screen">
+
+    <div th:replace="fragments/SideBar :: sidebar-trigger"></div>
+    <aside th:replace="fragments/SideBar :: sidebar"></aside>
+
+<div class="main-content">
+    <!-- Stories Sidebar -->
+    <div class="fixed top-1/2 left-4 transform -translate-y-1/2 z-20">
+    
+    <!-- Position-fixed compact sidebar -->
+    <aside id="storiesSidebar" class="w-64 glass-panel rounded-xl p-4 shadow-lg">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="font-medium text-light-dark uppercase text-xs tracking-wider">Your Stories</h3>
+        </div>
+        
+        <div class="sidebar-stories-list max-h-80 overflow-y-auto pr-1">
+            <!-- Stories will be loaded here -->
+            <div th:each="story : ${userStories}" 
+                th:class="${currentStory != null && currentStory.id == story.id ? 'bg-primary bg-opacity-10 border-l-2 border-primary' : ''} + ' p-2 rounded-lg mb-2 hover:bg-dark-light cursor-pointer transition-all'"
+                th:onclick="'window.location.href=\'/Writing?storyId=' + ${story.id} + '\''">
+                <div class="text-light font-medium truncate" th:text="${story.title}">Story Title</div>
+                <div class="text-xs text-light-dark mt-0.5" th:if="${story.lastUpdated != null}" th:text="${#temporals.format(story.lastUpdated, 'MMM d, yyyy')}">Last modified</div>
+            </div>
+            
+            <div th:if="${userStories.isEmpty()}" class="text-center py-4 text-light-dark">
+                <i class="fas fa-book-open text-2xl mb-2 opacity-50"></i>
+                <p class="text-sm">No stories yet</p>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <a href="/Dashboard" class="action-button primary-button w-full py-1.5 text-sm">
+                <i class="fas fa-plus text-xs"></i>
+                <span>Create New Story</span>
+            </a>
+        </div>
+    </aside>
+</div>
+
+    <!-- Full sidebar (expanded view) -->
+    <div id="fullSidebar" class="fixed inset-0 z-30 hidden">
+        <div class="absolute inset-0 bg-black bg-opacity-50" id="sidebarOverlay"></div>
+        <aside class="absolute top-0 left-0 h-full w-80 glass-panel p-6 flex flex-col animate-slide-in">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-semibold">Your Stories</h2>
+                <button id="closeSidebar" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-dark-light">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="sidebar-stories-list flex-1 overflow-y-auto pr-2">
+                <!-- Stories will be loaded here (same content) -->
+                <div th:each="story : ${userStories}" 
+                    th:class="${currentStory != null && currentStory.id == story.id ? 'bg-primary bg-opacity-10 border-l-2 border-primary' : ''} + ' p-3 rounded-lg mb-2 hover:bg-dark-light cursor-pointer transition-all'"
+                    th:onclick="'window.location.href=\'/Writing?storyId=' + ${story.id} + '\''">
+                    <div class="text-light font-medium" th:text="${story.title}">Story Title</div>
+                    <div class="text-xs text-light-dark mt-1" th:if="${story.lastUpdated != null}" th:text="${#temporals.format(story.lastUpdated, 'MMM d, yyyy')}">Last modified</div>
+                </div>
+                
+                <div th:if="${userStories.isEmpty()}" class="text-center py-8 text-light-dark">
+                    <i class="fas fa-book-open text-4xl mb-3 opacity-50"></i>
+                    <p>No stories yet</p>
+                </div>
+            </div>
+            
+            <div class="mt-6">
+                <a href="/Dashboard" class="action-button primary-button w-full">
+                    <i class="fas fa-plus"></i>
+                    <span>Create New Story</span>
+                </a>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Main Content -->
+    <main class="container mx-auto py-8 px-4 md:px-8 max-w-7xl">
+        <div class="mb-8">
+            <h1 th:if="${currentStory != null}" th:text="${currentStory.title}" class="text-3xl font-bold text-light">Story Title</h1>
+            <h1 th:unless="${currentStory != null}" class="text-3xl font-bold text-light">Welcome to Inkwell</h1>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex flex-wrap gap-2 mb-6">
+            <button class="tab-button active" data-tab="chapters">
+                <i class="fas fa-book"></i>
+                <span>Chapters</span>
+            </button>
+            <button class="tab-button" data-tab="characters">
+                <i class="fas fa-user"></i>
+                <span>Characters</span>
+            </button>
+            <button class="tab-button" data-tab="worldbuilding">
+                <i class="fas fa-globe"></i>
+                <span>World</span>
+            </button>
+            <button class="tab-button" data-tab="planning">
+                <i class="fas fa-map"></i>
+                <span>Planning</span>
+            </button>
+        </div>
+
+        <!-- Main Content Area -->
+        <div th:if="${currentStory != null}" class="flex flex-col md:flex-row gap-6">
+            <!-- Left Sidebar -->
+            <div id="leftSidebar" class="w-full md:w-64 glass-panel rounded-xl p-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-medium text-light" id="sidebarTitle">Chapters</h3>
+                    <button id="newItemBtn" class="w-8 h-8 rounded-md bg-primary text-light flex items-center justify-center hover:bg-primary-dark transition-colors">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                <div id="sidebarList" class="max-h-[calc(100vh-18rem)] overflow-y-auto">
+                    <!-- Sidebar items will be loaded here -->
+                    <div class="text-center py-6 text-light-dark">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p class="mt-2">Loading...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Editor Area -->
+            <div class="flex-1 glass-panel rounded-xl p-6">
+                <!-- Editor Content -->
+                <div id="editorContainer" class="h-full flex flex-col">
+                    <!-- Editor Toolbar -->
+                    <div class="grid grid-cols-12 gap-2 p-3 bg-dark rounded-t-lg border-b border-dark-light mb-4">
+                        <button class="toolbar-button col-span-1" data-command="bold" title="Bold">
+                        <i class="fas fa-bold"></i>
+                    </button>
+                    <button class="toolbar-button col-span-1" data-command="italic" title="Italic">
+                        <i class="fas fa-italic"></i>
+                    </button>
+                    <button class="toolbar-button col-span-1" data-command="underline" title="Underline">
+                        <i class="fas fa-underline"></i>
+                    </button>
+                    <div class="col-span-1 border-r border-dark-light"></div>
+                    <button class="toolbar-button col-span-1" data-command="justifyLeft" title="Align Left">
+                        <i class="fas fa-align-left"></i>
+                    </button>
+                    <button class="toolbar-button col-span-1" data-command="justifyCenter" title="Align Center">
+                        <i class="fas fa-align-center"></i>
+                    </button>
+                    <button class="toolbar-button col-span-1" data-command="justifyRight" title="Align Right">
+                        <i class="fas fa-align-right"></i>
+                    </button>
+                    <div class="col-span-1 border-r border-dark-light"></div>
+                    <button class="toolbar-button col-span-1" data-command="insertUnorderedList" title="Bullet List">
+                        <i class="fas fa-list-ul"></i>
+                    </button>
+                    <button class="toolbar-button col-span-1" data-command="insertOrderedList" title="Numbered List">
+                        <i class="fas fa-list-ol"></i>
+                    </button>
+                    <div class="col-span-1 border-r border-dark-light" id="musicDivider"></div>
+                    <button class="toolbar-button col-span-1" id="addMusicButton" title="Add Background Music">
+                        <i class="fas fa-music"></i>
+                    </button>
+                    </div>
+
+                    <!-- Add this after the other toolbar buttons -->
+                    <div class="flex items-center gap-2 mt-3 mb-4">
+                        <select id="fontSelector" class="bg-dark-light text-light px-3 py-2 rounded-lg text-sm border border-dark-light focus:outline-none focus:ring-2 focus:ring-accent-blue focus:border-accent-blue transition-all">
+                            <option value="'Merriweather', Georgia, serif">Merriweather</option>
+                            <option value="'Lora', Georgia, serif">Lora</option>
+                            <option value="'Open Sans', sans-serif">Open Sans</option>
+                            <option value="'Source Code Pro', monospace">Source Code Pro</option>
+                        </select>
+                    </div>
+
+                    <!-- Selected Music Track -->
+                    <div id="selectedTrackContainer" class="hidden mb-4">
+                        <div class="selected-track">
+                            <img id="selectedTrackArtwork" src="/placeholder.svg" alt="Track Artwork">
+                            <div class="track-info">
+                                <div id="selectedTrackTitle" class="title">Track Title</div>
+                                <div id="selectedTrackArtist" class="artist">Artist Name</div>
+                            </div>
+                            <button id="removeTrackButton" class="remove-btn">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Editable Content -->
+                    <div id="editableContent" class="editor-content flex-1 mb-4" contenteditable="true" placeholder="Select an item to start editing..."></div>
+
+                    <!-- Editor Footer -->
+                    <div class="flex flex-col space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                            <span class="text-sm text-light-dark">Version <span id="currentVersionNumber" class="text-light">1</span></span>
+                        </div>
+                        <div class="flex gap-2">
+                            <button id="versionHistoryButton" class="action-button ghost-button py-2">
+                                <i class="fas fa-history"></i>
+                                <span>History</span>
+                            </button>
+                            <button id="publishButton" class="action-button secondary-button py-2">
+                                <i class="fas fa-upload"></i>
+                                <span>Publish</span>
+                            </button>
+                            <button id="saveButton" class="action-button primary-button py-2" disabled>
+                                <i class="fas fa-save"></i>
+                                <span>Save</span>
+                            </button>
+                        </div>
+                        </div>
+
+                        <div id="oldVersionBadge" class="warning-badge hidden">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <div class="flex-1">Viewing old version: <span id="oldVersionNumber" class="font-medium">1</span></div>
+                            <button id="restoreCurrentButton" class="text-xs bg-amber-500 text-white px-3 py-1 rounded">
+                                Return to current
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Planning Area (initially hidden) -->
+                <div id="planningArea" class="hidden h-full">
+                    <div class="flex justify-between items-center mb-6">
+                        <div class="flex gap-2">
+                            <button onclick="addPlanningBox('#0ea5e9')" class="action-button primary-button">
+                                <i class="fas fa-plus"></i>
+                                <span>New Note</span>
+                            </button>
+                            <div class="flex border border-dark-light rounded-lg overflow-hidden">
+                                <button onclick="addPlanningBox('#ff1744')" class="w-8 h-8 flex items-center justify-center hover:bg-dark-light" style="color: #ff1744">
+                                    <i class="fas fa-square"></i>
+                                </button>
+                                <button onclick="addPlanningBox('#d500f9')" class="w-8 h-8 flex items-center justify-center hover:bg-dark-light" style="color: #d500f9">
+                                    <i class="fas fa-square"></i>
+                                </button>
+                                <button onclick="addPlanningBox('#00e5ff')" class="w-8 h-8 flex items-center justify-center hover:bg-dark-light" style="color: #00e5ff">
+                                    <i class="fas fa-square"></i>
+                                </button>
+                                <button onclick="addPlanningBox('#76ff03')" class="w-8 h-8 flex items-center justify-center hover:bg-dark-light" style="color: #76ff03">
+                                    <i class="fas fa-square"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button id="savePlanningButton" class="action-button secondary-button">
+                            <i class="fas fa-save"></i>
+                            <span>Save Planning</span>
+                        </button>
+                    </div>
+                    <div class="bg-dark rounded-lg w-full h-[calc(100vh-20rem)]">
+                        <!-- Planning boxes will be added here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty state when no story is selected -->
+        <div th:unless="${currentStory != null}" class="glass-panel rounded-xl p-12 text-center">
+            <div class="text-6xl text-primary opacity-50 mb-6">
+                <i class="fas fa-feather-alt"></i>
+            </div>
+            <h3 class="text-2xl font-bold mb-4">Start Your Writing Journey</h3>
+            <p class="text-light-dark mb-8 max-w-lg mx-auto">Select a story from the sidebar or create a new one to begin crafting your next masterpiece</p>
+            <a href="/Dashboard" class="action-button primary-button inline-flex">
+                <i class="fas fa-plus"></i>
+                <span>Create New Story</span>
+            </a>
+        </div>
+    </main>
+</div>
+
+    <!-- SoundCloud Modal -->
+    <div id="soundcloudModal" class="modal">
+        <div class="modal-content p-6">
+            <div class="flex justify-between items-center mb-6 pb-3 border-b border-dark-light">
+                <h3 class="text-xl font-bold">Add Background Music</h3>
+                <button id="closeModal" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-dark-light">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="mb-6">
+                <label for="trackSearch" class="block text-sm font-medium mb-2">Enter a SoundCloud track URL</label>
+                <div class="flex gap-2">
+                    <input type="text" id="trackSearch" class="flex-1 bg-dark-light border border-dark-light rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary" 
+                           placeholder="https://soundcloud.com/artist/track-name">
+                    <button id="searchButton" class="action-button primary-button">
+                        <i class="fas fa-search"></i>
+                        <span>Add</span>
+                    </button>
+                </div>
+                <p class="text-xs text-light-dark mt-2">Paste the full URL of a SoundCloud track</p>
+            </div>
+
+            <div id="searchResults" class="max-h-80 overflow-y-auto">
+                <div class="text-center py-8 text-light-dark">
+                    <i class="fas fa-music text-4xl mb-4 opacity-30"></i>
+                    <p>Enter a SoundCloud URL above</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Version History Modal -->
+    <div id="versionHistoryModal" class="modal">
+        <div class="modal-content p-6">
+            <div class="flex justify-between items-center mb-6 pb-3 border-b border-dark-light">
+                <h3 class="text-xl font-bold">Version History</h3>
+                <button id="closeVersionModal" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-dark-light">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="mb-4 text-sm text-light-dark">
+                Select a previous version to view or restore
+            </div>
+
+            <div id="versionsList" class="max-h-80 overflow-y-auto">
+                <div class="text-center py-8">
+                    <i class="fas fa-spinner fa-spin text-2xl mb-3"></i>
+                    <p class="text-light-dark">Loading version history...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize SoundCloud API with error handling
+        let scInitialized = true;
+
+        // DOM Elements
+        const tabs = document.querySelectorAll('.tab-button');
+        const editor = document.getElementById('editorContainer');
+        const planningArea = document.getElementById('planningArea');
+        const leftSidebar = document.getElementById('leftSidebar');
+        const sidebarTitle = document.getElementById('sidebarTitle');
+        const sidebarList = document.getElementById('sidebarList');
+        const editableContent = document.getElementById('editableContent');
+        const newItemBtn = document.getElementById('newItemBtn');
+        const saveButton = document.getElementById('saveButton');
+        const publishButton = document.getElementById('publishButton');
+        const addMusicButton = document.getElementById('addMusicButton');
+        const musicDivider = document.getElementById('musicDivider');
+        const selectedTrackContainer = document.getElementById('selectedTrackContainer');
+        const selectedTrackArtwork = document.getElementById('selectedTrackArtwork');
+        const selectedTrackTitle = document.getElementById('selectedTrackTitle');
+        const selectedTrackArtist = document.getElementById('selectedTrackArtist');
+        const removeTrackButton = document.getElementById('removeTrackButton');
+        
+        // SoundCloud Modal Elements
+        const soundcloudModal = document.getElementById('soundcloudModal');
+        const closeModal = document.getElementById('closeModal');
+        const trackSearch = document.getElementById('trackSearch');
+        const searchButton = document.getElementById('searchButton');
+        const searchResults = document.getElementById('searchResults');
+
+        // Version History Elements
+        const versionHistoryButton = document.getElementById('versionHistoryButton');
+        const versionHistoryModal = document.getElementById('versionHistoryModal');
+        const closeVersionModal = document.getElementById('closeVersionModal');
+        const versionsList = document.getElementById('versionsList');
+        const currentVersionNumber = document.getElementById('currentVersionNumber');
+        const oldVersionBadge = document.getElementById('oldVersionBadge');
+        const oldVersionNumber = document.getElementById('oldVersionNumber');
+        const restoreCurrentButton = document.getElementById('restoreCurrentButton');
+
+        // State Management
+        const tabItems = {
+            chapters: [],
+            characters: [],
+            worldbuilding: [],
+            planning: []
+        };
+        
+        let currentTab = 'chapters';
+        let activeItemId = null;
+        let unsavedChanges = false;
+        let currentTrack = null;
+        let currentVersionId = null;
+        let isViewingOldVersion = false;
+        let versions = [];
+
+        // Get Story ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const currentStoryId = urlParams.get('storyId');
+
+        // Tab switching
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Auto-save content before switching
+                autoSave();
+                
+                // Update active state
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                // Get the tab type
+                currentTab = tab.dataset.tab;
+                
+                // Update sidebar title
+                let icon, title;
+                switch(currentTab) {
+                    case 'chapters':
+                        icon = 'book';
+                        title = 'Chapters';
+                        break;
+                    case 'characters':
+                        icon = 'user';
+                        title = 'Characters';
+                        break;
+                    case 'worldbuilding':
+                        icon = 'globe';
+                        title = 'World Settings';
+                        break;
+                    case 'planning':
+                        icon = 'map';
+                        title = 'Planning';
+                        break;
+                }
+                
+                sidebarTitle.innerHTML = `<i class="fas fa-${icon} mr-2"></i>${title}`;
+                
+                // Show/hide appropriate content
+                if (currentTab === 'planning') {
+                    editor.classList.add('hidden');
+                    planningArea.classList.remove('hidden');
+                    leftSidebar.classList.add('hidden');
+                    loadPlanningElements();
+                } else {
+                    editor.classList.remove('hidden');
+                    planningArea.classList.add('hidden');
+                    leftSidebar.classList.remove('hidden');
+                }
+                
+                // Toggle publish button visibility
+                publishButton.classList.toggle('hidden', currentTab !== 'chapters');
+                
+                // Toggle music button visibility
+                addMusicButton.classList.toggle('hidden', currentTab !== 'chapters');
+                musicDivider.classList.toggle('hidden', currentTab !== 'chapters');
+                
+                // If music is not for this tab, hide it
+                if (currentTab !== 'chapters') {
+                    selectedTrackContainer.classList.add('hidden');
+                }
+                
+                // Render the sidebar items
+                renderSidebarItems();
+            });
+        });
+
+        // Initialize editor toolbar
+        const toolbarButtons = document.querySelectorAll('.toolbar-button[data-command]');
+        toolbarButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const command = button.dataset.command;
+                
+                // Handle alignment buttons special case
+                if (command.startsWith('justify')) {
+                    document.querySelectorAll('.toolbar-button[data-command^="justify"]')
+                        .forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                }
+                
+                document.execCommand(command, false, null);
+                editableContent.focus();
+                unsavedChanges = true;
+            });
+        });
+
+        // Editable content change detection
+        editableContent.addEventListener('input', () => {
+            unsavedChanges = true;
+            saveButton.disabled = false;
+        });
+
+        // Disable editor initially
+        function disableEditor() {
+            editableContent.contentEditable = 'false';
+            editableContent.classList.add('opacity-50');
+            editableContent.innerHTML = '<p class="text-center text-light-dark">Select an item from the sidebar or create a new one</p>';
+            saveButton.disabled = true;
+            publishButton.disabled = true;
+            
+            // Hide music elements
+            if (currentTab === 'chapters') {
+                addMusicButton.classList.remove('hidden');
+                musicDivider.classList.remove('hidden');
+            } else {
+                addMusicButton.classList.add('hidden');
+                musicDivider.classList.add('hidden');
+            }
+            
+            selectedTrackContainer.classList.add('hidden');
+            
+            // Hide version history
+            document.getElementById('versionHistoryContainer').classList.add('hidden');
+        }
+
+        // Enable editor
+        function enableEditor() {
+            editableContent.contentEditable = 'true';
+            editableContent.classList.remove('opacity-50');
+            saveButton.disabled = false;
+            
+            // Show publish button for chapters
+            if (currentTab === 'chapters') {
+                publishButton.classList.remove('hidden');
+                const item = getCurrentItem();
+                publishButton.disabled = !item || !item.id;
+            } else {
+                publishButton.classList.add('hidden');
+            }
+            
+            // Show music button for chapters
+            if (currentTab === 'chapters') {
+                addMusicButton.classList.remove('hidden');
+                musicDivider.classList.remove('hidden');
+            } else {
+                addMusicButton.classList.add('hidden');
+                musicDivider.classList.add('hidden');
+                selectedTrackContainer.classList.add('hidden');
+            }
+        }
+
+        // Function to save planning elements
+        function savePlanningElements() {
+            const savePlanningButton = document.getElementById('savePlanningButton');
+            const originalText = savePlanningButton.innerHTML;
+            
+            savePlanningButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Saving...</span>';
+            savePlanningButton.disabled = true;
+            
+            // Get all planning boxes from the planning container
+            const planningContainer = planningArea.querySelector('.bg-dark');
+            const planningBoxes = planningContainer.querySelectorAll('.planning-box');
+            
+            const planningData = Array.from(planningBoxes).map(box => {
+                return {
+                    title: box.querySelector('.title').textContent,
+                    content: box.querySelector('textarea').value,
+                    color: box.style.borderColor,
+                    positionX: parseInt(box.style.left),
+                    positionY: parseInt(box.style.top),
+                    width: box.offsetWidth,
+                    height: box.offsetHeight,
+                    storyId: currentStoryId
+                };
+            });
+            
+            // Send data to server
+            fetch(`/api/writing/planning/save`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    storyId: currentStoryId,
+                    elements: planningData
+                })
+            })
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                return response.json();
+            })
+            .then(data => {
+                savePlanningButton.innerHTML = '<i class="fas fa-check"></i><span>Saved</span>';
+                setTimeout(() => {
+                    savePlanningButton.innerHTML = originalText;
+                    savePlanningButton.disabled = false;
+                }, 2000);
+            })
+            .catch(error => {
+                console.error('Error saving planning elements:', error);
+                savePlanningButton.innerHTML = '<i class="fas fa-exclamation-circle"></i><span>Error</span>';
+                setTimeout(() => {
+                    savePlanningButton.innerHTML = originalText;
+                    savePlanningButton.disabled = false;
+                }, 2000);
+            });
+        }
+
+        // Get current item
+        function getCurrentItem() {
+            const activeItem = document.querySelector('.sidebar-item.active');
+            return activeItem ? {
+                id: activeItem.dataset.id,
+                title: activeItem.textContent.trim(),
+                type: currentTab
+            } : null;
+        }
+
+        // Add new item
+        newItemBtn.addEventListener('click', handleNewItem);
+
+        function handleNewItem() {
+            // Auto-save current content
+            autoSave();
+            
+            // Create a default name based on tab type
+            let defaultName = '';
+            switch(currentTab) {
+                case 'chapters':
+                    defaultName = `Chapter ${tabItems.chapters.length + 1}`;
+                    break;
+                case 'characters':
+                    defaultName = 'New Character';
+                    break;
+                case 'worldbuilding':
+                    defaultName = 'New Setting';
+                    break;
+            }
+            
+            // Add to our data
+            const newItem = {
+                id: '',
+                title: defaultName,
+                content: '',
+                soundCloudTrackUrl: null
+            };
+            
+            tabItems[currentTab].push(newItem);
+            
+            // Render sidebar items and select new item
+            renderSidebarItems();
+            const items = sidebarList.querySelectorAll('.sidebar-item');
+            selectSidebarItem(items[items.length - 1]);
+            
+            // Enable editor
+            enableEditor();
+            
+            // For chapters, show publish button but disable until saved
+            if (currentTab === 'chapters') {
+                publishButton.classList.remove('hidden');
+                publishButton.disabled = true;
+            }
+        }
+
+        // Render sidebar items
+        function renderSidebarItems() {
+            sidebarList.innerHTML = '';
+            
+            if (!tabItems[currentTab]) {
+                console.warn(`No items found for tab: ${currentTab}`);
+                return;
+            }
+            
+            const items = tabItems[currentTab];
+            
+            if (items.length === 0) {
+                sidebarList.innerHTML = `
+                    <div class="text-center py-8 text-light-dark">
+                        <i class="fas fa-folder-open text-3xl mb-3 opacity-30"></i>
+                        <p>No ${currentTab} yet</p>
+                        <p class="text-xs mt-2">Click + to create one</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            items.forEach((item, index) => {
+                const itemEl = document.createElement('div');
+                itemEl.className = `sidebar-item animate-slide-in`;
+                itemEl.style.animationDelay = `${index * 50}ms`;
+                itemEl.textContent = item.title;
+                
+                if (item.id) {
+                    itemEl.dataset.id = item.id;
+                }
+                
+                // Add music icon if needed
+                if (currentTab === 'chapters' && item.soundCloudTrackUrl) {
+                    const musicIcon = document.createElement('i');
+                    musicIcon.className = 'fas fa-music text-primary ml-2';
+                    itemEl.appendChild(musicIcon);
+                }
+                
+                sidebarList.appendChild(itemEl);
+                
+                // Add double-click to edit title
+                itemEl.addEventListener('dblclick', () => {
+                    const input = document.createElement('input');
+                    input.value = item.title;
+                    input.className = 'w-full bg-dark-light border border-dark-light rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary';
+                    itemEl.textContent = '';
+                    itemEl.appendChild(input);
+                    input.focus();
+                    
+                    input.addEventListener('blur', () => {
+                        const newTitle = input.value;
+                        item.title = newTitle;
+                        itemEl.textContent = newTitle;
+                        
+                        // Re-add music icon if needed
+                        if (currentTab === 'chapters' && item.soundCloudTrackUrl) {
+                            const musicIcon = document.createElement('i');
+                            musicIcon.className = 'fas fa-music text-primary ml-2';
+                            itemEl.appendChild(musicIcon);
+                        }
+                        
+                        // Update in our data
+                        const itemId = itemEl.dataset.id || '';
+                        const itemIndex = tabItems[currentTab].findIndex(i => 
+                            (itemId && i.id === itemId) || (!itemId && i.title === item.title)
+                        );
+                        
+                        if (itemIndex !== -1) {
+                            tabItems[currentTab][itemIndex].title = newTitle;
+                            
+                            // Save if item has an ID
+                            if (itemId) {
+                                const activeItem = getCurrentItem();
+                                if (activeItem) {
+                                    saveContent();
+                                }
+                            }
+                        }
+                    });
+                    
+                    input.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') {
+                            input.blur();
+                        }
+                    });
+                });
+                
+                // Add click to select
+                itemEl.addEventListener('click', () => {
+                    autoSave();
+                    selectSidebarItem(itemEl);
+                });
+            });
+            
+            // If no active item but there are items, select the first one
+            if (items.length > 0 && !document.querySelector('.sidebar-item.active')) {
+                selectSidebarItem(sidebarList.firstChild);
+            } else if (items.length === 0) {
+                disableEditor();
+            }
+        }
+
+        // Select a sidebar item
+        function selectSidebarItem(item) {
+            document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+            
+            // Reset version view state
+            isViewingOldVersion = false;
+            oldVersionBadge.classList.add('hidden');
+            
+            // Enable editor
+            enableEditor();
+            
+            // Load content
+            const itemId = item.dataset.id || '';
+            const itemTitle = item.textContent.trim();
+            
+            // Find item in our data
+            const selectedItem = tabItems[currentTab].find(i => {
+                const idMatch = itemId && i.id === itemId;
+                const titleMatch = !itemId && i.title === itemTitle;
+                return idMatch || titleMatch;
+            });
+            
+            if (selectedItem) {
+                // Set content
+                if (selectedItem.content && selectedItem.content.trim() !== '') {
+                    editableContent.innerHTML = selectedItem.content;
+                } else {
+                    editableContent.innerHTML = '';
+                }
+                
+                // Load music if applicable
+                if (currentTab === 'chapters' && selectedItem.soundCloudTrackUrl) {
+                    loadSoundCloudTrack(selectedItem.soundCloudTrackUrl);
+                } else {
+                    selectedTrackContainer.classList.add('hidden');
+                    currentTrack = null;
+                }
+                
+                // Update version number
+                currentVersionNumber.textContent = selectedItem.versionNumber || '1';
+            } else {
+                editableContent.innerHTML = '';
+                selectedTrackContainer.classList.add('hidden');
+                currentTrack = null;
+                currentVersionNumber.textContent = '1';
+            }
+            
+            // Reset unsaved changes
+            unsavedChanges = false;
+        }
+
+        // Load tab content
+        function loadTabContent(tabName) {
+            // Clear existing items
+            tabItems[tabName] = [];
+            
+            // Skip if no story ID
+            if (!currentStoryId) return;
+            
+            // Show loading
+            sidebarList.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin mr-2"></i>Loading...</div>';
+            
+            // Fetch data from server
+            fetch(`/api/writing/${tabName}/list?storyId=${currentStoryId}`)
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    if (data && Array.isArray(data)) {
+                        data.forEach(item => {
+                            tabItems[tabName].push({
+                                id: String(item.id),
+                                title: tabName === 'characters' ? item.name : item.title,
+                                content: tabName === 'characters' ? item.description : item.content,
+                                soundCloudTrackUrl: tabName === 'chapters' ? item.soundCloudTrackUrl : null,
+                                versionNumber: item.versionNumber || 1
+                            });
+                        });
+                    }
+                    
+                    renderSidebarItems();
+                })
+                .catch(error => {
+                    console.error(`Error loading ${tabName}:`, error);
+                    sidebarList.innerHTML = `<div class="text-center py-4 text-red-500">Error: ${error.message}</div>`;
+                });
+        }
+
+        // Save content
+        function saveContent() {
+            // If viewing old version, restore first
+            if (isViewingOldVersion) {
+                restoreCurrentVersion();
+            }
+            
+            const item = getCurrentItem();
+            if (!item) return;
+            
+            const content = editableContent.innerHTML;
+            
+            // Show saving state
+            const originalText = saveButton.innerHTML;
+            saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Saving...</span>';
+            saveButton.disabled = true;
+            
+            // Verify story ID
+            if (!currentStoryId) {
+                console.error('No story ID found');
+                saveButton.innerHTML = '<i class="fas fa-exclamation-circle"></i><span>Error</span>';
+                setTimeout(() => {
+                    saveButton.innerHTML = originalText;
+                    saveButton.disabled = false;
+                }, 2000);
+                return;
+            }
+            
+            // Store IDs for reselection
+            const currentItemId = item.id;
+            const currentItemTitle = item.title;
+            
+            // Prepare data
+            const endpoint = `/api/writing/${item.type}/${item.id || 'new'}`;
+            const data = {
+                title: item.title,
+                content: content,
+                storyId: currentStoryId
+            };
+            
+            // Add music info if applicable
+            if (currentTab === 'chapters') {
+                data.soundCloudTrackUrl = currentTrack ? currentTrack.permalink_url : null;
+            }
+            
+            // Send to server
+            fetch(endpoint, {
+                method: item.id ? 'PUT' : 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                return response.json();
+            })
+            .then(data => {
+                // Show success
+                saveButton.innerHTML = '<i class="fas fa-check"></i><span>Saved</span>';
+                
+                // Update ID if new
+                let newId = null;
+                if (data.id && !item.id) {
+                    newId = data.id;
+                    const activeItem = document.querySelector('.sidebar-item.active');
+                    if (activeItem) {
+                        activeItem.dataset.id = data.id;
+                        
+                        // Update in our data
+                        const itemIndex = tabItems[currentTab].findIndex(i => i.title === item.title && !i.id);
+                        if (itemIndex !== -1) {
+                            tabItems[currentTab][itemIndex].id = data.id;
+                            tabItems[currentTab][itemIndex].content = content;
+                            
+                            if (currentTab === 'chapters' && currentTrack) {
+                                tabItems[currentTab][itemIndex].soundCloudTrackUrl = currentTrack.permalink_url;
+                            }
+                        }
+                    }
+                    
+                    // Enable publish for new chapters
+                    if (currentTab === 'chapters') {
+                        publishButton.disabled = false;
+                    }
+                } else {
+                    // Update existing item
+                    const itemIndex = tabItems[currentTab].findIndex(i => i.id === currentItemId);
+                    if (itemIndex !== -1) {
+                        tabItems[currentTab][itemIndex].content = content;
+                        
+                        if (currentTab === 'chapters' && currentTrack) {
+                            tabItems[currentTab][itemIndex].soundCloudTrackUrl = currentTrack.permalink_url;
+                        }
+                    }
+                }
+                
+                // Reset unsaved flag
+                unsavedChanges = false;
+                
+                // Update version number
+                if (data.versionNumber) {
+                    currentVersionNumber.textContent = data.versionNumber;
+                }
+                
+                // Reset UI after delay
+                setTimeout(() => {
+                    updateUIAfterSave(newId || currentItemId, currentItemTitle);
+                    saveButton.innerHTML = originalText;
+                    saveButton.disabled = false;
+                }, 1000);
+            })
+            .catch(error => {
+                console.error('Error saving:', error);
+                saveButton.innerHTML = '<i class="fas fa-exclamation-circle"></i><span>Error</span>';
+                setTimeout(() => {
+                    saveButton.innerHTML = originalText;
+                    saveButton.disabled = false;
+                }, 2000);
+            });
+        }
+
+        // Update UI after save
+        function updateUIAfterSave(itemId, itemTitle) {
+            // Store current state
+            const currentContent = editableContent.innerHTML;
+            const currentTrackData = currentTrack;
+            
+            // Refresh sidebar
+            const currentScrollPosition = sidebarList.scrollTop;
+            renderSidebarItems();
+            
+            // Find and select saved item
+            const sidebarItems = document.querySelectorAll('.sidebar-item');
+            let selectedItem = null;
+            
+            // Try by ID first
+            if (itemId) {
+                selectedItem = Array.from(sidebarItems).find(item => item.dataset.id === itemId);
+            }
+            
+            // If not found, try by title
+            if (!selectedItem && itemTitle) {
+                selectedItem = Array.from(sidebarItems).find(item => item.textContent.trim() === itemTitle.trim());
+            }
+            
+            // If found, restore selection and content
+            if (selectedItem) {
+                document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+                selectedItem.classList.add('active');
+                
+                // Restore content
+                editableContent.innerHTML = currentContent;
+                
+                // Restore music if applicable
+                if (currentTrackData && currentTab === 'chapters') {
+                    currentTrack = currentTrackData;
+                    selectedTrackContainer.classList.remove('hidden');
+                    selectedTrackArtwork.src = currentTrack.artwork_url || currentTrack.user.avatar_url || '/placeholder.svg';
+                    selectedTrackTitle.textContent = currentTrack.title;
+                    selectedTrackArtist.textContent = currentTrack.user.username;
+                }
+                
+                // Restore scroll position
+                sidebarList.scrollTop = currentScrollPosition;
+            }
+            
+            // Ensure editor is enabled
+            enableEditor();
+        }
+
+        // Auto-save
+        function autoSave() {
+            if (unsavedChanges && getCurrentItem()) {
+                saveContent();
+            }
+        }
+
+        // Publish chapter
+        function publishContent() {
+            const item = getCurrentItem();
+            if (!item || !item.id) return;
+            
+            if (item.type !== 'chapters') return;
+            
+            // Save first if needed
+            if (unsavedChanges) {
+                saveContent();
+                setTimeout(() => doPublish(item), 1000);
+            } else {
+                doPublish(item);
+            }
+            
+            function doPublish(item) {
+                // Show publishing state
+                const originalText = publishButton.innerHTML;
+                publishButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Publishing...</span>';
+                publishButton.disabled = true;
+                
+                // Send publish request
+                fetch(`/api/writing/chapters/${item.id}/publish`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    publishButton.innerHTML = '<i class="fas fa-check"></i><span>Published</span>';
+                    setTimeout(() => {
+                        publishButton.innerHTML = originalText;
+                        publishButton.disabled = false;
+                    }, 2000);
+                })
+                .catch(error => {
+                    console.error('Error publishing:', error);
+                    publishButton.innerHTML = '<i class="fas fa-exclamation-circle"></i><span>Error</span>';
+                    setTimeout(() => {
+                        publishButton.innerHTML = originalText;
+                        publishButton.disabled = false;
+                    }, 2000);
+                });
+            }
+        }
+
+        // SoundCloud functions
+        function openSoundCloudModal() {
+            soundcloudModal.classList.add('show');
+            trackSearch.focus();
+        }
+        
+        function closeSoundCloudModal() {
+            soundcloudModal.classList.remove('show');
+            searchResults.innerHTML = '<div class="text-center py-8 text-light-dark"><i class="fas fa-music text-4xl mb-4 opacity-30"></i><p>Enter a SoundCloud URL above</p></div>';
+        }
+        
+        function searchSoundCloudTracks() {
+            const query = trackSearch.value.trim();
+            if (!query) return;
+            
+            searchResults.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin"></i><p class="mt-2">Processing...</p></div>';
+            
+            if (query.includes('soundcloud.com')) {
+                fetch(`https://soundcloud.com/oembed?url=${encodeURIComponent(query)}&format=json`)
+                    .then(response => {
+                        if (!response.ok) throw new Error('Invalid SoundCloud URL');
+                        return response.json();
+                    })
+                    .then(data => {
+                        const track = {
+                            permalink_url: query,
+                            title: data.title || 'Unknown Track',
+                            user: {
+                                username: data.author_name || 'Unknown Artist'
+                            },
+                            artwork_url: data.thumbnail_url || null
+                        };
+                        
+                        selectTrack(track);
+                        closeSoundCloudModal();
+                    })
+                    .catch(error => {
+                        searchResults.innerHTML = `
+                            <div class="text-center py-8 text-red-400">
+                                <i class="fas fa-exclamation-circle text-4xl mb-4"></i>
+                                <p>Error: Please enter a valid SoundCloud track URL</p>
+                                <p class="text-sm mt-2 text-light-dark">Example: https://soundcloud.com/artist/track-name</p>
+                            </div>
+                        `;
+                    });
+            } else {
+                searchResults.innerHTML = `
+                    <div class="text-center py-8 text-light-dark">
+                        <p class="mb-2">Please enter a direct SoundCloud track URL</p>
+                        <p class="text-sm">Example: https://soundcloud.com/artist/track-name</p>
+                        <p class="text-xs mt-4 opacity-70">SoundCloud search is not available due to API limitations</p>
+                    </div>
+                `;
+            }
+        }
+        
+        function selectTrack(track) {
+            currentTrack = track;
+            
+            selectedTrackArtwork.src = track.artwork_url || track.user.avatar_url || '/placeholder.svg';
+            selectedTrackTitle.textContent = track.title;
+            selectedTrackArtist.textContent = track.user.username;
+            selectedTrackContainer.classList.remove('hidden');
+            
+            unsavedChanges = true;
+        }
+        
+        function loadSoundCloudTrack(trackUrl) {
+            selectedTrackContainer.classList.remove('hidden');
+            selectedTrackTitle.textContent = 'Loading track...';
+            selectedTrackArtist.textContent = '';
+            
+            fetch(`https://soundcloud.com/oembed?url=${encodeURIComponent(trackUrl)}&format=json`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Invalid SoundCloud URL');
+                    return response.json();
+                })
+                .then(data => {
+                    currentTrack = {
+                        permalink_url: trackUrl,
+                        title: data.title || 'Unknown Track',
+                        user: {
+                            username: data.author_name || 'Unknown Artist'
+                        },
+                        artwork_url: data.thumbnail_url || null
+                    };
+                    
+                    selectedTrackArtwork.src = currentTrack.artwork_url || '/placeholder.svg';
+                    selectedTrackTitle.textContent = currentTrack.title;
+                    selectedTrackArtist.textContent = currentTrack.user.username;
+                })
+                .catch(error => {
+                    console.error('Error loading track:', error);
+                    selectedTrackContainer.classList.add('hidden');
+                    currentTrack = null;
+                });
+        }
+
+        // Planning functions
+        function loadPlanningElements() {
+            // Get the planning container
+            const planningContainer = planningArea.querySelector('.bg-dark');
+            
+            // Clear any existing planning boxes
+            planningContainer.querySelectorAll('.planning-box').forEach(box => box.remove());
+            
+            if (!currentStoryId) return;
+            
+            // Show loading indicator
+            const loadingIndicator = document.createElement('div');
+            loadingIndicator.className = 'text-center py-8';
+            loadingIndicator.innerHTML = '<i class="fas fa-spinner fa-spin text-2xl mb-3"></i><p class="text-light-dark">Loading planning elements...</p>';
+            planningContainer.appendChild(loadingIndicator);
+            
+            fetch(`/api/writing/planning/list?storyId=${currentStoryId}`)
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    loadingIndicator.remove();
+                    
+                    if (data && Array.isArray(data)) {
+                        data.forEach(element => {
+                            createPlanningBox(
+                                element.title,
+                                element.content,
+                                element.color,
+                                element.positionX,
+                                element.positionY,
+                                element.width,
+                                element.height
+                            );
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading planning elements:', error);
+                    loadingIndicator.innerHTML = `<div class="text-center py-8 text-red-400"><i class="fas fa-exclamation-circle text-4xl mb-4"></i><p>Error loading planning elements: ${error.message}</p></div>`;
+                });
+        }
+
+        function addPlanningBox(color = '#0ea5e9') {
+                // Use planning container to position the box
+                const planningContainer = planningArea.querySelector('.bg-dark');
+                
+                // Ensure container has correct positioning
+                if (getComputedStyle(planningContainer).position === 'static') {
+                    planningContainer.style.position = 'relative';
+                }
+                
+                // Calculate a good position inside the container
+                const width = 200;
+                const height = 120;
+                const horizontalPadding = 20; // Add some padding from edges
+                const verticalPadding = 20;
+
+                // Calculate max coordinates
+                const maxX = planningContainer.clientWidth - width - horizontalPadding;
+                const maxY = planningContainer.clientHeight - height - verticalPadding;
+                
+                // Position in the center area
+                const posX = Math.max(horizontalPadding, Math.min(maxX/2, maxX));
+                const posY = Math.max(verticalPadding, Math.min(maxY/2, maxY));
+                
+                createPlanningBox('New Note', '', color, posX, posY, width, height);
+        }
+
+        function createPlanningBox(title, content, color, posX, posY, width, height) {
+            const box = document.createElement('div');
+            box.className = 'planning-box';
+            box.innerHTML = `
+                <div class="title" contenteditable="true">${title}</div>
+                <textarea placeholder="Add your notes here...">${content || ''}</textarea>
+                <div class="absolute top-2 right-2 flex gap-1">
+                    <button onclick="changePlanningBoxColor(this)" class="w-6 h-6 flex items-center justify-center rounded-full hover:bg-dark-light">
+                        <i class="fas fa-palette"></i>
+                    </button>
+                    <button onclick="this.closest('.planning-box').remove()" class="w-6 h-6 flex items-center justify-center rounded-full hover:bg-dark-light text-red-400">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            box.style.left = `${posX}px`;
+            box.style.top = `${posY}px`;
+            if (width) box.style.width = `${width}px`;
+            if (height) box.style.height = `${height}px`;
+            if (color) box.style.borderColor = color;
+            
+            // Append to planning container
+            const planningContainer = planningArea.querySelector('.bg-dark');
+            planningContainer.appendChild(box);
+            setupDraggable(box);
+        }
+        
+        function setupDraggable(element) {
+            let offsetX = 0;
+            let offsetY = 0;
+            let isDragging = false;
+            
+            // Make sure container is properly set for positioning
+            const container = planningArea.querySelector('.bg-dark');
+            if (getComputedStyle(container).position === 'static') {
+                container.style.position = 'relative';
+            }
+            
+            // Create ResizeObserver
+            const resizeObserver = new ResizeObserver(entries => {
+                for (const entry of entries) {
+                    const element = entry.target;
+                    
+                    // Get current position and dimensions
+                    let currentLeft = parseInt(element.style.left) || 0;
+                    let currentTop = parseInt(element.style.top) || 0;
+                    
+                    // Make sure element stays within container bounds
+                    const maxX = container.clientWidth - element.offsetWidth;
+                    const maxY = container.clientHeight - element.offsetHeight;
+                    
+                    // Apply constraints
+                    if (currentLeft > maxX) element.style.left = `${maxX}px`;
+                    if (currentTop > maxY) element.style.top = `${maxY}px`;
+                    
+                    unsavedChanges = true;
+                }
+            });
+            
+            resizeObserver.observe(element);
+            
+            element.addEventListener('mousedown', function(e) {
+                // Skip if clicking on interactive elements
+                if (e.target.tagName === 'TEXTAREA' || 
+                    e.target.classList.contains('title') || 
+                    e.target.tagName === 'BUTTON' || 
+                    e.target.tagName === 'I') {
+                    return;
+                }
+                
+                // Check if clicking in the resize handle area (bottom-right corner)
+                const rect = element.getBoundingClientRect();
+                const resizeHandleSize = 15;
+                
+                if (e.clientX > rect.right - resizeHandleSize && 
+                    e.clientY > rect.bottom - resizeHandleSize) {
+                    // Let the browser handle resizing
+                    return;
+                }
+                
+                // Otherwise, start dragging
+                isDragging = true;
+                
+                // Calculate the offset between mouse position and element position
+                // This is the key fix for the jumping issue
+                const elementRect = element.getBoundingClientRect();
+                const containerRect = container.getBoundingClientRect();
+                
+                // Get the actual visual position of the element
+                offsetX = e.clientX - elementRect.left;
+                offsetY = e.clientY - elementRect.top;
+                
+                // Increase z-index during drag
+                element.style.zIndex = '1000';
+                
+                // Prevent text selection
+                e.preventDefault();
+            });
+            
+            document.addEventListener('mousemove', function(e) {
+                if (!isDragging) return;
+                
+                // Get container and element dimensions
+                const containerRect = container.getBoundingClientRect();
+                
+                // Calculate the new position with the offset
+                let newLeft = e.clientX - containerRect.left - offsetX;
+                let newTop = e.clientY - containerRect.top - offsetY;
+                
+                // Ensure we stay within bounds
+                const maxX = containerRect.width - element.offsetWidth;
+                const maxY = containerRect.height - element.offsetHeight;
+                
+                // Apply bounds constraints
+                newLeft = Math.max(0, Math.min(newLeft, maxX));
+                newTop = Math.max(0, Math.min(newTop, maxY));
+                
+                // Update position
+                element.style.left = `${newLeft}px`;
+                element.style.top = `${newTop}px`;
+            });
+            
+            document.addEventListener('mouseup', function() {
+                if (isDragging) {
+                    isDragging = false;
+                    element.style.zIndex = '';
+                    unsavedChanges = true;
+                }
+            });            
+        }
+
+        // Version History Functions
+        versionHistoryButton.addEventListener('click', openVersionHistory);
+        closeVersionModal.addEventListener('click', closeVersionHistory);
+        restoreCurrentButton.addEventListener('click', restoreCurrentVersion);
+
+        function openVersionHistory() {
+            const item = getCurrentItem();
+            if (!item || !item.id) {
+                alert('Please save this item first to access version history');
+                return;
+            }
+            
+            versionHistoryModal.classList.add('show');
+            loadVersionHistory(item.id);
+        }
+
+        function closeVersionHistory() {
+            versionHistoryModal.classList.remove('show');
+        }
+
+        function loadVersionHistory(itemId) {
+            versionsList.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin"></i><p class="mt-2">Loading versions...</p></div>';
+            
+            fetch(`/api/writing/${currentTab}/versions/${itemId}`)
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    versions = data;
+                    
+                    if (!data || data.length === 0) {
+                        versionsList.innerHTML = '<div class="text-center py-8 text-light-dark">No version history available.</div>';
+                        return;
+                    }
+                    
+                    // Update current version ID
+                    currentVersionId = data[0].id;
+                    
+                    // Render versions list
+                    versionsList.innerHTML = '';
+                    data.forEach((version, index) => {
+                        const versionNumber = data.length - index;
+                        
+                        const date = new Date(version.createdAt);
+                        const formattedDate = new Intl.DateTimeFormat('en-US', {
+                            year: 'numeric', 
+                            month: 'short', 
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        }).format(date);
+                        
+                        const versionItem = document.createElement('div');
+                        versionItem.className = `version-item ${version.id === currentVersionId ? 'current' : ''}`;
+                        
+                        versionItem.innerHTML = `
+                            <div>
+                                <div class="font-medium">Version ${versionNumber}</div>
+                                <div class="text-xs text-light-dark">${formattedDate}</div>
+                            </div>
+                            <div>
+                                <button class="view-btn px-3 py-1 rounded-md bg-dark-light text-light hover:bg-primary transition-colors">
+                                    <i class="fas fa-eye mr-1"></i>View
+                                </button>
+                            </div>
+                        `;
+                        
+                        versionsList.appendChild(versionItem);
+                        
+                        // Add view button click handler
+                        versionItem.querySelector('.view-btn').addEventListener('click', () => {
+                            loadVersionContent(version.id, versionNumber);
+                        });
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading version history:', error);
+                    versionsList.innerHTML = `<div class="text-center py-4 text-red-500"><i class="fas fa-exclamation-circle mr-2"></i>Error: ${error.message}</div>`;
+                });
+        }
+
+        function loadVersionContent(versionId, versionNumber) {
+            editableContent.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin"></i><p class="mt-2">Loading version content...</p></div>';
+            
+            fetch(`/api/writing/${currentTab}/version/${versionId}`)
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    // Update content
+                    editableContent.innerHTML = data.content || '';
+                    
+                    // Update UI for old version
+                    if (versionId !== currentVersionId) {
+                        isViewingOldVersion = true;
+                        oldVersionBadge.classList.remove('hidden');
+                        oldVersionNumber.textContent = versionNumber;
+                        
+                        // Disable editing when viewing old version
+                        editableContent.contentEditable = "false";
+                        saveButton.disabled = true;
+                        publishButton.disabled = true;
+                    }
+                    
+                    // Load music track if available for chapters
+                    if (currentTab === 'chapters' && data.soundCloudTrackUrl) {
+                        loadSoundCloudTrack(data.soundCloudTrackUrl);
+                    } else {
+                        selectedTrackContainer.classList.add('hidden');
+                        currentTrack = null;
+                    }
+                    
+                    // Close modal
+                    closeVersionHistory();
+                })
+                .catch(error => {
+                    console.error('Error loading version content:', error);
+                    editableContent.innerHTML = `<div class="text-center py-4 text-red-500"><i class="fas fa-exclamation-circle mr-2"></i>Error: ${error.message}</div>`;
+                });
+        }
+
+        function restoreCurrentVersion() {
+            isViewingOldVersion = false;
+            oldVersionBadge.classList.add('hidden');
+            
+            // Re-enable editor
+            editableContent.contentEditable = "true";
+            saveButton.disabled = false;
+            
+            // For chapters, re-enable publish button
+            if (currentTab === 'chapters') {
+                publishButton.disabled = false;
+            }
+            
+            // Load current content
+            const activeItem = document.querySelector('.sidebar-item.active');
+            if (activeItem) {
+                const itemId = activeItem.dataset.id;
+                const item = tabItems[currentTab].find(i => i.id === itemId);
+                
+                if (item) {
+                    editableContent.innerHTML = item.content || '';
+                    
+                    if (currentTab === 'chapters' && item.soundCloudTrackUrl) {
+                        loadSoundCloudTrack(item.soundCloudTrackUrl);
+                    } else {
+                        selectedTrackContainer.classList.add('hidden');
+                        currentTrack = null;
+                    }
+                }
+            }
+        }
+
+        // Spell check functions
+        function initSpellCheck() {
+            // Use localStorage to track preference
+            const spellCheckEnabled = localStorage.getItem('spellCheckEnabled') !== 'false';
+            
+            // Apply spellcheck setting
+            editableContent.spellcheck = spellCheckEnabled;
+            if (spellCheckEnabled) {
+                editableContent.classList.add('spellcheck-enabled');
+            } else {
+                editableContent.classList.remove('spellcheck-enabled');
+            }
+            
+            // Initialize autocorrect
+            initAutoCorrect();
+            
+            // Listen for storage changes
+            window.addEventListener('storage', function(e) {
+                if (e.key === 'spellCheckEnabled') {
+                    const enabled = e.newValue !== 'false';
+                    editableContent.spellcheck = enabled;
+                    editableContent.classList.toggle('spellcheck-enabled', enabled);
+                }
+                
+                if (e.key === 'autoCorrectEnabled') {
+                    initAutoCorrect();
+                }
+            });
+        }
+
+        function initAutoCorrect() {
+            // Check if autocorrect is enabled from localStorage
+            const autoCorrectEnabled = localStorage.getItem('autoCorrectEnabled') === 'true';
+            
+            // If there's an existing autocorrect listener, remove it
+            if (editableContent._autocorrectListener) {
+                editableContent.removeEventListener('input', editableContent._autocorrectListener);
+                editableContent._autocorrectListener = null;
+            }
+            
+            // If autocorrect is disabled, just return
+            if (!autoCorrectEnabled) {
+                console.log('Autocorrect is disabled');
+                return;
+            }
+            
+            console.log('Initializing autocorrect...');
+            
+            // Load dictionary if not already loaded
+            if (!window.dictionary) {
+                loadDictionary();
+            }
+            
+            // Create autocorrect handler
+            const handleAutoCorrect = function(e) {
+                // Only continue if dictionary is loaded and autocorrect is enabled
+                if (!window.dictionary || !autoCorrectEnabled) return;
+                
+                // Only check when space or punctuation is entered
+                if (!/[\s.,!?;:]/.test(e.data)) return;
+                
+                const selection = window.getSelection();
+                if (!selection.rangeCount) return;
+                
+                const range = selection.getRangeAt(0);
+                const startNode = range.startContainer;
+                
+                // Only work with text nodes
+                if (startNode.nodeType !== Node.TEXT_NODE) return;
+                
+                const text = startNode.textContent;
+                const cursorPos = range.startOffset;
+                
+                // Get last word before cursor
+                const textBeforeCursor = text.substring(0, cursorPos);
+                const words = textBeforeCursor.split(/[\s.,!?;:]/);
+                const lastWord = words[words.length - 2]; // Last complete word
+                
+                if (!lastWord || lastWord.length < 3) return; // Skip very short words
+                
+                // Skip proper nouns and special words
+                if (lastWord[0] === lastWord[0].toUpperCase() && lastWord.length > 1) return;
+                if (lastWord === lastWord.toUpperCase()) return; // Skip all caps (acronyms)
+                if (/\d/.test(lastWord)) return; // Skip words with numbers
+                
+                // Check if word is misspelled
+                if (window.dictionary && !window.dictionary.check(lastWord)) {
+                    console.log('Found misspelled word:', lastWord);
+                    
+                    // Get suggestions
+                    const suggestions = window.dictionary.suggest(lastWord, 1);
+                    
+                    if (suggestions && suggestions.length > 0) {
+                        const correction = suggestions[0];
+                        
+                        // Only use the suggestion if it's reasonably close to the original
+                        if (levenshteinDistance(lastWord, correction) <= 2) {
+                            console.log('Autocorrecting to:', correction);
+                            
+                            // Find position of last word
+                            const lastWordPos = textBeforeCursor.lastIndexOf(lastWord);
+                            
+                            // Create range for the word to replace
+                            const replaceRange = document.createRange();
+                            replaceRange.setStart(startNode, lastWordPos);
+                            replaceRange.setEnd(startNode, lastWordPos + lastWord.length);
+                            
+                            // Preserve capitalization
+                            let finalCorrection = correction;
+                            if (lastWord[0] === lastWord[0].toUpperCase()) {
+                                finalCorrection = correction[0].toUpperCase() + correction.substring(1);
+                            }
+                            
+                            // Create temporary element to highlight correction
+                            const tempSpan = document.createElement('span');
+                            tempSpan.className = 'autocorrect-highlight';
+                            tempSpan.textContent = finalCorrection;
+                            
+                            replaceRange.deleteContents();
+                            replaceRange.insertNode(tempSpan);
+                            
+                            // Move cursor to after the corrected word
+                            const newRange = document.createRange();
+                            newRange.setStartAfter(tempSpan);
+                            newRange.setEndAfter(tempSpan);
+                            selection.removeAllRanges();
+                            selection.addRange(newRange);
+                            
+                            // Remove highlight after a delay
+                            setTimeout(() => {
+                                if (tempSpan.parentNode) {
+                                    const textNode = document.createTextNode(tempSpan.textContent);
+                                    tempSpan.parentNode.replaceChild(textNode, tempSpan);
+                                }
+                            }, 1500);
+                            
+                            // Mark as unsaved
+                            unsavedChanges = true;
+                        }
+                    }
+                }
+            };
+            
+            // Store the handler for potential later removal
+            editableContent._autocorrectListener = handleAutoCorrect;
+            
+            // Add the input event listener
+            editableContent.addEventListener('input', handleAutoCorrect);
+        }
+
+        async function loadDictionary() {
+            // Check if Typo is already available (it should be from your <script> tag in the head)
+            if (typeof Typo !== 'undefined') {
+                console.log('Typo library already loaded');
+            } else {
+                console.log('Typo library not available, creating fallback dictionary');
+                // Create a fallback dictionary that considers all words correct
+                window.dictionary = {
+                    check: function(word) { return true; },
+                    suggest: function(word) { return []; },
+                    addWord: function(word) { console.log('Added to fallback dictionary:', word); }
+                };
+                return; // Exit early since we can't load the real dictionary
+            }
+
+            try {
+                console.log('Loading dictionary files...');
+                
+                // Try multiple paths to find dictionary files
+                const paths = [
+                    { aff: '/dict/en_US.aff', dic: '/dict/en_US.dic' },
+                    { aff: '/static/dict/en_US.aff', dic: '/static/dict/en_US.dic' },
+                    { aff: '../dict/en_US.aff', dic: '../dict/en_US.dic' }
+                ];
+                
+                let affData, dicData;
+                let loaded = false;
+                
+                // Try each path until one works
+                for (const path of paths) {
+                    try {
+                        console.log(`Attempting to load from: ${path.aff}`);
+                        
+                        const affResponse = await fetch(path.aff);
+                        if (!affResponse.ok) {
+                            console.log(`Failed with status: ${affResponse.status}`);
+                            continue;
+                        }
+                        
+                        const dicResponse = await fetch(path.dic);
+                        if (!dicResponse.ok) {
+                            console.log(`Failed with status: ${dicResponse.status}`);
+                            continue;
+                        }
+                        
+                        // If we get here, both files loaded successfully
+                        affData = await affResponse.text();
+                        dicData = await dicResponse.text();
+                        console.log('Dictionary files loaded successfully!');
+                        loaded = true;
+                        break;
+                    } catch (pathError) {
+                        console.log(`Error with path ${path.aff}:`, pathError);
+                        // Continue to next path
+                    }
+                }
+                
+                if (!loaded) {
+                    throw new Error('Could not load dictionary files from any path');
+                }
+                
+                // Initialize dictionary
+                window.dictionary = new Typo("en_US", affData, dicData, { platform: 'any' });
+                
+                // Add common contractions
+                const contractions = ["aren't", "can't", "couldn't", "didn't", "doesn't", "don't", "hadn't", 
+                    "hasn't", "haven't", "he's", "I'm", "isn't", "it's", "shouldn't", "that's", "there's", 
+                    "they're", "wasn't", "we're", "weren't", "what's", "where's", "who's", "won't", "wouldn't", 
+                    "you're", "you've", "she's", "they've", "we've", "i'll", "you'll", "he'll", "she'll", 
+                    "we'll", "they'll", "i'd", "you'd", "he'd", "she'd", "we'd", "they'd"];
+                    
+                if (typeof window.dictionary.addWord === 'function') {
+                    contractions.forEach(word => window.dictionary.addWord(word));
+                }
+                
+                console.log('Dictionary setup complete');
+            } catch (error) {
+                console.error('Error setting up dictionary:', error);
+                
+                // Create a functional fallback
+                window.dictionary = {
+                    check: function(word) { return true; }, // Consider all words correct
+                    suggest: function(word) { return []; }, // No suggestions
+                    addWord: function(word) { } // Do nothing
+                };
+            }
+        }
+
+        // Helper function to calculate edit distance between words
+        function levenshteinDistance(a, b) {
+            if (a.length === 0) return b.length;
+            if (b.length === 0) return a.length;
+            
+            const matrix = [];
+            
+            // Initialize matrix
+            for (let i = 0; i <= b.length; i++) {
+                matrix[i] = [i];
+            }
+            for (let j = 0; j <= a.length; j++) {
+                matrix[0][j] = j;
+            }
+            
+            // Fill matrix
+            for (let i = 1; i <= b.length; i++) {
+                for (let j = 1; j <= a.length; j++) {
+                    if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                        matrix[i][j] = matrix[i - 1][j - 1];
+                    } else {
+                        matrix[i][j] = Math.min(
+                            matrix[i - 1][j - 1] + 1, // substitution
+                            matrix[i][j - 1] + 1,     // insertion
+                            matrix[i - 1][j] + 1      // deletion
+                        );
+                    }
+                }
+            }
+            
+            return matrix[b.length][a.length];
+        }
+
+        // Planning box color change functionality
+        function changePlanningBoxColor(button) {
+            const box = button.closest('.planning-box');
+            const colors = ['#ff1744', '#d500f9', '#00e5ff', '#76ff03', '#ffea00', '#ff9100'];
+            
+            // Get current index from data attribute, or -1 if not set yet
+            let currentIndex = parseInt(box.dataset.colorIndex || '-1');
+            
+            // Move to next color (or loop back to first)
+            const nextIndex = (currentIndex + 1) % colors.length;
+            
+            // Store the new index
+            box.dataset.colorIndex = nextIndex;
+            
+            // Set the new color
+            box.style.borderColor = colors[nextIndex];
+        }
+
+        // Function to initialize the editor
+        function initEditor() {
+            // Initialize toolbar buttons
+            const toolbarButtons = document.querySelectorAll('.toolbar-button[data-command]');
+            toolbarButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const command = button.dataset.command;
+                    
+                    // Handle alignment buttons special case
+                    if (command.startsWith('justify')) {
+                        document.querySelectorAll('.toolbar-button[data-command^="justify"]')
+                            .forEach(btn => btn.classList.remove('active'));
+                        button.classList.add('active');
+                    }
+                    
+                    document.execCommand(command, false, null);
+                    editableContent.focus();
+                    unsavedChanges = true;
+                    saveButton.disabled = false;
+                });
+            });
+            
+            // Add input listener to detect changes
+            editableContent.addEventListener('input', () => {
+                unsavedChanges = true;
+                saveButton.disabled = false;
+            });
+            
+            // Add initial placeholder if needed
+            if (!editableContent.textContent.trim()) {
+                editableContent.innerHTML = '<p class="text-light-dark">Select an item to start editing or create a new one...</p>';
+            }
+        }
+
+        // Initialize everything when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+            try{
+
+            
+            const sidebar = document.getElementById('sidebar');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const mainContent = document.querySelector('.main-content');
+            const storiesSidebar = document.querySelector('.stories-sidebar');
+
+            // Add null checks to prevent errors
+            if (!sidebar || !sidebarToggle) {
+                console.warn('Sidebar elements not found. Skipping sidebar initialization.');
+                return; // Exit early if elements aren't found
+            }
+            
+            // Function to update toggle position
+            function updateTogglePosition() {
+                const sidebarWidth = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sidebar-width'));
+                const collapsedWidth = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sidebar-collapsed-width'));
+                
+                if (sidebar.classList.contains('collapsed')) {
+                    // When collapsed - position near edge of collapsed sidebar
+                    sidebarToggle.style.left = `${collapsedWidth - 0.5}px`;
+                } else {
+                    // When expanded - position near edge of expanded sidebar
+                    sidebarToggle.style.left = `${sidebarWidth - 24}px`;
+                }
+            }
+            
+            // Check if sidebar state is stored in localStorage
+            const sidebarState = localStorage.getItem('sidebarState');
+            if (sidebarState === 'collapsed') {
+                sidebar.classList.add('collapsed');
+                mainContent.classList.remove('sidebar-expanded');
+                sidebarToggle.querySelector('i').classList.remove('fa-chevron-left');
+                sidebarToggle.querySelector('i').classList.add('fa-chevron-right');
+            } else {
+                // If sidebar is expanded by default, add the class to main content
+                mainContent.classList.add('sidebar-expanded');
+            }
+            
+            // Initial position update
+            updateTogglePosition();
+            
+            // Toggle sidebar on button click with sliding content
+            sidebarToggle.addEventListener('click', function(e) {
+                e.stopPropagation(); // Prevent event bubbling
+                sidebar.classList.toggle('collapsed');
+                mainContent.classList.toggle('sidebar-expanded');
+                
+                // Update icon
+                const icon = sidebarToggle.querySelector('i');
+                if (sidebar.classList.contains('collapsed')) {
+                    icon.classList.remove('fa-chevron-left');
+                    icon.classList.add('fa-chevron-right');
+                    localStorage.setItem('sidebarState', 'collapsed');
+                    
+                    // Restore stories sidebar visibility after animation
+                    setTimeout(() => {
+                        storiesSidebar.style.visibility = 'visible';
+                    }, 300);
+                } else {
+                    icon.classList.remove('fa-chevron-right');
+                    icon.classList.add('fa-chevron-left');
+                    localStorage.setItem('sidebarState', 'expanded');
+                    
+                    // Hide stories sidebar immediately
+                    storiesSidebar.style.visibility = 'hidden';
+                }
+                
+                // Update position after toggling
+                updateTogglePosition();
+            });
+            
+            // Handle hover state
+            sidebar.addEventListener('mouseenter', function() {
+                if (sidebar.classList.contains('collapsed')) {
+                    // When hovering over collapsed sidebar, move button to expanded position
+                    const sidebarWidth = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sidebar-width'));
+                    sidebarToggle.style.left = `${sidebarWidth - 24}px`;
+                }
+            });
+            
+            sidebar.addEventListener('mouseleave', function() {
+                if (sidebar.classList.contains('collapsed')) {
+                    // When mouse leaves collapsed sidebar, return button to collapsed position
+                    const collapsedWidth = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sidebar-collapsed-width'));
+                    sidebarToggle.style.left = `${collapsedWidth - 0.5}px`;
+                }
+            });
+            
+            // Update position on window resize
+            window.addEventListener('resize', updateTogglePosition);
+            } catch (error) {
+            console.error('Error setting up sidebar:', error);
+        }
+        }, 1000); // Delay to ensure elements are loaded
+
+            const fontSelector = document.getElementById('fontSelector');
+
+            fontSelector.addEventListener('change', () => {
+            const selectedFont = fontSelector.value;
+            editableContent.style.fontFamily = selectedFont;
+            // Save the preference in localStorage
+            localStorage.setItem('preferredFont', selectedFont);
+            // Mark as changed so it's saved with the content
+            unsavedChanges = true;
+        });
+
+        const savedFont = localStorage.getItem('preferredFont');
+        if (savedFont) {
+            editableContent.style.fontFamily = savedFont;
+            fontSelector.value = savedFont;
+        }
+
+            // Try to load Typo.js if not available
+            if (typeof Typo === 'undefined') {
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/typo.js/1.2.2/typo.min.js';
+                script.onload = function() {
+                    console.log('Fallback Typo.js loaded successfully');
+                    if (window.pendingAutocorrectInit) initAutoCorrect();
+                };
+                document.head.appendChild(script);
+            }
+
+            // Get initial active tab
+            currentTab = document.querySelector('.tab-button.active').dataset.tab;
+            
+            // Set visibility of publish button
+            publishButton.classList.toggle('hidden', currentTab !== 'chapters');
+            
+            // Load content for current tab
+            loadTabContent(currentTab);
+
+            // Initialize editor
+            initEditor();
+
+            // Set up save and publish buttons
+            saveButton.addEventListener('click', saveContent);
+            publishButton.addEventListener('click', publishContent);
+
+            // Set up SoundCloud modal
+            addMusicButton.addEventListener('click', openSoundCloudModal);
+            closeModal.addEventListener('click', closeSoundCloudModal);
+            searchButton.addEventListener('click', searchSoundCloudTracks);
+            removeTrackButton.addEventListener('click', () => {
+                currentTrack = null;
+                selectedTrackContainer.classList.add('hidden');
+                unsavedChanges = true;
+            });
+            
+            trackSearch.addEventListener('keypress', e => {
+                if (e.key === 'Enter') searchSoundCloudTracks();
+            });
+            
+            // Set up version history
+            versionHistoryButton.addEventListener('click', openVersionHistory);
+            closeVersionModal.addEventListener('click', closeVersionHistory);
+            restoreCurrentButton.addEventListener('click', restoreCurrentVersion);
+            
+            // Close modals when clicking outside
+            soundcloudModal.addEventListener('click', e => {
+                if (e.target === soundcloudModal) closeSoundCloudModal();
+            });
+            
+            versionHistoryModal.addEventListener('click', e => {
+                if (e.target === versionHistoryModal) closeVersionHistory();
+            });
+            
+            // Set up planning save button
+            document.getElementById('savePlanningButton').addEventListener('click', savePlanningElements);
+            
+            // Load data when switching tabs
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    if (!tabItems[tab.dataset.tab]) {
+                        tabItems[tab.dataset.tab] = [];
+                    }
+                    
+                    if (tabItems[tab.dataset.tab].length === 0 && tab.dataset.tab !== 'planning') {
+                        loadTabContent(tab.dataset.tab);
+                    }
+                });
+            });
+
+            // Initialize spell checking
+            initSpellCheck();
+            
+            // Warn about unsaved changes
+            window.addEventListener('beforeunload', e => {
+                if (unsavedChanges) {
+                    e.preventDefault();
+                    e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+                    return e.returnValue;
+                }
+            });
+        });
+
+        // Expose functions to the global scope for use in HTML
+        // Make functions accessible globally
+        window.addPlanningBox = addPlanningBox;
+        window.changePlanningBoxColor = changePlanningBoxColor;
+        window.handleNewItem = handleNewItem;
+        window.createPlanningBox = createPlanningBox;
+        window.savePlanningElements = savePlanningElements;
+        window.loadPlanningElements = loadPlanningElements;
+        window.openVersionHistory = openVersionHistory;
+        window.closeVersionHistory = closeVersionHistory;
+        window.loadVersionHistory = loadVersionHistory;
+        window.loadVersionContent = loadVersionContent;
+        window.restoreCurrentVersion = restoreCurrentVersion;
+        window.openSoundCloudModal = openSoundCloudModal;
+        window.closeSoundCloudModal = closeSoundCloudModal;
+        window.searchSoundCloudTracks = searchSoundCloudTracks;
+        window.selectTrack = selectTrack;
+        window.loadSoundCloudTrack = loadSoundCloudTrack;
+
+    
+        
+</script>
+<script src="/js/editor-service.js"></script>
+</body>
+</html>
+                
+               

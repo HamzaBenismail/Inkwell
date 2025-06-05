@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create New Topic - Inkwell</title>
+    <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:if="${_csrf != null}" th:content="${_csrf.headerName}"/>
+    
+    <!-- Use CDN links -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'accent-blue': '#0ea5e9',
+                        'accent-cyan': '#06b6d4',
+                        'bg-dark': '#030712',
+                        'bg-card': '#111827',
+                        'bg-card-hover': '#1f2937'
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        /* Core Styles */
+        body {
+            background-color: #030712;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #111827;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #374151;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #0ea5e9;
+        }
+        
+        /* Form card styles */
+        .form-card {
+            background: linear-gradient(145deg, #151e30, #0f1625);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Editor styles */
+        .editor-container {
+            min-height: 200px;
+        }
+        
+        .editor-toolbar button:hover {
+            background-color: rgba(55, 65, 81, 0.7);
+        }
+        
+        /* Tag input styling */
+        .tag-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            min-height: 42px;
+            align-items: center;
+        }
+        
+        .tag {
+            background-color: rgba(14, 165, 233, 0.2);
+            color: #0ea5e9;
+            border-radius: 16px;
+            padding: 4px 10px;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .tag-remove {
+            margin-left: 6px;
+            cursor: pointer;
+        }
+        
+        .tag-input {
+            flex: 1;
+            min-width: 100px;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #d1d5db;
+        }
+        
+        /* Gradient text */
+        .gradient-text {
+            background: linear-gradient(90deg, #0ea5e9, #06b6d4);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+    
+    <style th:replace="~{fragments/sidebar :: sidebar-style}"></style>
+    <style th:replace="~{fragments/FantasyBackground :: fantasy-style}"></style>
+</head>
+<body class="bg-bg-dark text-gray-100 font-sans">
+    <div class="flex min-h-screen">
+        <!-- Fantasy Background -->
+        <div th:replace="~{fragments/FantasyBackground :: fantasy-elements}"></div>
+        
+        <!-- Sidebar Trigger -->
+        <div th:replace="~{fragments/sidebar :: sidebar-trigger}"></div>
+        
+        <!-- Sidebar -->
+        <aside th:replace="~{fragments/sidebar :: sidebar}"></aside>
+
+        <!-- Main Content -->
+        <div class="flex-1 overflow-auto">
+            <main class="py-6 lg:py-10 px-4">
+                <div class="max-w-4xl mx-auto">
+                    <!-- Page Header -->
+                    <div class="mb-6">
+                        <div class="flex items-center mb-3">
+                            <a th:href="@{'/forums/' + ${writer.username}}" class="text-accent-blue hover:text-accent-cyan transition-colors mr-2">
+                                <i class="fas fa-home"></i> Forum Home
+                            </a>
+                            <span class="text-gray-500 mx-2">/</span>
+                            <a th:href="@{'/forums/' + ${writer.username} + '/' + ${subforum.slug}}" class="text-accent-blue hover:text-accent-cyan transition-colors">
+                                <span th:text="${subforum.name}">Subforum</span>
+                            </a>
+                            <span class="text-gray-500 mx-2">/</span>
+                            <span class="text-gray-400">New Topic</span>
+                        </div>
+                        
+                        <h1 class="text-2xl sm:text-3xl font-bold mb-2">Create a New Topic</h1>
+                        <p class="text-gray-400">in <span th:text="${subforum.name}" class="text-accent-blue">Subforum Name</span></p>
+                    </div>
+                    
+                    <!-- New Topic Form -->
+                    <div class="form-card p-6 mb-8">
+                        <form th:action="@{'/forums/' + ${writer.username} + '/' + ${subforum.slug} + '/new-topic'}" 
+                              method="post" th:object="${topicForm}">
+                            
+                            <!-- Title Field -->
+                            <div class="mb-5">
+                                <label for="topicTitle" class="block text-sm font-medium text-gray-300 mb-1">Topic Title</label>
+                                <input type="text" id="topicTitle" th:field="*{title}" 
+                                       class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-accent-blue focus:border-transparent"
+                                       placeholder="Enter a descriptive title..." required>
+                                <div th:if="${#fields.hasErrors('title')}" class="text-red-500 text-sm mt-1" th:errors="*{title}">Title Error</div>
+                            </div>
+                            
+                            <!-- Content Field -->
+                            <div class="mb-5">
+                                <label for="content" class="block text-sm font-medium text-gray-300 mb-1">Content</label>
+                                <div class="editor-container bg-gray-900 border border-gray-700 rounded-lg">
+                                    <div class="editor-toolbar border-b border-gray-700 p-2 flex flex-wrap gap-1">
+                                        <button type="button" class="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded" data-command="bold" title="Bold">
+                                            <i class="fas fa-bold"></i>
+                                        </button>
+                                        <button type="button" class="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded" data-command="italic" title="Italic">
+                                            <i class="fas fa-italic"></i>
+                                        </button>
+                                        <button type="button" class="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded" data-command="underline" title="Underline">
+                                            <i class="fas fa-underline"></i>
+                                        </button>
+                                        <button type="button" class="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded" data-command="insertOrderedList" title="Numbered list">
+                                            <i class="fas fa-list-ol"></i>
+                                        </button>
+                                        <button type="button" class="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded" data-command="insertUnorderedList" title="Bullet list">
+                                            <i class="fas fa-list-ul"></i>
+                                        </button>
+                                        <button type="button" class="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded" data-command="createLink" title="Insert link">
+                                            <i class="fas fa-link"></i>
+                                        </button>
+                                        <button type="button" class="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded" data-command="insertImage" title="Insert image">
+                                            <i class="fas fa-image"></i>
+                                        </button>
+                                    </div>
+                                    <div id="editor" contenteditable="true" class="p-3 min-h-[250px] focus:outline-none"></div>
+                                    <input type="hidden" id="content-input" th:field="*{content}">
+                                </div>
+                                <div th:if="${#fields.hasErrors('content')}" class="text-red-500 text-sm mt-1" th:errors="*{content}">Content Error</div>
+                            </div>
+                            
+                            <!-- Tags Field -->
+                            <div class="mb-5">
+                                <label for="tags" class="block text-sm font-medium text-gray-300 mb-1">Tags (optional)</label>
+                                <div class="tag-container bg-gray-900 border border-gray-700 rounded-lg" id="tag-container">
+                                    <input type="text" id="tag-input" class="tag-input" placeholder="Add tags (press enter to add)">
+                                </div>
+                                <input type="hidden" id="tags-input" th:field="*{tags}">
+                                <p class="text-xs text-gray-500 mt-1">Press Enter to add a tag. Separate tags help categorize your topic.</p>
+                            </div>
+                            
+                            <!-- Admin Options (visible only to forum owner) -->
+                            <div th:if="${isForumOwner}" class="mb-5 p-4 bg-gray-800 bg-opacity-50 rounded-lg border border-gray-700">
+                                <h3 class="text-sm font-semibold text-gray-300 mb-3">Admin Options</h3>
+                                
+                                <div class="flex flex-wrap gap-4">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="pinned" th:field="*{pinned}" 
+                                               class="w-4 h-4 text-accent-blue bg-gray-900 border-gray-700 rounded focus:ring-accent-blue focus:ring-opacity-25">
+                                        <label for="pinned" class="ml-2 text-sm text-gray-300">Pin Topic</label>
+                                    </div>
+                                    
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="locked" th:field="*{locked}" 
+                                               class="w-4 h-4 text-accent-blue bg-gray-900 border-gray-700 rounded focus:ring-accent-blue focus:ring-opacity-25">
+                                        <label for="locked" class="ml-2 text-sm text-gray-300">Lock Topic</label>
+                                    </div>
+                                </div>
+                                
+                                <p class="text-xs text-gray-500 mt-2">Pinned topics appear at the top of the list. Locked topics prevent new replies.</p>
+                            </div>
+                            
+                            <!-- Submit Button -->
+                            <div class="flex justify-end">
+                                <button type="submit" class="bg-accent-blue hover:bg-accent-cyan text-white px-6 py-2 rounded-lg transition-colors shadow-lg" onclick="prepareSubmit()">
+                                    Create Topic
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Footer -->
+            <footer class="bg-bg-card py-10 mt-auto border-t border-gray-800">
+                <div class="max-w-7xl mx-auto px-4">
+                    <div class="grid md:grid-cols-4 gap-8">
+                        <div class="md:col-span-2">
+                            <a href="/Home" class="text-2xl font-bold gradient-text inline-block mb-3">Inkwell</a>
+                            <p class="text-gray-400 max-w-md">
+                                A platform for writers and readers to connect through the power of storytelling.
+                            </p>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold mb-4 text-white">Navigation</h3>
+                            <ul class="space-y-2">
+                                <li><a href="/Home" class="text-gray-400 hover:text-accent-blue transition-colors">Home</a></li>
+                                <li><a href="/Library" class="text-gray-400 hover:text-accent-blue transition-colors">Library</a></li>
+                                <li><a href="/Dashboard" class="text-gray-400 hover:text-accent-blue transition-colors">Dashboard</a></li>
+                                <li><a href="/Writing" class="text-gray-400 hover:text-accent-blue transition-colors">Write</a></li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold mb-4 text-white">Legal</h3>
+                            <ul class="space-y-2">
+                                <li><a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">Terms of Service</a></li>
+                                <li><a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">Privacy Policy</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <script th:replace="~{fragments/sidebar :: sidebar-script}"></script>
+    <script th:replace="~{fragments/FantasyBackground :: fantasy-script}"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Rich text editor functionality
+            const editor = document.getElementById('editor');
+            if (editor) {
+                const toolbarButtons = document.querySelectorAll('.editor-toolbar button');
+                
+                toolbarButtons.forEach(button => {
+                    button.addEventListener('click', function() {
+                        const command = this.getAttribute('data-command');
+                        
+                        if (command === 'createLink') {
+                            const url = prompt('Enter the link URL:');
+                            if (url) document.execCommand(command, false, url);
+                        } else if (command === 'insertImage') {
+                            const url = prompt('Enter the image URL:');
+                            if (url) document.execCommand(command, false, url);
+                        } else {
+                            document.execCommand(command, false, null);
+                        }
+                        
+                        editor.focus();
+                    });
+                });
+            }
+            
+            // Tags functionality
+            const tagContainer = document.getElementById('tag-container');
+            const tagInput = document.getElementById('tag-input');
+            const tagsHiddenInput = document.getElementById('tags-input');
+            const tags = [];
+            
+            function createTag(label) {
+                const tag = document.createElement('div');
+                tag.className = 'tag';
+                
+                const tagText = document.createElement('span');
+                tagText.textContent = label;
+                
+                const closeBtn = document.createElement('span');
+                closeBtn.className = 'tag-remove';
+                closeBtn.innerHTML = '&times;';
+                closeBtn.addEventListener('click', () => {
+                    removeTag(label);
+                });
+                
+                tag.appendChild(tagText);
+                tag.appendChild(closeBtn);
+                
+                return tag;
+            }
+            
+            function addTag(label) {
+                label = label.trim();
+                if (label === '' || tags.includes(label)) return;
+                
+                tags.push(label);
+                const tag = createTag(label);
+                tagContainer.insertBefore(tag, tagInput);
+                updateTagsInput();
+            }
+            
+            function removeTag(label) {
+                const index = tags.indexOf(label);
+                if (index > -1) {
+                    tags.splice(index, 1);
+                    updateTagsInput();
+                    renderTags();
+                }
+            }
+            
+            function updateTagsInput() {
+                tagsHiddenInput.value = JSON.stringify(tags);
+            }
+            
+            function renderTags() {
+                // Remove all existing tags
+                const existingTags = document.querySelectorAll('.tag');
+                existingTags.forEach(tag => tag.remove());
+                
+                // Recreate tags from array
+                tags.forEach(tag => {
+                    const tagElement = createTag(tag);
+                    tagContainer.insertBefore(tagElement, tagInput);
+                });
+            }
+            
+            tagInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addTag(tagInput.value);
+                    tagInput.value = '';
+                }
+            });
+        });
+        
+        function prepareSubmit() {
+            // Copy editor content to hidden input
+            const editor = document.getElementById('editor');
+            const contentInput = document.getElementById('content-input');
+            if (editor && contentInput) {
+                contentInput.value = editor.innerHTML;
+            }
+        }
+    </script>
+</body>
+</html>

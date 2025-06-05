@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:if="${_csrf != null}" th:content="${_csrf.headerName}"/>
+    <title>Reader Profile - Inkwell</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'accent-blue': '#0ea5e9',
+                        'accent-cyan': '#06b6d4',
+                        'bg-dark': '#030712',
+                        'bg-card': '#111827',
+                        'bg-card-hover': '#1f2937'
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style th:replace="~{fragments/sidebar :: sidebar-style}"></style>
+    <style th:replace="fragments/FantasyBackground :: fantasy-style"></style>
+    <style>
+      /* Core Styles */
+      body {
+          background-color: #030712;
+          font-family: 'Inter', sans-serif;
+      }
+      
+      /* Custom scrollbar */
+      ::-webkit-scrollbar {
+          width: 8px;
+          height: 8px;
+      }
+      
+      ::-webkit-scrollbar-track {
+          background: #111827;
+      }
+      
+      ::-webkit-scrollbar-thumb {
+          background: #374151;
+          border-radius: 4px;
+      }
+      
+      ::-webkit-scrollbar-thumb:hover {
+          background: #0ea5e9;
+      }
+      
+      /* Profile card with subtle hover effects */
+      .profile-card {
+        background: linear-gradient(145deg, #151e30, #0f1625);
+        border: 1px solid rgba(255, 255, 255, 0.03);
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      }
+      
+      .profile-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(14, 165, 233, 0.15);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+      }
+      
+      /* Stats card with subtle hover effects */
+      .stat-card {
+        background: linear-gradient(145deg, #151e30, #0f1625);
+        border: 1px solid rgba(255, 255, 255, 0.03);
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      }
+      
+      .stat-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(14, 165, 233, 0.1);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+      }
+      
+      /* Story card with hover effects */
+      .story-card {
+        background: linear-gradient(145deg, #1a2235, #141c2b);
+        border: 1px solid rgba(255, 255, 255, 0.03);
+        border-radius: 10px;
+        transition: all 0.2s ease;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      }
+      
+      .story-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(14, 165, 233, 0.2);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+      }
+      
+      /* Fade-in animation for content */
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      
+      .animate-fade-in {
+        animation: fadeIn 0.4s ease forwards;
+        opacity: 0;
+      }
+      
+      .delay-100 { animation-delay: 0.1s; }
+      .delay-200 { animation-delay: 0.2s; }
+      .delay-300 { animation-delay: 0.3s; }
+      
+      /* Gradient text */
+      .gradient-text {
+        background: linear-gradient(90deg, #0ea5e9, #06b6d4);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      
+      /* Fancy buttons */
+      .btn-primary {
+        background: linear-gradient(90deg, #0ea5e9, #06b6d4);
+        color: white;
+        border-radius: 8px;
+        padding: 0.5rem 1.5rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        position: relative;
+        z-index: 1;
+      }
+      
+      .btn-primary:hover {
+        box-shadow: 0 0 15px rgba(14, 165, 233, 0.4);
+        transform: translateY(-1px);
+      }
+      
+      .btn-secondary {
+        background: rgba(14, 165, 233, 0.1);
+        color: #0ea5e9;
+        border: 1px solid rgba(14, 165, 233, 0.3);
+        border-radius: 8px;
+        padding: 0.5rem 1.5rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+      }
+      
+      .btn-secondary:hover {
+        background: rgba(14, 165, 233, 0.15);
+        transform: translateY(-1px);
+      }
+      
+      /* Tag styles */
+      .tag {
+        transition: all 0.2s ease;
+        background: rgba(14, 165, 233, 0.1);
+        color: #0ea5e9;
+        border: 1px solid rgba(14, 165, 233, 0.3);
+      }
+      
+      .tag:hover {
+        background: rgba(14, 165, 233, 0.15);
+        transform: translateY(-1px);
+      }
+      
+      /* Bookshelf styles */
+      .bookshelf-tab {
+        transition: all 0.2s ease;
+      }
+      
+      .bookshelf-tab.active {
+        border-color: #0ea5e9;
+        color: #0ea5e9;
+      }
+      
+      /* Alert styling */
+      .alert {
+        transition: opacity 0.3s ease;
+      }
+      
+      /* Form elements */
+      .form-input {
+        background: rgba(17, 24, 39, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        color: white;
+        transition: all 0.3s;
+      }
+      
+      .form-input:focus {
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+        outline: none;
+      }
+      
+      /* Modal styling */
+      .modal-content {
+        background: linear-gradient(145deg, #151e30, #0f1625);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+        animation: modalFadeIn 0.3s ease;
+      }
+      
+      @keyframes modalFadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+    </style>
+</head>
+<body class="bg-bg-dark text-gray-100 font-sans">
+    <div class="flex min-h-screen">
+        <!-- Fantasy Background -->
+        <div th:replace="fragments/FantasyBackground :: fantasy-elements"></div>
+        
+        <!-- Sidebar Trigger -->
+        <div th:replace="~{fragments/sidebar :: sidebar-trigger}"></div>
+        
+        <!-- Sidebar -->
+        <aside th:replace="~{fragments/sidebar :: sidebar}"></aside>
+
+        <!-- Main Content -->
+        <div class="flex-1 overflow-auto">
+            <main class="py-6 lg:py-10 relative z-10">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    
+                    <!-- Alert Messages -->
+                    <div th:if="${successMessage}" class="mb-6 alert bg-green-800 text-white px-4 py-3 rounded-lg relative" role="alert">
+                        <span class="block sm:inline" th:text="${successMessage}">Your profile has been updated successfully.</span>
+                        <span class="absolute top-0 bottom-0 right-0 px-4 py-3 close-alert cursor-pointer">
+                            <i class="fas fa-times"></i>
+                        </span>
+                    </div>
+                    
+                    <div th:if="${errorMessage}" class="mb-6 alert bg-red-800 text-white px-4 py-3 rounded-lg relative" role="alert">
+                        <span class="block sm:inline" th:text="${errorMessage}">An error occurred.</span>
+                        <span class="absolute top-0 bottom-0 right-0 px-4 py-3 close-alert cursor-pointer">
+                            <i class="fas fa-times"></i>
+                        </span>
+                    </div>
+                    
+                    <!-- Not Authenticated Message -->
+                    <div th:if="${notAuthenticated == true}" class="profile-card animate-fade-in">
+                        <div class="px-6 py-10 text-center">
+                            <div class="text-5xl mb-6 text-gray-400">
+                                <i class="fas fa-user-lock"></i>
+                            </div>
+                            <h3 class="text-xl leading-6 font-bold text-white mb-3 gradient-text">Authentication Required</h3>
+                            <p class="text-gray-400 mb-6">You need to sign in to view this profile</p>
+                            <div class="flex justify-center space-x-4">
+                                <a href="/login" class="btn-primary inline-flex items-center gap-2">
+                                    <i class="fas fa-sign-in-alt"></i>
+                                    Sign In
+                                </a>
+                                <a href="/register" class="btn-secondary inline-flex items-center gap-2">
+                                    <i class="fas fa-user-plus"></i>
+                                    Register
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Profile Not Found Message -->
+                    <div th:if="${profileNotFound == true}" class="profile-card animate-fade-in">
+                        <div class="px-6 py-10 text-center">
+                            <div class="text-5xl mb-6 text-gray-400">
+                                <i class="fas fa-user-slash"></i>
+                            </div>
+                            <h3 class="text-xl leading-6 font-bold text-white mb-3 gradient-text">Profile Not Found</h3>
+                            <p class="text-gray-400 mb-6">The requested profile could not be found</p>
+                            <a href="/explore" class="btn-primary inline-flex items-center gap-2">
+                                <i class="fas fa-compass"></i>
+                                Explore Inkwell
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Reader Profile Content -->
+                    <div th:if="${user != null && notAuthenticated != true && profileNotFound != true}" class="space-y-8">
+                        <!-- Profile Header -->
+                        <div class="profile-card animate-fade-in">
+                            <div class="px-6 py-8">
+                                <div class="flex flex-col md:flex-row items-start md:items-center justify-between">
+                                    <div class="flex items-center mb-6 md:mb-0">
+                                        <div class="mr-5 flex-shrink-0">
+                                            <div th:if="${user.profileImage != null && !#strings.isEmpty(user.profileImage)}" class="h-20 w-20 rounded-full overflow-hidden border-2 border-accent-blue shadow-lg">
+                                                <img th:src="${user.profileImage}" alt="Profile" class="h-full w-full object-cover" onerror="this.src='/images/default-avatar.png';" />
+                                            </div>
+                                            <div th:unless="${user.profileImage != null && !#strings.isEmpty(user.profileImage)}" class="h-20 w-20 rounded-full overflow-hidden bg-bg-card border-2 border-accent-blue shadow-lg flex items-center justify-center">
+                                                <i class="fas fa-user-edit text-2xl text-accent-blue"></i>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <h1 class="text-2xl font-bold gradient-text sm:text-3xl" th:text="${user.username}">Username</h1>
+                                            <p class="text-sm text-gray-400 mt-1">
+                                                <span class="text-accent-blue">Reader</span>
+                                                <span class="mx-2">•</span>
+                                                <span th:text="${'Joined ' + #temporals.format(user.createdAt, 'MMM yyyy')}">Joined Apr 2023</span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="flex space-x-3">
+                                        <button th:if="${isOwnProfile}" id="editProfileBtn" class="btn-primary inline-flex items-center gap-2">
+                                            <i class="fas fa-edit"></i> Edit Profile
+                                        </button>
+                                        
+                                        <a th:if="${isOwnProfile}" href="/become-writer" class="btn-secondary inline-flex items-center gap-2">
+                                            <i class="fas fa-pen-fancy"></i> Become a Writer
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="mt-6 border-t border-gray-800 pt-6">
+                                    <div class="text-gray-300" th:if="${user.bio != null && !#strings.isEmpty(user.bio)}">
+                                        <p th:text="${user.bio}">User bio goes here...</p>
+                                    </div>
+                                    <div class="text-gray-500 italic" th:unless="${user.bio != null && !#strings.isEmpty(user.bio)}">
+                                        <p th:if="${isOwnProfile}">Add a bio to tell others about yourself...</p>
+                                        <p th:unless="${isOwnProfile}">This user hasn't added a bio yet.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Reader Stats Section -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="stat-card p-6 animate-fade-in delay-100">
+                                <div class="flex items-center">
+                                    <div class="p-3 rounded-lg bg-accent-blue bg-opacity-10">
+                                        <i class="fas fa-book-open text-accent-blue"></i>
+                                    </div>
+                                    <div class="ml-5 w-0 flex-1">
+                                        <dl>
+                                            <dt class="text-sm font-medium text-gray-400 truncate">Stories Read</dt>
+                                            <dd>
+                                                <div class="text-lg font-medium text-gray-100" th:text="${readerStats != null ? readerStats.storiesRead : '0'}">0</div>
+                                            </dd>
+                                        </dl>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="stat-card p-6 animate-fade-in delay-100">
+                                <div class="flex items-center">
+                                    <div class="p-3 rounded-lg bg-red-500 bg-opacity-10">
+                                        <i class="fas fa-heart text-red-500"></i>
+                                    </div>
+                                    <div class="ml-5 w-0 flex-1">
+                                        <dl>
+                                            <dt class="text-sm font-medium text-gray-400 truncate">Stories Liked</dt>
+                                            <dd>
+                                                <div class="text-lg font-medium text-gray-100" th:text="${readerStats != null ? readerStats.storiesLiked : '0'}">0</div>
+                                            </dd>
+                                        </dl>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="stat-card p-6 animate-fade-in delay-100">
+                                <div class="flex items-center">
+                                    <div class="p-3 rounded-lg bg-green-500 bg-opacity-10">
+                                        <i class="fas fa-comment text-green-500"></i>
+                                    </div>
+                                    <div class="ml-5 w-0 flex-1">
+                                        <dl>
+                                            <dt class="text-sm font-medium text-gray-400 truncate">Reviews Written</dt>
+                                            <dd>
+                                                <div class="text-lg font-medium text-gray-100" th:text="${readerStats != null ? readerStats.reviewsWritten : '0'}">0</div>
+                                            </dd>
+                                        </dl>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                                
+                        <!-- Bookshelf Section -->
+                        <div class="profile-card animate-fade-in delay-200">
+                            <div class="px-6 py-5 border-b border-gray-700">
+                                <h3 class="text-xl font-bold gradient-text">Bookshelf</h3>
+                            </div>
+                            
+                            <!-- Bookshelf Tabs -->
+                            <div class="px-6 pt-4 border-b border-gray-700">
+                                <div class="flex overflow-x-auto">
+                                    <button class="bookshelf-tab px-4 py-2 border-b-2 border-accent-blue text-accent-blue whitespace-nowrap active" data-tab="reading">
+                                        Currently Reading
+                                    </button>
+                                    <button class="bookshelf-tab px-4 py-2 border-b-2 border-transparent text-gray-400 hover:text-white whitespace-nowrap" data-tab="plan">
+                                        Plan to Read
+                                    </button>
+                                    <button class="bookshelf-tab px-4 py-2 border-b-2 border-transparent text-gray-400 hover:text-white whitespace-nowrap" data-tab="onhold">
+                                        On Hold
+                                    </button>
+                                    <button class="bookshelf-tab px-4 py-2 border-b-2 border-transparent text-gray-400 hover:text-white whitespace-nowrap" data-tab="completed">
+                                        Completed
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Bookshelf Tab Contents -->
+                            <div class="px-6 py-5">
+                                <!-- Currently Reading Tab -->
+                                <div id="reading-tab" class="bookshelf-content">
+                                    <div th:if="${currentlyReading != null && !currentlyReading.isEmpty()}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                                        <div th:each="book : ${currentlyReading}" class="story-card p-4">
+                                            <div class="flex items-start">
+                                                <div class="flex-shrink-0 mr-4">
+                                                    <div th:if="${book.coverImage != null && !#strings.isEmpty(book.coverImage)}" class="h-24 w-16 rounded overflow-hidden shadow-md">
+                                                        <img th:src="${book.coverImage}" alt="Cover" class="h-full w-full object-cover" />
+                                                    </div>
+                                                    <div th:unless="${book.coverImage != null && !#strings.isEmpty(book.coverImage)}" class="h-24 w-16 flex items-center justify-center rounded bg-bg-card shadow-md">
+                                                        <i class="fas fa-book text-xl text-gray-500"></i>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <a th:href="@{/story/{id}(id=${book.id})}" class="text-md font-medium text-white hover:text-accent-blue transition-colors duration-300" th:text="${book.title}">Book Title</a>
+                                                    <p class="text-xs text-gray-400 mt-1" th:text="${'by ' + book.author.username}">by Author</p>
+                                                    <div class="mt-3 flex items-center">
+                                                        <div class="bg-accent-blue bg-opacity-20 h-2 rounded-full overflow-hidden w-24">
+                                                            <div class="bg-accent-blue h-full" th:style="${'width: ' + book.readProgress + '%'}"></div>
+                                                        </div>
+                                                        <span class="ml-2 text-xs text-gray-400" th:text="${book.readProgress + '%'}">25%</span>
+                                                    </div>
+                                                    <div class="mt-2">
+                                                        <a th:href="@{/story/{id}(id=${book.id})}" class="text-xs text-accent-blue hover:text-accent-cyan transition-colors flex items-center mt-2">
+                                                            Continue reading <i class="fas fa-arrow-right ml-1"></i>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Empty state for Currently Reading -->
+                                    <div th:if="${currentlyReading == null || currentlyReading.isEmpty()}" class="text-center py-8">
+                                        <div class="text-5xl text-gray-600 mb-4">
+                                            <i class="fas fa-book-reader"></i>
+                                        </div>
+                                        <h3 class="text-lg font-medium text-gray-300 mb-2">You're not reading any stories</h3>
+                                        <p class="text-gray-400 mb-4">Explore our collection and start reading!</p>
+                                        <a href="/explore" class="btn-primary inline-flex items-center gap-2">
+                                            <i class="fas fa-compass"></i> Discover Stories
+                                        </a>
+                                    </div>
+                                </div>
+                                
+                                <!-- Plan to Read Tab (Hidden by default) -->
+                                <div id="plan-tab" class="bookshelf-content hidden">
+                                    <div th:if="${planToRead != null && !planToRead.isEmpty()}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                                        <div th:each="book : ${planToRead}" class="story-card p-4">
+                                            <div class="flex items-start">
+                                                <div class="flex-shrink-0 mr-4">
+                                                    <div th:if="${book.coverImage != null && !#strings.isEmpty(book.coverImage)}" class="h-24 w-16 rounded overflow-hidden shadow-md">
+                                                        <img th:src="${book.coverImage}" alt="Cover" class="h-full w-full object-cover" />
+                                                    </div>
+                                                    <div th:unless="${book.coverImage != null && !#strings.isEmpty(book.coverImage)}" class="h-24 w-16 flex items-center justify-center rounded bg-bg-card shadow-md">
+                                                        <i class="fas fa-book text-xl text-gray-500"></i>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <a th:href="@{/story/{id}(id=${book.id})}" class="text-md font-medium text-white hover:text-accent-blue transition-colors duration-300" th:text="${book.title}">Book Title</a>
+                                                    <p class="text-xs text-gray-400 mt-1" th:text="${'by ' + book.author.username}">by Author</p>
+                                                    <div class="mt-3">
+                                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-bg-card text-accent-blue border border-accent-blue border-opacity-30">
+                                                            <i class="fas fa-bookmark mr-1"></i> Plan to Read
+                                                        </span>
+                                                    </div>
+                                                    <div class="mt-2">
+                                                        <a th:href="@{/story/{id}(id=${book.id})}" class="text-xs text-accent-blue hover:text-accent-cyan transition-colors flex items-center mt-2">
+                                                            Start reading <i class="fas fa-arrow-right ml-1"></i>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Empty state for Plan to Read -->
+                                    <div th:if="${planToRead == null || planToRead.isEmpty()}" class="text-center py-8">
+                                        <div class="text-5xl text-gray-600 mb-4">
+                                            <i class="fas fa-list"></i>
+                                        </div>
+                                        <h3 class="text-lg font-medium text-gray-300 mb-2">Your reading list is empty</h3>
+                                        <p class="text-gray-400 mb-4">Add stories to your "Plan to Read" list to keep track of what you want to read next</p>
+                                        <a href="/explore" class="btn-primary inline-flex items-center gap-2">
+                                            <i class="fas fa-compass"></i> Discover Stories
+                                        </a>
+                                    </div>
+                                </div>
+                                
+                                <!-- On Hold Tab (Hidden by default) -->
+                                <div id="onhold-tab" class="bookshelf-content hidden">
+                                    <div th:if="${onHold != null && !onHold.isEmpty()}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                                        <div th:each="book : ${onHold}" class="story-card p-4">
+                                            <div class="flex items-start">
+                                                <div class="flex-shrink-0 mr-4">
+                                                    <div th:if="${book.coverImage != null && !#strings.isEmpty(book.coverImage)}" class="h-24 w-16 rounded overflow-hidden shadow-md">
+                                                        <img th:src="${book.coverImage}" alt="Cover" class="h-full w-full object-cover" />
+                                                    </div>
+                                                    <div th:unless="${book.coverImage != null && !#strings.isEmpty(book.coverImage)}" class="h-24 w-16 flex items-center justify-center rounded bg-bg-card shadow-md">
+                                                        <i class="fas fa-book text-xl text-gray-500"></i>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <a th:href="@{/story/{id}(id=${book.id})}" class="text-md font-medium text-white hover:text-accent-blue transition-colors duration-300" th:text="${book.title}">Book Title</a>
+                                                    <p class="text-xs text-gray-400 mt-1" th:text="${'by ' + book.author.username}">by Author</p>
+                                                    <div class="mt-3 flex items-center">
+                                                        <div class="bg-accent-blue bg-opacity-20 h-2 rounded-full overflow-hidden w-24">
+                                                            <div class="bg-accent-blue h-full" th:style="${'width: ' + book.readProgress + '%'}"></div>
+                                                        </div>
+                                                        <span class="ml-2 text-xs text-gray-400" th:text="${book.readProgress + '%'}">25%</span>
+                                                    </div>
+                                                    <div class="mt-2">
+                                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-900 bg-opacity-30 text-yellow-500 border border-yellow-500 border-opacity-30">
+                                                            <i class="fas fa-pause mr-1"></i> On Hold
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Empty state for On Hold -->
+                                    <div th:if="${onHold == null || onHold.isEmpty()}" class="text-center py-8">
+                                        <div class="text-5xl text-gray-600 mb-4">
+                                            <i class="fas fa-pause-circle"></i>
+                                        </div>
+                                        <h3 class="text-lg font-medium text-gray-300 mb-2">No stories on hold</h3>
+                                        <p class="text-gray-400 mb-4">You don't have any stories on hold</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Completed Tab (Hidden by default) -->
+                                <div id="completed-tab" class="bookshelf-content hidden">
+                                    <div th:if="${completed != null && !completed.isEmpty()}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                                        <div th:each="book : ${completed}" class="story-card p-4">
+                                            <div class="flex items-start">
+                                                <div class="flex-shrink-0 mr-4">
+                                                    <div th:if="${book.coverImage != null && !#strings.isEmpty(book.coverImage)}" class="h-24 w-16 rounded overflow-hidden shadow-md">
+                                                        <img th:src="${book.coverImage}" alt="Cover" class="h-full w-full object-cover" />
+                                                    </div>
+                                                    <div th:unless="${book.coverImage != null && !#strings.isEmpty(book.coverImage)}" class="h-24 w-16 flex items-center justify-center rounded bg-bg-card shadow-md">
+                                                        <i class="fas fa-book text-xl text-gray-500"></i>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <a th:href="@{/story/{id}(id=${book.id})}" class="text-md font-medium text-white hover:text-accent-blue transition-colors duration-300" th:text="${book.title}">Book Title</a>
+                                                    <p class="text-xs text-gray-400 mt-1" th:text="${'by ' + book.author.username}">by Author</p>
+                                                    <div class="mt-2">
+                                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-900 bg-opacity-30 text-green-500 border border-green-500 border-opacity-30">
+                                                            <i class="fas fa-check mr-1"></i> Completed
+                                                        </span>
+                                                    </div>
+                                                    <p class="text-xs text-gray-500 mt-2">
+                                                        Finished: <span th:text="${#temporals.format(book.completedDate, 'MMM d, yyyy')}">Apr 10, 2023</span>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Empty state for Completed -->
+                                    <div th:if="${completed == null || completed.isEmpty()}" class="text-center py-8">
+                                        <div class="text-5xl text-gray-600 mb-4">
+                                            <i class="fas fa-check-circle"></i>
+                                        </div>
+                                        <h3 class="text-lg font-medium text-gray-300 mb-2">No completed stories</h3>
+                                        <p class="text-gray-400 mb-4">You haven't completed any stories yet</p>
+                                        <a href="/explore" class="btn-primary inline-flex items-center gap-2">
+                                            <i class="fas fa-compass"></i> Discover Stories
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                                
+                        <!-- Most Liked Story -->
+                        <div th:if="${mostLikedStory != null}" class="profile-card animate-fade-in delay-300">
+                            <div class="px-6 py-5 border-b border-gray-700">
+                                <h3 class="text-xl font-bold gradient-text">Most Liked Story</h3>
+                            </div>
+                            <div class="px-6 py-6">
+                                <div class="bg-gradient-to-r from-gray-900 to-bg-card rounded-lg p-6 relative shadow-lg">
+                                    <div class="absolute top-3 right-3">
+                                        <div class="bg-accent-blue bg-opacity-10 text-accent-blue text-sm px-3 py-1.5 rounded-full flex items-center shadow-sm">
+                                            <i class="fas fa-heart mr-2"></i> Favorite
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-col sm:flex-row">
+                                        <div class="flex-shrink-0 sm:mr-6 mb-4 sm:mb-0">
+                                            <div th:if="${mostLikedStory.coverImage != null && !#strings.isEmpty(mostLikedStory.coverImage)}" class="h-44 w-32 rounded-lg overflow-hidden bg-bg-card shadow-lg">
+                                                <img th:src="${mostLikedStory.coverImage}" alt="Cover" class="h-full w-full object-cover" />
+                                            </div>
+                                            <div th:unless="${mostLikedStory.coverImage != null && !#strings.isEmpty(mostLikedStory.coverImage)}" class="h-44 w-32 flex items-center justify-center rounded-lg bg-bg-card shadow-lg">
+                                                <i class="fas fa-book text-3xl text-gray-500"></i>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <h4 class="text-xl font-medium text-white mb-2" th:text="${mostLikedStory.title}">Story Title</h4>
+                                            <p class="text-sm text-gray-400 mb-1" th:text="${'by ' + mostLikedStory.author.username}">by Author Name</p>
+                                            <p class="text-sm text-gray-400 mb-4" th:text="${mostLikedStory.description}">Story description</p>
+                                            <a th:href="@{/story/{id}(id=${mostLikedStory.id})}" class="btn-primary inline-flex items-center gap-2">
+                                                Read Story <i class="fas fa-arrow-right"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                                
+                        <!-- Reading Activity -->
+                        <div class="profile-card animate-fade-in delay-300">
+                            <div class="px-6 py-5 border-b border-gray-700">
+                                <h3 class="text-xl font-bold gradient-text">Reading Activity</h3>
+                            </div>
+                            <div class="px-6 py-6">
+                                <div class="mb-6">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <h4 class="text-sm font-medium text-gray-300">Reading Streak</h4>
+                                        <span class="text-sm text-accent-blue" th:text="${readingStreak + ' days'}">7 days</span>
+                                    </div>
+                                    <div class="bg-gray-800 rounded-full h-2 overflow-hidden">
+                                        <div class="bg-gradient-to-r from-accent-blue to-accent-cyan h-2" th:style="${'width: ' + (readingStreak * 5) + '%'}"></div>
+                                    </div>
+                                </div>
+                                
+                                <div th:if="${recentlyReadStories != null && !recentlyReadStories.isEmpty()}">
+                                    <h4 class="text-sm font-medium text-gray-300 mb-3">Recently Read</h4>
+                                    <div class="space-y-4">
+                                        <div th:each="story : ${recentlyReadStories}" class="story-card px-4 py-3 flex items-center">
+                                            <div class="flex-shrink-0 mr-4">
+                                                <div th:if="${story.coverImage != null && !#strings.isEmpty(story.coverImage)}" class="h-12 w-9 rounded overflow-hidden shadow-md">
+                                                    <img th:src="${story.coverImage}" alt="Cover" class="h-full w-full object-cover" />
+                                                </div>
+                                                <div th:unless="${story.coverImage != null && !#strings.isEmpty(story.coverImage)}" class="h-12 w-9 flex items-center justify-center rounded bg-bg-card shadow-md">
+                                                    <i class="fas fa-book text-sm text-gray-500"></i>
+                                                </div>
+                                            </div>
+                                            <div class="min-w-0 flex-1">
+                                                <a th:href="@{/story/{id}(id=${story.id})}" class="text-sm font-medium text-white hover:text-accent-blue transition-colors truncate block" th:text="${story.title}">Story Title</a>
+                                                <p class="text-xs text-gray-400" th:text="${'by ' + story.author.username}">by Author</p>
+                                            </div>
+                                            <div class="ml-auto text-xs text-gray-500">
+                                                <span th:text="${story.lastRead}">2d ago</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Empty state for reading activity -->
+                                <div th:if="${recentlyReadStories == null || recentlyReadStories.isEmpty()}" class="text-center py-6">
+                                    <div class="text-4xl text-gray-600 mb-3">
+                                        <i class="fas fa-book-reader"></i>
+                                    </div>
+                                    <p class="text-gray-400">No recent reading activity</p>
+                                    <p class="text-sm text-gray-500 mt-1">Start reading to track your activity</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Footer -->
+            <footer class="bg-bg-card py-10 mt-auto border-t border-gray-800">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="grid md:grid-cols-4 gap-8">
+                        <div class="md:col-span-2">
+                            <a href="/Home" class="text-2xl font-bold gradient-text inline-block mb-3">Inkwell</a>
+                            <p class="text-gray-400 max-w-md">
+                                A platform for writers and readers to connect through the power of storytelling. 
+                                Create, share, and discover stories that captivate and inspire.
+                            </p>
+                            <div class="flex mt-6 space-x-4">
+                                <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">
+                                    <i class="fab fa-twitter text-xl"></i>
+                                </a>
+                                <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">
+                                    <i class="fab fa-facebook text-xl"></i>
+                                </a>
+                                <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">
+                                    <i class="fab fa-instagram text-xl"></i>
+                                </a>
+                                <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">
+                                    <i class="fab fa-github text-xl"></i>
+                                </a>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold mb-4 text-white">Navigation</h3>
+                            <ul class="space-y-2">
+                                <li>
+                                    <a href="/Home" class="text-gray-400 hover:text-accent-blue transition-colors">Home</a>
+                                </li>
+                                <li>
+                                    <a href="/Library" class="text-gray-400 hover:text-accent-blue transition-colors">Library</a>
+                                </li>
+                                <li>
+                                    <a href="/Dashboard" class="text-gray-400 hover:text-accent-blue transition-colors">Dashboard</a>
+                                </li>
+                                <li>
+                                    <a href="/Writing" class="text-gray-400 hover:text-accent-blue transition-colors">Write</a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold mb-4 text-white">Legal</h3>
+                            <ul class="space-y-2">
+                                <li>
+                                    <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">Terms of Service</a>
+                                </li>
+                                <li>
+                                    <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">Privacy Policy</a>
+                                </li>
+                                <li>
+                                    <a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">Copyright</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="mt-8 pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center">
+                        <p class="text-gray-400 text-sm">
+                            &copy; 2023-2025 Inkwell. All rights reserved.
+                        </p>
+                        <div class="mt-4 md:mt-0">
+                            <a href="#" class="text-sm text-accent-blue hover:underline">Back to top</a>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div id="editProfileModal" class="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center hidden backdrop-blur-sm">
+        <div class="modal-content w-full max-w-md mx-auto">
+            <div class="px-6 py-5 border-b border-gray-700 flex justify-between items-center">
+                <h3 class="text-xl font-bold gradient-text">Edit Profile</h3>
+                <button id="closeModalBtn" class="text-gray-400 hover:text-white transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-6">
+                <form action="/profile/update" method="post" enctype="multipart/form-data">
+                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <div class="space-y-5">
+                        <div>
+                            <label for="username" class="block text-sm font-medium text-gray-300 mb-1">Username</label>
+                            <input type="text" name="username" id="username" th:value="${user != null ? user.username : ''}" class="form-input w-full">
+                        </div>
+                        <div>
+                            <label for="bio" class="block text-sm font-medium text-gray-300 mb-1">Bio</label>
+                            <textarea name="bio" id="bio" rows="3" th:text="${user != null && user.bio != null ? user.bio : ''}" class="form-input w-full resize-none"></textarea>
+                        </div>
+                        <div>
+                            <label for="profileImage" class="block text-sm font-medium text-gray-300 mb-1">Profile Image</label>
+                            <div class="mt-2 flex items-center">
+                                <span class="h-14 w-14 rounded-full overflow-hidden bg-bg-card flex items-center justify-center border border-gray-700">
+                                    <i class="fas fa-user text-xl text-gray-400"></i>
+                                </span>
+                                <div class="ml-4 flex-1">
+                                    <div class="relative bg-bg-card rounded-lg overflow-hidden border border-gray-700 hover:border-accent-blue transition-colors">
+                                        <input type="file" name="profileImage" id="profileImage" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                                        <label for="profileImage" class="py-2 px-4 text-sm text-white inline-block w-full text-center">
+                                            <i class="fas fa-upload mr-2"></i> Upload new image
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-6">
+                        <button type="submit" class="btn-primary w-full inline-flex justify-center items-center gap-2">
+                            <i class="fas fa-save"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile page script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Edit Profile Modal
+            const editProfileBtn = document.getElementById('editProfileBtn');
+            const editProfileModal = document.getElementById('editProfileModal');
+            const closeModalBtn = document.getElementById('closeModalBtn');
+            
+            if (editProfileBtn && editProfileModal && closeModalBtn) {
+                // Open modal
+                editProfileBtn.addEventListener('click', function() {
+                    editProfileModal.classList.remove('hidden');
+                });
+                
+                // Close modal
+                closeModalBtn.addEventListener('click', function() {
+                    editProfileModal.classList.add('hidden');
+                });
+                
+                // Close modal when clicking outside
+                editProfileModal.addEventListener('click', function(e) {
+                    if (e.target === editProfileModal) {
+                        editProfileModal.classList.add('hidden');
+                    }
+                });
+                
+                // Prevent event propagation when clicking the modal content
+                const modalContent = editProfileModal.querySelector('.modal-content');
+                if (modalContent) {
+                    modalContent.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                    });
+                }
+            }
+
+            // Bookshelf tabs
+            const bookshelfTabs = document.querySelectorAll('.bookshelf-tab');
+            const bookshelfContents = document.querySelectorAll('.bookshelf-content');
+            
+            bookshelfTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Remove active class from all tabs
+                    bookshelfTabs.forEach(t => {
+                        t.classList.remove('active');
+                        t.classList.remove('border-accent-blue');
+                        t.classList.remove('text-accent-blue');
+                        t.classList.add('border-transparent');
+                        t.classList.add('text-gray-400');
+                    });
+                    
+                    // Add active class to clicked tab
+                    this.classList.add('active');
+                    this.classList.add('border-accent-blue');
+                    this.classList.add('text-accent-blue');
+                    this.classList.remove('border-transparent');
+                    this.classList.remove('text-gray-400');
+                    
+                    // Hide all content
+                    bookshelfContents.forEach(content => {
+                        content.classList.add('hidden');
+                    });
+                    
+                    // Show corresponding content
+                    const tabId = this.getAttribute('data-tab');
+                    const content = document.getElementById(tabId + '-tab');
+                    if (content) {
+                        content.classList.remove('hidden');
+                    }
+                });
+            });
+            
+            // Alert dismissal
+            const closeAlertButtons = document.querySelectorAll('.close-alert');
+            closeAlertButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const alert = this.closest('.alert');
+                    if (alert) {
+                        alert.style.opacity = '0';
+                        setTimeout(() => {
+                            alert.style.display = 'none';
+                        }, 300);
+                    }
+                });
+            });
+
+            // Auto-hide alerts after 5 seconds
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                setTimeout(() => {
+                    alert.style.opacity = '0';
+                    setTimeout(() => {
+                        alert.style.display = 'none';
+                    }, 300);
+                }, 5000);
+            });
+            
+            // Theme setup
+            const savedTheme = localStorage.getItem('interfaceTheme') || 'none';
+            if (window.setTheme) {
+                window.setTheme(savedTheme);
+            }
+        });
+    </script>
+    <script th:replace="~{fragments/sidebar :: sidebar-script}"></script>
+    <script th:replace="fragments/FantasyBackground :: fantasy-script"></script>
+</body>
+</html>

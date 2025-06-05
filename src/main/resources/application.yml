@@ -1,0 +1,53 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:inkwelldb
+    username: sa
+    password: password
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
+        jdbc:
+          lob:
+            non_contextual_creation: true
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: 383629978917-th097i5s1prfndutb3ohfj38ten3lng7.apps.googleusercontent.com
+            client-secret: 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
+            redirect-uri: 'http://localhost:8082/login/oauth2/code/google'
+            scope:
+              - email
+              - profile
+  mvc:
+    static-path-pattern: /**
+  web:
+    resources:
+      static-locations: classpath:/static/
+      cache:
+        period: 3600
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+server:
+  port: 8082
+
+app:
+  url: http://localhost:8082
+  jwt:
+    secret: a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6a7b8c9d0e1f2g3h4i5j6k7l8m9n0o1p2
+    expiration-ms: 86400000
+  oauth2:
+    authorizedRedirectUris:
+      - http://localhost:8082/oauth2/redirect
+      - http://localhost:8082/login/oauth2/code/google
+      - http://localhost:8082/Home

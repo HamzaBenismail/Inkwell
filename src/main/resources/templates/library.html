@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inkwell - Library</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+      tailwind.config = {
+          theme: {
+              extend: {
+                  colors: {
+                      'accent-blue': '#0ea5e9',
+                      'accent-cyan': '#06b6d4',
+                      'bg-dark': '#030712',
+                      'bg-card': '#111827',
+                      'bg-card-hover': '#1f2937'
+                  },
+                  fontFamily: {
+                      'sans': ['Inter', 'sans-serif'],
+                  },
+              }
+          }
+      }
+  </script>
+  <style>
+      :root {
+          --bg-dark: #030712;
+          --bg-panel: #111827;
+          --bg-panel-lighter: #1e293b;
+          --text-primary: #e2e8f0;
+          --text-secondary: #94a3b8;
+          --accent-blue: #0ea5e9;
+          --accent-cyan: #06b6d4;
+      }
+
+      body {
+          background-color: var(--bg-dark);
+          color: var(--text-primary);
+          font-family: 'Inter', sans-serif;
+      }
+
+      /* Custom scrollbar */
+      ::-webkit-scrollbar {
+          width: 8px;
+          height: 8px;
+      }
+      
+      ::-webkit-scrollbar-track {
+          background: #111827;
+      }
+      
+      ::-webkit-scrollbar-thumb {
+          background: #374151;
+          border-radius: 4px;
+      }
+      
+      ::-webkit-scrollbar-thumb:hover {
+          background: var(--accent-blue);
+      }
+
+      /* Tab Navigation - Enhanced */
+      .tab-button {
+          position: relative;
+          padding: 0.75rem 1.5rem;
+          color: var(--text-secondary);
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          font-weight: 500;
+          border-radius: 8px 8px 0 0;
+          border: 1px solid transparent;
+          border-bottom: none;
+          margin-bottom: -1px;
+          overflow: hidden;
+      }
+
+      .tab-button:hover {
+          color: white;
+          background-color: rgba(14, 165, 233, 0.08);
+          transform: translateY(-3px);
+      }
+      
+      .tab-button::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(135deg, transparent, rgba(14, 165, 233, 0.05), transparent);
+          transform: translateX(-100%);
+          transition: transform 0.6s;
+      }
+      
+      .tab-button:hover::before {
+          transform: translateX(100%);
+      }
+
+      .tab-button.active {
+          color: var(--text-primary);
+          background-color: rgba(14, 165, 233, 0.1);
+          border-color: rgba(14, 165, 233, 0.2);
+          border-bottom: none;
+          box-shadow: 0 -4px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      .tab-button.active::after {
+          content: '';
+          position: absolute;
+          bottom: -1px;
+          left: 0;
+          width: 100%;
+          height: 2px;
+          background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan));
+          border-radius: 2px;
+          box-shadow: 0 0 8px rgba(14, 165, 233, 0.5);
+      }
+
+      .tab-button i {
+          color: var(--text-secondary);
+          transition: all 0.3s ease;
+      }
+
+      .tab-button:hover i,
+      .tab-button.active i {
+          color: var(--accent-blue);
+          transform: scale(1.1);
+      }
+
+      /* Filter Buttons - Enhanced */
+      .filter-button {
+          padding: 0.5rem 1rem;
+          border-radius: 0.5rem;
+          background-color: rgba(17, 24, 39, 0.8);
+          color: var(--text-secondary);
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          font-weight: 500;
+          position: relative;
+          overflow: hidden;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .filter-button::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan));
+          opacity: 0;
+          z-index: -1;
+          transition: opacity 0.3s ease;
+      }
+
+      .filter-button:hover {
+          background-color: rgba(14, 165, 233, 0.1);
+          border-color: rgba(14, 165, 233, 0.3);
+          color: white;
+          transform: translateY(-3px) scale(1.02);
+          box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      .filter-button.active {
+          color: white;
+          border-color: transparent;
+          box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+          background-size: 200% 100%;
+          position: relative;
+          z-index: 1;
+      }
+
+      .filter-button.active::before {
+          opacity: 1;
+      }
+
+      .filter-button.active span {
+          position: relative;
+          z-index: 2;
+      }
+      
+      .filter-button i {
+          transition: all 0.3s ease;
+      }
+      
+      .filter-button:hover i {
+          transform: scale(1.1);
+      }
+      
+      .filter-button.active i {
+          color: white;
+          filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.3));
+      }
+
+      /* Story Cards - Enhanced */
+      .story-card {
+          background: linear-gradient(to bottom, #111827, #0f172a);
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          border-radius: 12px;
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          position: relative;
+          overflow: hidden;
+          aspect-ratio: 2/3;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      
+      .story-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(14, 165, 233, 0.3), transparent);
+          transform: scaleX(0);
+          transition: transform 0.6s;
+      }
+      
+      .story-card:hover {
+          transform: translateY(-8px) scale(1.02);
+          box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
+          border-color: rgba(14, 165, 233, 0.2);
+      }
+      
+      .story-card:hover::before {
+          transform: scaleX(1);
+      }
+      
+      .story-card::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          z-index: -1;
+          background: radial-gradient(circle at center, rgba(14, 165, 233, 0.05), transparent 70%);
+          opacity: 0;
+          transition: opacity 0.5s ease;
+      }
+      
+      .story-card:hover::after {
+          opacity: 1;
+      }
+
+      .story-title {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          font-weight: 600;
+          transition: color 0.3s ease;
+      }
+      
+      .story-card:hover .story-title {
+          color: var(--accent-blue);
+          text-shadow: 0 0 5px rgba(14, 165, 233, 0.2);
+      }
+
+      /* Cover Images - Enhanced */
+      .cover-image {
+          width: 100%;
+          height: 200px;
+          object-fit: cover;
+          border-radius: 8px;
+          transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), filter 0.5s ease;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      .story-card:hover .cover-image {
+          transform: scale(1.05);
+          box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+          filter: brightness(1.05);
+      }
+
+      /* Empty States - Enhanced */
+      .empty-state-icon {
+          background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+          -webkit-background-clip: text;
+          background-clip: text;
+          -webkit-text-fill-color: transparent;
+          filter: drop-shadow(0 0 10px rgba(14, 165, 233, 0.3));
+      }
+
+      .empty-state-container {
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          backdrop-filter: blur(8px);
+          position: relative;
+          overflow: hidden;
+      }
+      
+      .empty-state-container::before {
+          content: '';
+          position: absolute;
+          top: -100%;
+          left: -100%;
+          width: 300%;
+          height: 300%;
+          background: radial-gradient(circle at center, rgba(14, 165, 233, 0.1) 0%, transparent 50%);
+          opacity: 0;
+          transition: opacity 1s ease;
+          z-index: -1;
+      }
+
+      .empty-state-container:hover {
+          border-color: rgba(14, 165, 233, 0.2);
+          box-shadow: 0 0 30px rgba(14, 165, 233, 0.05);
+          transform: translateY(-5px);
+      }
+      
+      .empty-state-container:hover::before {
+          opacity: 1;
+      }
+
+      /* Action buttons - Enhanced */
+      .btn-primary {
+          background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan));
+          color: white;
+          border-radius: 8px;
+          padding: 0.5rem 1.5rem;
+          font-weight: 500;
+          transition: all 0.3s;
+          position: relative;
+          z-index: 1;
+          overflow: hidden;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      
+      .btn-primary::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 0;
+          height: 100%;
+          background: rgba(255, 255, 255, 0.1);
+          transition: width 0.3s ease;
+          z-index: -1;
+      }
+      
+      .btn-primary::after {
+          content: '';
+          position: absolute;
+          top: -50%;
+          left: -50%;
+          width: 200%;
+          height: 200%;
+          background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 60%);
+          opacity: 0;
+          transition: opacity 0.3s ease;
+          z-index: -1;
+      }
+      
+      .btn-primary:hover::before {
+          width: 100%;
+      }
+      
+      .btn-primary:hover::after {
+          opacity: 0.5;
+      }
+      
+      .btn-primary:hover {
+          box-shadow: 0 0 20px rgba(14, 165, 233, 0.5);
+          transform: translateY(-2px) scale(1.02);
+      }
+      
+      .btn-primary:active {
+          transform: translateY(0) scale(0.98);
+      }
+
+      /* Section Headers - Enhanced */
+      .section-header {
+          font-size: 1.25rem;
+          font-weight: 700;
+          margin-bottom: 1rem;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding-bottom: 0.5rem;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+          position: relative;
+      }
+      
+      .section-header i {
+          color: var(--accent-blue);
+          filter: drop-shadow(0 0 3px rgba(14, 165, 233, 0.3));
+          transition: transform 0.3s ease;
+      }
+      
+      .section-header:hover i {
+          transform: scale(1.1) rotate(-5deg);
+      }
+
+      .section-header::after {
+          content: '';
+          position: absolute;
+          bottom: -1px;
+          left: 0;
+          width: 100px;
+          height: 1px;
+          background: linear-gradient(90deg, var(--accent-blue), transparent);
+          transition: width 0.5s ease;
+      }
+      
+      .section-header:hover::after {
+          width: 150px;
+      }
+
+      /* Gradient Text - Enhanced */
+      .gradient-text {
+          background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan));
+          -webkit-background-clip: text;
+          background-clip: text;
+          -webkit-text-fill-color: transparent;
+          position: relative;
+      }
+      
+      .gradient-text::after {
+          content: '';
+          position: absolute;
+          bottom: -4px;
+          left: 0;
+          width: 100%;
+          height: 1px;
+          background: linear-gradient(90deg, var(--accent-blue), transparent);
+          transform: scaleX(0.3);
+          transform-origin: left;
+          opacity: 0.6;
+          transition: all 0.5s ease;
+      }
+      
+      .gradient-text:hover::after {
+          transform: scaleX(1);
+          opacity: 1;
+      }
+
+      /* Progress Bar - Enhanced */
+      .progress-bar {
+          height: 4px;
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 2px;
+          overflow: hidden;
+          margin-top: 4px;
+      }
+      
+      .progress-fill {
+          height: 100%;
+          background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan));
+          border-radius: 2px;
+          position: relative;
+          overflow: hidden;
+          box-shadow: 0 0 4px rgba(14, 165, 233, 0.3);
+          transition: box-shadow 0.3s ease;
+      }
+      
+      .story-card:hover .progress-fill {
+          box-shadow: 0 0 8px rgba(14, 165, 233, 0.5);
+      }
+      
+      .progress-fill::after {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 50%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+          animation: progress-shine 2s infinite;
+      }
+      
+      @keyframes progress-shine {
+          to {
+              left: 100%;
+          }
+      }
+      
+      /* Status indicators - Enhanced */
+      .status-icon {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          background: rgba(0, 0, 0, 0.5);
+          backdrop-filter: blur(4px);
+          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          transition: all 0.3s ease;
+      }
+      
+      .story-card:hover .status-icon {
+          transform: scale(1.1);
+          box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+          border-color: rgba(14, 165, 233, 0.3);
+      }
+      
+      .status-icon i {
+          transition: all 0.3s ease;
+      }
+      
+      .story-card:hover .status-icon i {
+          transform: scale(1.1);
+          filter: drop-shadow(0 0 3px currentColor);
+      }
+      
+      /* Staggered animations - Enhanced */
+      @keyframes fade-in-up {
+          from {
+              opacity: 0;
+              transform: translateY(20px);
+          }
+          to {
+              opacity: 1;
+              transform: translateY(0);
+          }
+      }
+      
+      /* Page title enhancement */
+      .page-title {
+          position: relative;
+          display: inline-block;
+          padding-bottom: 0.5rem;
+          transition: all 0.5s ease;
+      }
+      
+      .page-title::after {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          width: 100%;
+          height: 2px;
+          background: linear-gradient(90deg, var(--accent-blue), transparent);
+          border-radius: 2px;
+          box-shadow: 0 0 6px rgba(14, 165, 233, 0.3);
+          transition: all 0.5s ease;
+      }
+      
+      .page-title:hover::after {
+          width: 120%;
+          box-shadow: 0 0 12px rgba(14, 165, 233, 0.5);
+      }
+      
+      .page-title i {
+          transition: all 0.3s ease;
+      }
+      
+      .page-title:hover i {
+          transform: scale(1.1) rotate(-5deg);
+      }
+      
+      /* Tab container styling - Enhanced */
+      .tabs-container {
+          background: rgba(17, 24, 39, 0.5);
+          backdrop-filter: blur(10px);
+          border-radius: 0.5rem;
+          padding: 0.25rem;
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          transition: all 0.3s ease;
+      }
+      
+      .tabs-container:hover {
+          box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+          border-color: rgba(14, 165, 233, 0.1);
+      }
+  </style>
+  <style th:replace="fragments/sidebar :: sidebar-style"></style>
+  <style th:replace="fragments/FantasyBackground :: fantasy-style"></style>
+</head>
+<body class="bg-bg-dark text-gray-100 font-sans">
+    <div th:replace="fragments/FantasyBackground :: fantasy-elements"></div>
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside th:replace="fragments/sidebar :: sidebar"></aside>
+        <div th:replace="fragments/sidebar :: sidebar-trigger"></div>
+
+        <!-- Main Content -->
+        <div class="flex-1 overflow-auto">
+            <div class="container mx-auto px-4 py-8">
+                <h1 class="text-3xl font-bold mb-8 gradient-text flex items-center gap-3 page-title">
+                    <i class="fas fa-book-open"></i>
+                    <span>My Library</span>
+                </h1>
+
+                <!-- Tabs -->
+                <div class="border-b border-gray-700 mb-8 tabs-container">
+                    <div class="flex space-x-4">
+                        <a th:href="@{/Library(tab='continue')}" class="tab-button" th:classappend="${activeTab == 'continue' ? 'active' : ''}">
+                            <i class="fas fa-book-open mr-2"></i>Continue Reading
+                        </a>
+                        <a th:href="@{/Library(tab='favorites')}" class="tab-button" th:classappend="${activeTab == 'favorites' ? 'active' : ''}">
+                            <i class="fas fa-heart mr-2"></i>Favorites
+                        </a>
+                        <a th:href="@{/Library(tab='readlist')}" class="tab-button" th:classappend="${activeTab == 'readlist' ? 'active' : ''}">
+                            <i class="fas fa-list mr-2"></i>Read List
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Filters (shown only for readlist tab) -->
+                <div id="filters" class="mb-8 flex flex-wrap gap-2" th:classappend="${activeTab != 'readlist' ? 'hidden' : ''}">
+                    <a th:href="@{/Library(tab='readlist',filter='all')}" class="filter-button" th:classappend="${activeFilter == 'all' ? 'active' : ''}">
+                        <span><i class="fas fa-layer-group mr-1"></i>All</span>
+                    </a>
+                    <a th:href="@{/Library(tab='readlist',filter='reading')}" class="filter-button" th:classappend="${activeFilter == 'reading' ? 'active' : ''}">
+                        <span><i class="fas fa-book-reader mr-1"></i>Currently Reading</span>
+                    </a>
+                    <a th:href="@{/Library(tab='readlist',filter='hold')}" class="filter-button" th:classappend="${activeFilter == 'hold' ? 'active' : ''}">
+                        <span><i class="fas fa-pause-circle mr-1"></i>On Hold</span>
+                    </a>
+                    <a th:href="@{/Library(tab='readlist',filter='plan')}" class="filter-button" th:classappend="${activeFilter == 'plan' ? 'active' : ''}">
+                        <span><i class="fas fa-calendar mr-1"></i>Plan to Read</span>
+                    </a>
+                    <a th:href="@{/Library(tab='readlist',filter='dropped')}" class="filter-button" th:classappend="${activeFilter == 'dropped' ? 'active' : ''}">
+                        <span><i class="fas fa-times-circle mr-1"></i>Dropped</span>
+                    </a>
+                    <a th:href="@{/Library(tab='readlist',filter='completed')}" class="filter-button" th:classappend="${activeFilter == 'completed' ? 'active' : ''}">
+                        <span><i class="fas fa-check-circle mr-1"></i>Completed</span>
+                    </a>
+                </div>
+
+                <!-- Continue Reading Tab Content -->
+                <div th:if="${activeTab == 'continue'}" class="space-y-8">
+                    <!-- Empty state -->
+                    <div th:if="${continueReading.isEmpty()}" class="text-center py-16 bg-slate-800/30 rounded-xl backdrop-blur-sm border border-gray-700 empty-state-container">
+                        <div class="text-6xl mb-6 empty-state-icon animate-pulse">
+                            <i class="fas fa-book-open"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-3">No stories in progress</h3>
+                        <p class="text-gray-400 mb-6 max-w-md mx-auto">Start reading stories to track your progress and continue where you left off</p>
+                        <a href="/Home" class="btn-primary">
+                            <i class="fas fa-compass mr-2"></i>Discover Stories
+                        </a>
+                    </div>
+
+                    <!-- Story Grid -->
+                    <div th:unless="${continueReading.isEmpty()}" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                        <div th:each="progress : ${continueReading}" class="story-card p-4 story-item">
+                            <a th:href="@{/story/{id}(id=${progress.story.id})}" class="block h-full flex flex-col">
+                                <div class="relative overflow-hidden rounded-lg mb-3 flex-shrink-0">
+                                    <img th:if="${progress.story.coverImage}" th:src="${progress.story.coverImage}" th:alt="${progress.story.title + ' cover'}" 
+                                        class="cover-image" 
+                                        onerror="this.onerror=null; this.src='https://placehold.co/200x300/1f2937/cccccc?text=No+Cover'">
+                                    <img th:unless="${progress.story.coverImage}" 
+                                        src="https://placehold.co/200x300/1f2937/cccccc?text=No+Cover" 
+                                        th:alt="${progress.story.title + ' cover'}" 
+                                        class="cover-image">
+                                    <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                                        <div class="text-xs font-medium text-white">
+                                            <span th:if="${progress.currentChapter != null}" th:text="${'Chapter ' + progress.currentChapter.chapterNumber}">Chapter</span>
+                                            <span th:if="${progress.progressPercentage > 0}" class="float-right" th:text="${progress.progressPercentage + '%'}">Progress</span>
+                                        </div>
+                                        <div th:if="${progress.progressPercentage > 0}" class="progress-bar">
+                                            <div class="progress-fill" th:style="'width:' + ${progress.progressPercentage + '%'}"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <h3 class="story-title" th:text="${progress.story.title}">Story Title</h3>
+                                <p class="text-sm text-gray-400 mt-auto">
+                                    <i class="far fa-clock mr-1"></i>
+                                    <span th:text="${#temporals.format(progress.lastReadAt, 'MMM dd, yyyy')}">Last read: date</span>
+                                </p>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Read List Tab Content -->
+                <div th:if="${activeTab == 'readlist'}" class="space-y-12">
+                    <!-- Empty state -->
+                    <div th:if="${(activeFilter == 'all' && continueReading.isEmpty() && planToRead.isEmpty() && onHold.isEmpty() && completed.isEmpty() && dropped.isEmpty()) ||
+                                (activeFilter == 'reading' && continueReading.isEmpty()) ||
+                                (activeFilter == 'plan' && planToRead.isEmpty()) ||
+                                (activeFilter == 'hold' && onHold.isEmpty()) ||
+                                (activeFilter == 'completed' && completed.isEmpty()) ||
+                                (activeFilter == 'dropped' && dropped.isEmpty())}" 
+                        class="text-center py-16 bg-slate-800/30 rounded-xl backdrop-blur-sm border border-gray-700 empty-state-container">
+                        <div class="text-6xl mb-6 empty-state-icon animate-pulse">
+                            <i class="fas fa-list"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-3">No stories in this category</h3>
+                        <p class="text-gray-400 mb-6 max-w-md mx-auto">Add stories to your reading list to keep track of your reading journey</p>
+                        <a href="/Home" class="btn-primary">
+                            <i class="fas fa-compass mr-2"></i>Discover Stories
+                        </a>
+                    </div>
+
+                    <!-- Currently Reading Section -->
+                    <div th:if="${(activeFilter == 'all' || activeFilter == 'reading') && !continueReading.isEmpty()}" class="space-y-4">
+                        <h2 class="section-header">
+                            <i class="fas fa-book-reader"></i>
+                            <span>Currently Reading</span>
+                        </h2>
+                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                            <div th:each="progress : ${continueReading}" class="story-card p-4 story-item">
+                                <a th:href="@{/story/{id}(id=${progress.story.id})}" class="block h-full flex flex-col">
+                                    <div class="relative overflow-hidden rounded-lg mb-3 flex-shrink-0">
+                                        <img th:if="${progress.story.coverImage}" th:src="${progress.story.coverImage}" th:alt="${progress.story.title + ' cover'}" 
+                                            class="cover-image" 
+                                            onerror="this.onerror=null; this.src='https://placehold.co/200x300/1f2937/cccccc?text=No+Cover'">
+                                        <img th:unless="${progress.story.coverImage}" 
+                                            src="https://placehold.co/200x300/1f2937/cccccc?text=No+Cover" 
+                                            th:alt="${progress.story.title + ' cover'}" 
+                                            class="cover-image">
+                                        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                                            <div class="text-xs font-medium text-white">
+                                                <span th:if="${progress.progressPercentage > 0}" th:text="${progress.progressPercentage + '%'}">Progress</span>
+                                            </div>
+                                            <div th:if="${progress.progressPercentage > 0}" class="progress-bar">
+                                                <div class="progress-fill" th:style="'width:' + ${progress.progressPercentage + '%'}"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <h3 class="story-title" th:text="${progress.story.title}">Story Title</h3>
+                                    <p class="text-sm text-gray-400 mt-auto">
+                                        <i class="far fa-clock mr-1"></i>
+                                        <span th:text="${#temporals.format(progress.lastReadAt, 'MMM dd, yyyy')}">Last read: date</span>
+                                    </p>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Plan to Read Section -->
+                    <div th:if="${(activeFilter == 'all' || activeFilter == 'plan') && !planToRead.isEmpty()}" class="space-y-4">
+                        <h2 class="section-header">
+                            <i class="fas fa-calendar"></i>
+                            <span>Plan to Read</span>
+                        </h2>
+                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                            <div th:each="progress : ${planToRead}" class="story-card p-4 story-item">
+                                <a th:href="@{/story/{id}(id=${progress.story.id})}" class="block h-full flex flex-col">
+                                    <div class="relative overflow-hidden rounded-lg mb-3 flex-shrink-0">
+                                        <img th:if="${progress.story.coverImage}" th:src="${progress.story.coverImage}" th:alt="${progress.story.title + ' cover'}" 
+                                            class="cover-image" 
+                                            onerror="this.onerror=null; this.src='https://placehold.co/200x300/1f2937/cccccc?text=No+Cover'">
+                                        <img th:unless="${progress.story.coverImage}" 
+                                            src="https://placehold.co/200x300/1f2937/cccccc?text=No+Cover" 
+                                            th:alt="${progress.story.title + ' cover'}" 
+                                            class="cover-image">
+                                        <div class="absolute top-0 right-0 p-2">
+                                            <div class="status-icon">
+                                                <i class="fas fa-calendar text-accent-blue drop-shadow-md"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <h3 class="story-title" th:text="${progress.story.title}">Story Title</h3>
+                                    <p class="text-sm text-gray-400 mt-auto">
+                                        <i class="fas fa-calendar-plus mr-1"></i>
+                                        <span>Plan to Read</span>
+                                    </p>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- On Hold Section -->
+                    <div th:if="${(activeFilter == 'all' || activeFilter == 'hold') && !onHold.isEmpty()}" class="space-y-4">
+                        <h2 class="section-header">
+                            <i class="fas fa-pause-circle"></i>
+                            <span>On Hold</span>
+                        </h2>
+                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                            <div th:each="progress : ${onHold}" class="story-card p-4 story-item">
+                                <a th:href="@{/story/{id}(id=${progress.story.id})}" class="block h-full flex flex-col">
+                                    <div class="relative overflow-hidden rounded-lg mb-3 flex-shrink-0">
+                                        <img th:if="${progress.story.coverImage}" th:src="${progress.story.coverImage}" th:alt="${progress.story.title + ' cover'}" 
+                                            class="cover-image" 
+                                            onerror="this.onerror=null; this.src='https://placehold.co/200x300/1f2937/cccccc?text=No+Cover'">
+                                        <img th:unless="${progress.story.coverImage}" 
+                                            src="https://placehold.co/200x300/1f2937/cccccc?text=No+Cover" 
+                                            th:alt="${progress.story.title + ' cover'}" 
+                                            class="cover-image">
+                                        <div class="absolute top-0 right-0 p-2">
+                                            <div class="status-icon">
+                                                <i class="fas fa-pause text-yellow-500 drop-shadow-md"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <h3 class="story-title" th:text="${progress.story.title}">Story Title</h3>
+                                    <p class="text-sm text-gray-400 mt-auto">
+                                        <i class="fas fa-pause mr-1 text-yellow-500"></i>
+                                        <span>On Hold</span>
+                                    </p>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Completed Section -->
+                    <div th:if="${(activeFilter == 'all' || activeFilter == 'completed') && !completed.isEmpty()}" class="space-y-4">
+                        <h2 class="section-header">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Completed</span>
+                        </h2>
+                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                            <div th:each="progress : ${completed}" class="story-card p-4 story-item">
+                                <a th:href="@{/story/{id}(id=${progress.story.id})}" class="block h-full flex flex-col">
+                                    <div class="relative overflow-hidden rounded-lg mb-3 flex-shrink-0">
+                                        <img th:if="${progress.story.coverImage}" th:src="${progress.story.coverImage}" th:alt="${progress.story.title + ' cover'}" 
+                                            class="cover-image" 
+                                            onerror="this.onerror=null; this.src='https://placehold.co/200x300/1f2937/cccccc?text=No+Cover'">
+                                        <img th:unless="${progress.story.coverImage}" 
+                                            src="https://placehold.co/200x300/1f2937/cccccc?text=No+Cover" 
+                                            th:alt="${progress.story.title + ' cover'}" 
+                                            class="cover-image">
+                                        <div class="absolute top-0 right-0 p-2">
+                                            <div class="status-icon">
+                                                <i class="fas fa-check text-green-500 drop-shadow-md"></i>
+                                            </div>
+                                        </div>
+                                        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                                            <div class="progress-bar">
+                                                <div class="progress-fill" style="width:100%"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <h3 class="story-title" th:text="${progress.story.title}">Story Title</h3>
+                                    <p class="text-sm text-gray-400 mt-auto">
+                                        <i class="fas fa-check mr-1 text-green-500"></i>
+                                        <span>Completed</span>
+                                    </p>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dropped Section -->
+                    <div th:if="${(activeFilter == 'all' || activeFilter == 'dropped') && !dropped.isEmpty()}" class="space-y-4">
+                        <h2 class="section-header">
+                            <i class="fas fa-times-circle"></i>
+                            <span>Dropped</span>
+                        </h2>
+                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                            <div th:each="progress : ${dropped}" class="story-card p-4 story-item">
+                                <a th:href="@{/story/{id}(id=${progress.story.id})}" class="block h-full flex flex-col">
+                                    <div class="relative overflow-hidden rounded-lg mb-3 flex-shrink-0">
+                                        <img th:if="${progress.story.coverImage}" th:src="${progress.story.coverImage}" th:alt="${progress.story.title + ' cover'}" 
+                                            class="cover-image" 
+                                            onerror="this.onerror=null; this.src='https://placehold.co/200x300/1f2937/cccccc?text=No+Cover'">
+                                        <img th:unless="${progress.story.coverImage}" 
+                                            src="https://placehold.co/200x300/1f2937/cccccc?text=No+Cover" 
+                                            th:alt="${progress.story.title + ' cover'}" 
+                                            class="cover-image">
+                                        <div class="absolute top-0 right-0 p-2">
+                                            <div class="status-icon">
+                                                <i class="fas fa-times text-red-500 drop-shadow-md"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <h3 class="story-title" th:text="${progress.story.title}">Story Title</h3>
+                                    <p class="text-sm text-gray-400 mt-auto">
+                                        <i class="fas fa-times mr-1 text-red-500"></i>
+                                        <span>Dropped</span>
+                                    </p>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Favorites Tab Content -->
+                <div th:if="${activeTab == 'favorites'}" class="space-y-8">
+                    <!-- Empty state -->
+                    <div th:if="${favorites == null || favorites.isEmpty()}" class="text-center py-16 bg-slate-800/30 rounded-xl backdrop-blur-sm border border-gray-700 empty-state-container">
+                        <div class="text-6xl mb-6 empty-state-icon animate-pulse">
+                            <i class="fas fa-heart"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-3">No favorite stories yet</h3>
+                        <p class="text-gray-400 mb-6 max-w-md mx-auto">Like stories to add them to your favorites for quick access</p>
+                        <a href="/Home" class="btn-primary">
+                            <i class="fas fa-compass mr-2"></i>Discover Stories
+                        </a>
+                    </div>
+                    
+                    <!-- Favorites Grid -->
+                    <div th:unless="${favorites == null || favorites.isEmpty()}" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                        <div th:each="story : ${favorites}" class="story-card p-4 story-item">
+                            <a th:href="@{/story/{id}(id=${story.id})}" class="block h-full flex flex-col">
+                                <div class="relative overflow-hidden rounded-lg mb-3 flex-shrink-0">
+                                    <img th:if="${story.coverImage}" th:src="${story.coverImage}" th:alt="${story.title + ' cover'}" 
+                                        class="cover-image" 
+                                        onerror="this.onerror=null; this.src='https://placehold.co/200x300/1f2937/cccccc?text=No+Cover'">
+                                    <img th:unless="${story.coverImage}" 
+                                        src="https://placehold.co/200x300/1f2937/cccccc?text=No+Cover" 
+                                        th:alt="${story.title + ' cover'}" 
+                                        class="cover-image">
+                                    <div class="absolute top-0 right-0 p-2">
+                                        <div class="status-icon">
+                                            <i class="fas fa-heart text-red-500 drop-shadow-md"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <h3 class="story-title" th:text="${story.title}">Story Title</h3>
+                                <p class="text-sm text-gray-400 mt-auto">
+                                    <i class="fas fa-heart text-red-500 mr-1"></i>
+                                    <span>Favorite</span>
+                                </p>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:replace="fragments/sidebar :: sidebar-script"></script>
+    <script th:replace="fragments/FantasyBackground :: fantasy-script"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const savedTheme = localStorage.getItem('interfaceTheme') || 'none';
+        if (window.setTheme) {
+            window.setTheme(savedTheme);
+        }
+        
+        // Enhanced animations for cards with staggered timing
+        const storyCards = document.querySelectorAll('.story-item');
+        storyCards.forEach((card, index) => {
+            // Staggered animation on page load
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            setTimeout(() => {
+                card.style.transition = 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, 100 + (index * 60));
+            
+            // Enhanced hover animations
+            card.addEventListener('mouseenter', () => {
+                const icon = card.querySelector('.status-icon i');
+                if (icon) {
+                    icon.classList.add('animate-pulse');
+                }
+                
+                const progressBar = card.querySelector('.progress-fill');
+                if (progressBar) {
+                    progressBar.style.boxShadow = '0 0 10px rgba(14, 165, 233, 0.6)';
+                }
+                
+                // Add subtle glow to the card
+                card.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.2), 0 0 15px rgba(14, 165, 233, 0.1)';
+            });
+            
+            card.addEventListener('mouseleave', () => {
+                const icon = card.querySelector('.status-icon i');
+                if (icon) {
+                    icon.classList.remove('animate-pulse');
+                }
+                
+                const progressBar = card.querySelector('.progress-fill');
+                if (progressBar) {
+                    progressBar.style.boxShadow = '0 0 4px rgba(14, 165, 233, 0.3)';
+                }
+                
+                // Restore original shadow
+                card.style.boxShadow = '';
+            });
+        });
+        
+        // Add gradient text effect for all headings with enhanced animations
+        const headings = document.querySelectorAll('h1, h2.section-header span');
+        headings.forEach(heading => {
+            if (!heading.classList.contains('gradient-text')) {
+                heading.classList.add('gradient-text');
+            }
+            
+            // Add hover effect animation
+            heading.addEventListener('mouseenter', () => {
+                const icon = heading.parentElement.querySelector('i');
+                if (icon) {
+                    icon.style.transform = 'scale(1.1) rotate(-5deg)';
+                    icon.style.filter = 'drop-shadow(0 0 5px rgba(14, 165, 233, 0.5))';
+                }
+            });
+            
+            heading.addEventListener('mouseleave', () => {
+                const icon = heading.parentElement.querySelector('i');
+                if (icon) {
+                    icon.style.transform = '';
+                    icon.style.filter = '';
+                }
+            });
+        });
+        
+        // Enhanced animations for filter buttons
+        const filterButtons = document.querySelectorAll('.filter-button:not(.active)');
+        filterButtons.forEach(button => {
+            button.addEventListener('mouseenter', () => {
+                button.style.transform = 'translateY(-3px) scale(1.02)';
+                button.style.boxShadow = '0 6px 12px rgba(0, 0, 0, 0.2)';
+                
+                const icon = button.querySelector('i');
+                if (icon) {
+                    icon.style.transform = 'scale(1.1)';
+                    icon.style.color = 'var(--accent-blue)';
+                }
+            });
+            
+            button.addEventListener('mouseleave', () => {
+                button.style.transform = '';
+                button.style.boxShadow = '';
+                
+                const icon = button.querySelector('i');
+                if (icon) {
+                    icon.style.transform = '';
+                    icon.style.color = '';
+                }
+            });
+        });
+        
+        // Enhanced tab button animations
+        const tabButtons = document.querySelectorAll('.tab-button');
+        tabButtons.forEach(button => {
+            button.addEventListener('mouseenter', () => {
+                if (!button.classList.contains('active')) {
+                    button.style.transform = 'translateY(-3px)';
+                    
+                    const icon = button.querySelector('i');
+                    if (icon) {
+                        icon.style.transform = 'scale(1.1)';
+                        icon.style.color = 'var(--accent-blue)';
+                    }
+                }
+            });
+            
+            button.addEventListener('mouseleave', () => {
+                if (!button.classList.contains('active')) {
+                    button.style.transform = '';
+                    
+                    const icon = button.querySelector('i');
+                    if (icon) {
+                        icon.style.transform = '';
+                        icon.style.color = '';
+                    }
+                }
+            });
+        });
+        
+        // Add parallax effect to empty state containers
+        const emptyContainers = document.querySelectorAll('.empty-state-container');
+        emptyContainers.forEach(container => {
+            container.addEventListener('mousemove', (e) => {
+                const rect = container.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                
+                const moveX = (x - centerX) / 20;
+                const moveY = (y - centerY) / 20;
+                
+                const icon = container.querySelector('.empty-state-icon');
+                if (icon) {
+                    icon.style.transform = `translate(${moveX}px, ${moveY}px)`;
+                }
+            });
+            
+            container.addEventListener('mouseleave', () => {
+                const icon = container.querySelector('.empty-state-icon');
+                if (icon) {
+                    icon.style.transform = '';
+                }
+            });
+        });
+
+        // Fix for the white flash when switching tabs
+        function setupTabNavigation() {
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const filterButtons = document.querySelectorAll('.filter-button');
+            
+            // Handle tab buttons
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetUrl = this.getAttribute('href');
+                    
+                    // Show loading state on the button
+                    this.classList.add('loading');
+                    
+                    // Fetch the new content without a full page reload
+                    fetch(targetUrl, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => response.text())
+                    .then(html => {
+                        // Update the URL without reloading
+                        history.pushState(null, '', targetUrl);
+                        
+                        // Create a temporary container to parse the HTML
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        
+                        // Extract just the main content area
+                        const newContent = doc.querySelector('.flex-1.overflow-auto > .container');
+                        if (newContent) {
+                            // Replace just the main content
+                            document.querySelector('.flex-1.overflow-auto > .container').innerHTML = newContent.innerHTML;
+                            
+                            // Re-attach event handlers to the new content
+                            setupTabNavigation();
+                            
+                            // Initialize animations and effects for the new content
+                            initializePageEffects();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading tab content:', error);
+                        // Fallback to regular navigation on error
+                        window.location.href = targetUrl;
+                    })
+                    .finally(() => {
+                        // Remove loading state
+                        this.classList.remove('loading');
+                    });
+                });
+            });
+            
+            // Handle filter buttons
+            filterButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetUrl = this.getAttribute('href');
+                    
+                    // Show loading state on the button
+                    this.classList.add('loading');
+                    
+                    // Fetch the new content without a full page reload
+                    fetch(targetUrl, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => response.text())
+                    .then(html => {
+                        // Update the URL without reloading
+                        history.pushState(null, '', targetUrl);
+                        
+                        // Create a temporary container to parse the HTML
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        
+                        // Extract just the main content area
+                        const newContent = doc.querySelector('.flex-1.overflow-auto > .container');
+                        if (newContent) {
+                            // Replace just the main content
+                            document.querySelector('.flex-1.overflow-auto > .container').innerHTML = newContent.innerHTML;
+                            
+                            // Re-attach event handlers to the new content
+                            setupTabNavigation();
+                            
+                            // Initialize animations and effects for the new content
+                            initializePageEffects();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading filter content:', error);
+                        // Fallback to regular navigation on error
+                        window.location.href = targetUrl;
+                    })
+                    .finally(() => {
+                        // Remove loading state
+                        this.classList.remove('loading');
+                    });
+                });
+            });
+        }
+        
+        // Function to initialize all page effects and animations
+        function initializePageEffects() {
+            // Enhanced animations for cards with staggered timing
+            const storyCards = document.querySelectorAll('.story-item');
+            storyCards.forEach((card, index) => {
+                // Staggered animation on page load
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    card.style.transition = 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 100 + (index * 60));
+                
+                // Enhanced hover animations
+                card.addEventListener('mouseenter', () => {
+                    const icon = card.querySelector('.status-icon i');
+                    if (icon) {
+                        icon.classList.add('animate-pulse');
+                    }
+                    
+                    const progressBar = card.querySelector('.progress-fill');
+                    if (progressBar) {
+                        progressBar.style.boxShadow = '0 0 10px rgba(14, 165, 233, 0.6)';
+                    }
+                    
+                    // Add subtle glow to the card
+                    card.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.2), 0 0 15px rgba(14, 165, 233, 0.1)';
+                });
+                
+                card.addEventListener('mouseleave', () => {
+                    const icon = card.querySelector('.status-icon i');
+                    if (icon) {
+                        icon.classList.remove('animate-pulse');
+                    }
+                    
+                    const progressBar = card.querySelector('.progress-fill');
+                    if (progressBar) {
+                        progressBar.style.boxShadow = '0 0 4px rgba(14, 165, 233, 0.3)';
+                    }
+                    
+                    // Restore original shadow
+                    card.style.boxShadow = '';
+                });
+            });
+            
+            // Add gradient text effect for all headings with enhanced animations
+            const headings = document.querySelectorAll('h1, h2.section-header span');
+            headings.forEach(heading => {
+                if (!heading.classList.contains('gradient-text')) {
+                    heading.classList.add('gradient-text');
+                }
+                
+                // Add hover effect animation
+                heading.addEventListener('mouseenter', () => {
+                    const icon = heading.parentElement.querySelector('i');
+                    if (icon) {
+                        icon.style.transform = 'scale(1.1) rotate(-5deg)';
+                        icon.style.filter = 'drop-shadow(0 0 5px rgba(14, 165, 233, 0.5))';
+                    }
+                });
+                
+                heading.addEventListener('mouseleave', () => {
+                    const icon = heading.parentElement.querySelector('i');
+                    if (icon) {
+                        icon.style.transform = '';
+                        icon.style.filter = '';
+                    }
+                });
+            });
+            
+            // Enhanced animations for filter buttons
+            const filterButtons = document.querySelectorAll('.filter-button:not(.active)');
+            filterButtons.forEach(button => {
+                button.addEventListener('mouseenter', () => {
+                    button.style.transform = 'translateY(-3px) scale(1.02)';
+                    button.style.boxShadow = '0 6px 12px rgba(0, 0, 0, 0.2)';
+                    
+                    const icon = button.querySelector('i');
+                    if (icon) {
+                        icon.style.transform = 'scale(1.1)';
+                        icon.style.color = 'var(--accent-blue)';
+                    }
+                });
+                
+                button.addEventListener('mouseleave', () => {
+                    button.style.transform = '';
+                    button.style.boxShadow = '';
+                    
+                    const icon = button.querySelector('i');
+                    if (icon) {
+                        icon.style.transform = '';
+                        icon.style.color = '';
+                    }
+                });
+            });
+            
+            // Enhanced tab button animations
+            const tabButtons = document.querySelectorAll('.tab-button');
+            tabButtons.forEach(button => {
+                button.addEventListener('mouseenter', () => {
+                    if (!button.classList.contains('active')) {
+                        button.style.transform = 'translateY(-3px)';
+                        
+                        const icon = button.querySelector('i');
+                        if (icon) {
+                            icon.style.transform = 'scale(1.1)';
+                            icon.style.color = 'var(--accent-blue)';
+                        }
+                    }
+                });
+                
+                button.addEventListener('mouseleave', () => {
+                    if (!button.classList.contains('active')) {
+                        button.style.transform = '';
+                        
+                        const icon = button.querySelector('i');
+                        if (icon) {
+                            icon.style.transform = '';
+                            icon.style.color = '';
+                        }
+                    }
+                });
+            });
+            
+            // Add parallax effect to empty state containers
+            const emptyContainers = document.querySelectorAll('.empty-state-container');
+            emptyContainers.forEach(container => {
+                container.addEventListener('mousemove', (e) => {
+                    const rect = container.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+                    
+                    const moveX = (x - centerX) / 20;
+                    const moveY = (y - centerY) / 20;
+                    
+                    const icon = container.querySelector('.empty-state-icon');
+                    if (icon) {
+                        icon.style.transform = `translate(${moveX}px, ${moveY}px)`;
+                    }
+                });
+                
+                container.addEventListener('mouseleave', () => {
+                    const icon = container.querySelector('.empty-state-icon');
+                    if (icon) {
+                        icon.style.transform = '';
+                    }
+                });
+            });
+        }
+        
+        // Initial setup
+        setupTabNavigation();
+        initializePageEffects();
+      });
+    </script>
+</body>
+</html>

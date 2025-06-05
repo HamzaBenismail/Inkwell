@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${subforum.name} + ' - ' + ${writer.username} + '\'s Forum - Inkwell'">Subforum - Inkwell</title>
+    <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:if="${_csrf != null}" th:content="${_csrf.headerName}"/>
+    
+    <!-- Use CDN links instead of local CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Same tailwind config as previous pages -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'accent-blue': '#0ea5e9',
+                        'accent-cyan': '#06b6d4',
+                        'bg-dark': '#030712',
+                        'bg-card': '#111827',
+                        'bg-card-hover': '#1f2937'
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        /* Core Styles */
+        body {
+            background-color: #030712;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #111827;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #374151;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #0ea5e9;
+        }
+        
+        /* Topic card with hover effects */
+        .topic-card {
+            background: linear-gradient(145deg, #151e30, #0f1625);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .topic-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(14, 165, 233, 0.15);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .topic-card.pinned {
+            border-left: 3px solid #0ea5e9;
+        }
+        
+        .topic-card.locked {
+            border-left: 3px solid #f97316;
+        }
+        
+        .topic-card.pinned.locked {
+            border-left: 3px solid transparent;
+            background-image: linear-gradient(90deg, #0ea5e9, #f97316);
+            background-size: 100% 3px;
+            background-position: left top;
+            background-repeat: no-repeat;
+        }
+        
+        /* Tag styles */
+        .topic-tag {
+            background: rgba(14, 165, 233, 0.1);
+            border: 1px solid rgba(14, 165, 233, 0.2);
+            color: #0ea5e9;
+            border-radius: 999px;
+            padding: 0.25rem 0.75rem;
+            font-size: 0.75rem;
+            transition: all 0.2s ease;
+        }
+        
+        .topic-tag:hover {
+            background: rgba(14, 165, 233, 0.2);
+            border-color: rgba(14, 165, 233, 0.3);
+        }
+        
+        /* Buttons */
+        .btn-primary {
+            background: linear-gradient(90deg, #0ea5e9, #06b6d4);
+            color: white;
+            border-radius: 8px;
+            padding: 0.5rem 1.5rem;
+            font-weight: 500;
+            transition: all 0.3s;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .btn-primary:hover {
+            box-shadow: 0 0 15px rgba(14, 165, 233, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: rgba(14, 165, 233, 0.1);
+            color: #0ea5e9;
+            border: 1px solid rgba(14, 165, 233, 0.3);
+            border-radius: 8px;
+            padding: 0.5rem 1.5rem;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(14, 165, 233, 0.15);
+            transform: translateY(-2px);
+        }
+        
+        /* Gradient text */
+        .gradient-text {
+            background: linear-gradient(90deg, #0ea5e9, #06b6d4);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        /* Fade-in animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+        
+        .delay-100 { animation-delay: 0.1s; }
+        .delay-200 { animation-delay: 0.2s; }
+        .delay-300 { animation-delay: 0.3s; }
+    </style>
+    
+    <style th:replace="fragments/sidebar :: sidebar-style"></style>
+    <style th:replace="fragments/FantasyBackground :: fantasy-style"></style>
+</head>
+<body class="bg-bg-dark text-gray-100 font-sans">
+    <div class="flex min-h-screen">
+        <!-- Fantasy Background -->
+        <div th:replace="fragments/FantasyBackground :: fantasy-elements"></div>
+        
+        <!-- Sidebar Trigger -->
+        <div th:replace="fragments/sidebar :: sidebar-trigger"></div>
+        
+        <!-- Sidebar -->
+        <aside th:replace="fragments/sidebar :: sidebar"></aside>
+
+        <!-- Main Content -->
+        <div class="flex-1 overflow-auto">
+            <main class="py-6 lg:py-10 px-4">
+                <div class="max-w-6xl mx-auto">
+                    <!-- Subforum Header -->
+                    <div class="mb-8 animate-fade-in">
+                        <div class="flex items-center mb-3">
+                            <a th:href="@{'/forums/' + ${writer.username}}" class="text-accent-blue hover:text-accent-cyan transition-colors mr-2">
+                                <i class="fas fa-chevron-left"></i> Back to Forum
+                            </a>
+                            <span class="text-gray-500 mx-2">/</span>
+                            <h1 class="text-3xl font-bold gradient-text" th:text="${subforum.name}">Subforum Name</h1>
+                        </div>
+                        
+                        <div class="flex items-center">
+                            <div th:class="${subforum.iconBgClass + ' w-10 h-10 rounded-full flex items-center justify-center mr-3'}">
+                                <i th:class="${subforum.iconClass + ' text-white'}"></i>
+                            </div>
+                            <p class="text-gray-400" th:text="${subforum.description}">Subforum description</p>
+                        </div>
+                        
+                        <div class="flex flex-wrap items-center gap-2 mt-4">
+                            <div class="bg-bg-card px-3 py-1 rounded-full text-sm text-gray-400">
+                                <i class="fas fa-comments mr-1"></i> <span th:text="${subforum.topicCount} + ' topics'">0 topics</span>
+                            </div>
+                            <div class="bg-bg-card px-3 py-1 rounded-full text-sm text-gray-400">
+                                <i class="fas fa-reply mr-1"></i> <span th:text="${subforum.postCount} + ' posts'">0 posts</span>
+                            </div>
+                            
+                            <!-- Link to story if it's a story subforum -->
+                            <a th:if="${subforum.story != null}" th:href="@{'/story/' + ${subforum.story.id}}" 
+                               class="bg-accent-blue bg-opacity-10 px-3 py-1 rounded-full text-sm text-accent-blue hover:bg-opacity-20 transition-colors">
+                                <i class="fas fa-book mr-1"></i> View Story
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- New Topic & Filter Controls -->
+                    <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 animate-fade-in delay-100">
+                        <div>
+                            <a th:if="${isSubscribed || isForumOwner}" 
+                               th:href="@{'/forums/' + ${writer.username} + '/' + ${subforum.slug} + '/new-topic'}" 
+                               class="btn-primary inline-flex items-center gap-2">
+                                <i class="fas fa-plus"></i> New Topic
+                            </a>
+                            
+                            <div th:unless="${isSubscribed || isForumOwner}" class="text-gray-400 text-sm">
+                                <i class="fas fa-lock mr-1"></i> Subscribe to create topics
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center gap-4">
+                            <div class="relative">
+                                <select id="sort-select" class="bg-bg-card text-gray-300 rounded-lg border border-gray-700 p-2 pr-8 appearance-none cursor-pointer focus:outline-none focus:border-accent-blue">
+                                    <option value="latest">Latest Activity</option>
+                                    <option value="newest">Newest Topics</option>
+                                    <option value="most-viewed">Most Viewed</option>
+                                    <option value="most-replies">Most Replies</option>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                                    <i class="fas fa-chevron-down text-xs"></i>
+                                </div>
+                            </div>
+                            
+                            <button class="p-2 rounded-lg border border-gray-700 hover:border-accent-blue transition-colors">
+                                <i class="fas fa-search text-gray-400"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- No Topics Message -->
+                    <div th:if="${topics == null || topics.empty}" class="bg-bg-card p-10 rounded-lg text-center animate-fade-in delay-200">
+                        <div class="text-6xl text-gray-600 mb-4">
+                            <i class="fas fa-comments"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-2">No Topics Yet</h3>
+                        <p class="text-gray-400 mb-6">Be the first to start a discussion in this forum.</p>
+                        <a th:if="${isSubscribed || isForumOwner}" 
+                           th:href="@{'/forums/' + ${writer.username} + '/' + ${subforum.slug} + '/new-topic'}" 
+                           class="btn-primary">
+                            Create First Topic
+                        </a>
+                    </div>
+                    
+                    <!-- Pinned Topics -->
+                    <div th:if="${pinnedTopics != null && !pinnedTopics.empty}" class="mb-8 animate-fade-in delay-100">
+                        <h2 class="text-xl font-bold text-white mb-4">Pinned Topics</h2>
+                        <div class="space-y-4">
+                            <div th:each="topic : ${pinnedTopics}" class="topic-card pinned p-5">
+                                <div class="flex items-start">
+                                    <!-- Topic Details -->
+                                    <div class="flex-grow">
+                                        <div class="flex items-center mb-1">
+                                            <i class="fas fa-thumbtack text-accent-blue mr-2"></i>
+                                            <h3 class="text-lg font-medium">
+                                                <a th:href="@{'/forums/' + ${writer.username} + '/' + ${subforum.slug} + '/' + ${topic.slug}}" 
+                                                   class="hover:text-accent-blue transition-colors"
+                                                   th:text="${topic.title}">Topic Title</a>
+                                            </h3>
+                                            <i th:if="${topic.locked}" class="fas fa-lock text-amber-500 ml-2" title="Topic is locked"></i>
+                                        </div>
+                                        
+                                        <p class="text-sm text-gray-400 mb-3" 
+                                           th:text="${#temporals.format(topic.createdAt, 'MMM d, yyyy')} + ' by ' + ${topic.author.username}">
+                                            Apr 20, 2025 by Username
+                                        </p>
+                                        
+                                        <div class="flex flex-wrap gap-1 mb-2">
+                                            <span th:each="tag : ${topic.tags}" 
+                                                  class="topic-tag"
+                                                  th:text="${tag}">Tag</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Topic Stats -->
+                                    <div class="text-right text-sm text-gray-400">
+                                        <div class="mb-1">
+                                            <i class="far fa-eye mr-1"></i> <span th:text="${topic.viewCount}">0</span>
+                                        </div>
+                                        <div>
+                                            <i class="far fa-comment mr-1"></i> <span th:text="${topic.replyCount}">0</span>
+                                        </div>
+                                        <div class="mt-2 text-xs text-gray-500">
+                                            <span th:if="${topic.lastActiveAt != null}" 
+                                                  th:text="'Active ' + ${#temporals.format(topic.lastActiveAt, 'MMM d, yyyy')}">
+                                                Active Apr 20, 2025
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Regular Topics -->
+                    <div th:if="${topics != null && !topics.empty}" class="animate-fade-in delay-200">
+                        <h2 class="text-xl font-bold text-white mb-4">Topics</h2>
+                        <div class="space-y-4 mb-6">
+                            <div th:each="topic : ${topics}" th:class="${topic.locked ? 'topic-card locked p-5' : 'topic-card p-5'}">
+                                <div class="flex items-start">
+                                    <!-- Author Avatar -->
+                                    <div class="hidden sm:block mr-4 flex-shrink-0">
+                                        <div class="w-10 h-10 rounded-full overflow-hidden">
+                                            <img th:if="${topic.author.profileImage}" 
+                                                 th:src="${topic.author.profileImage}" 
+                                                 class="w-full h-full object-cover" alt="Avatar"
+                                                 onerror="this.src='/images/default-avatar.png';">
+                                            <div th:unless="${topic.author.profileImage}" 
+                                                 class="w-full h-full bg-accent-blue bg-opacity-30 flex items-center justify-center text-sm font-bold">
+                                                <span th:text="${topic.author.username.substring(0,1).toUpperCase()}">U</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Topic Details -->
+                                    <div class="flex-grow">
+                                        <h3 class="text-lg font-medium mb-1">
+                                            <a th:href="@{'/forums/' + ${writer.username} + '/' + ${subforum.slug} + '/' + ${topic.slug}}" 
+                                               class="hover:text-accent-blue transition-colors"
+                                               th:text="${topic.title}">Topic Title</a>
+                                            <i th:if="${topic.locked}" class="fas fa-lock text-amber-500 ml-2" title="Topic is locked"></i>
+                                        </h3>
+                                        
+                                        <p class="text-sm text-gray-400 mb-3" 
+                                           th:text="${#temporals.format(topic.createdAt, 'MMM d, yyyy')} + ' by ' + ${topic.author.username}">
+                                            Apr 20, 2025 by Username
+                                        </p>
+                                        
+                                        <div class="flex flex-wrap gap-1">
+                                            <span th:each="tag : ${topic.tags}" 
+                                                  class="topic-tag"
+                                                  th:text="${tag}">Tag</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Topic Stats -->
+                                    <div class="text-right text-sm text-gray-400">
+                                        <div class="mb-1">
+                                            <i class="far fa-eye mr-1"></i> <span th:text="${topic.viewCount}">0</span>
+                                        </div>
+                                        <div>
+                                            <i class="far fa-comment mr-1"></i> <span th:text="${topic.replyCount}">0</span>
+                                        </div>
+                                        <div class="mt-2 text-xs text-gray-500">
+                                            <span th:if="${topic.lastActiveAt != null}" 
+                                                  th:text="'Active ' + ${#temporals.format(topic.lastActiveAt, 'MMM d, yyyy')}">
+                                                Active Apr 20, 2025
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Pagination -->
+                        <div class="flex justify-center mt-8" th:if="${totalPages > 1}">
+                            <div class="flex rounded-md">
+                                <a th:if="${currentPage > 0}" 
+                                   th:href="@{'/forums/' + ${writer.username} + '/' + ${subforum.slug} + '?page=' + ${currentPage - 1}}"
+                                   class="px-4 py-2 border border-gray-700 rounded-l-md hover:bg-bg-card-hover transition-colors">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                                <span th:if="${currentPage == 0}" 
+                                      class="px-4 py-2 border border-gray-700 rounded-l-md text-gray-600 cursor-not-allowed">
+                                    <i class="fas fa-chevron-left"></i>
+                                </span>
+                                
+                                <span th:each="i : ${#numbers.sequence(0, totalPages - 1)}" 
+                                      th:if="${i >= currentPage - 2 && i <= currentPage + 2}">
+                                    <a th:if="${i != currentPage}" 
+                                       th:href="@{'/forums/' + ${writer.username} + '/' + ${subforum.slug} + '?page=' + ${i}}"
+                                       class="px-4 py-2 border-t border-b border-gray-700 hover:bg-bg-card-hover transition-colors"
+                                       th:text="${i + 1}">1</a>
+                                    <span th:if="${i == currentPage}" 
+                                          class="px-4 py-2 border border-accent-blue bg-accent-blue bg-opacity-10 text-accent-blue font-medium"
+                                          th:text="${i + 1}">1</span>
+                                </span>
+                                
+                                <a th:if="${currentPage < totalPages - 1}" 
+                                   th:href="@{'/forums/' + ${writer.username} + '/' + ${subforum.slug} + '?page=' + ${currentPage + 1}}"
+                                   class="px-4 py-2 border border-gray-700 rounded-r-md hover:bg-bg-card-hover transition-colors">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                                <span th:if="${currentPage >= totalPages - 1}" 
+                                      class="px-4 py-2 border border-gray-700 rounded-r-md text-gray-600 cursor-not-allowed">
+                                    <i class="fas fa-chevron-right"></i>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Footer -->
+            <footer class="bg-bg-card py-10 mt-auto border-t border-gray-800">
+                <div class="max-w-7xl mx-auto px-4">
+                    <div class="grid md:grid-cols-4 gap-8">
+                        <div class="md:col-span-2">
+                            <a href="/Home" class="text-2xl font-bold gradient-text inline-block mb-3">Inkwell</a>
+                            <p class="text-gray-400 max-w-md">
+                                A platform for writers and readers to connect through the power of storytelling. 
+                                Create, share, and discover stories that captivate and inspire.
+                            </p>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold mb-4 text-white">Navigation</h3>
+                            <ul class="space-y-2">
+                                <li><a href="/Home" class="text-gray-400 hover:text-accent-blue transition-colors">Home</a></li>
+                                <li><a href="/Library" class="text-gray-400 hover:text-accent-blue transition-colors">Library</a></li>
+                                <li><a href="/Dashboard" class="text-gray-400 hover:text-accent-blue transition-colors">Dashboard</a></li>
+                                <li><a href="/Writing" class="text-gray-400 hover:text-accent-blue transition-colors">Write</a></li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold mb-4 text-white">Legal</h3>
+                            <ul class="space-y-2">
+                                <li><a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">Terms of Service</a></li>
+                                <li><a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">Privacy Policy</a></li>
+                                <li><a href="#" class="text-gray-400 hover:text-accent-blue transition-colors">Copyright</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <script th:replace="fragments/sidebar :: sidebar-script"></script>
+    <script th:replace="fragments/FantasyBackground :: fantasy-script"></script>
+</body>
+</html>

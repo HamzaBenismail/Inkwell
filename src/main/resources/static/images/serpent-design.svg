@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f1c40f"/>
+      <stop offset="50%" stop-color="#d4af37"/>
+      <stop offset="100%" stop-color="#b7950b"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Outer Circle -->
+  <circle cx="100" cy="100" r="90" fill="none" stroke="url(#goldGradient)" stroke-width="3"/>
+  
+  <!-- Celtic Knot Pattern -->
+  <path d="M30,100 C30,60 60,30 100,30 C140,30 170,60 170,100 C170,140 140,170 100,170 C60,170 30,140 30,100 Z" fill="none" stroke="url(#goldGradient)" stroke-width="2"/>
+  
+  <!-- Serpent Body -->
+  <path d="M100,30 C120,50 150,60 150,100 C150,140 120,150 100,170 C80,150 50,140 50,100 C50,60 80,50 100,30 Z" fill="none" stroke="url(#goldGradient)" stroke-width="4"/>
+  
+  <!-- Serpent Head -->
+  <path d="M100,30 C105,25 110,20 100,15 C90,20 95,25 100,30 Z" fill="url(#goldGradient)" stroke="url(#goldGradient)" stroke-width="1"/>
+  
+  <!-- Serpent Tail -->
+  <path d="M100,170 C105,175 110,180 100,185 C90,180 95,175 100,170 Z" fill="url(#goldGradient)" stroke="url(#goldGradient)" stroke-width="1"/>
+  
+  <!-- Decorative Elements -->
+  <circle cx="100" cy="100" r="15" fill="none" stroke="url(#goldGradient)" stroke-width="2"/>
+  <path d="M85,100 L115,100 M100,85 L100,115" stroke="url(#goldGradient)" stroke-width="2"/>
+  
+  <!-- Additional Celtic Knots -->
+  <path d="M70,70 C80,60 90,60 100,70 C110,60 120,60 130,70 C140,80 140,90 130,100 C140,110 140,120 130,130 C120,140 110,140 100,130 C90,140 80,140 70,130 C60,120 60,110 70,100 C60,90 60,80 70,70 Z" fill="none" stroke="url(#goldGradient)" stroke-width="1.5"/>
+</svg>
+

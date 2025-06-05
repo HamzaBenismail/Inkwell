@@ -1,0 +1,1774 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:if="${_csrf != null}" th:content="${_csrf.headerName}"/>
+    <title>Settings - Inkwell</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'accent-blue': '#3B82F6',
+                        'accent-purple': '#8B5CF6',
+                    }
+                }
+            }
+        }
+    </script>
+    <script>
+    // Define getCsrfToken in the global scope
+    function getCsrfToken() {
+        const tokenElement = document.querySelector('meta[name="_csrf"]');
+        return tokenElement ? tokenElement.getAttribute('content') : null;
+    }
+    </script>
+        
+    <style th:replace="~{fragments/sidebar :: sidebar-style}"></style>
+    <style th:replace="fragments/FantasyBackground :: fantasy-style"></style>
+    <style>
+      /* Animations and transitions */
+      .settings-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+      .settings-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+      }
+      /* Fade-in animation for content */
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .animate-fade-in {
+        animation: fadeIn 0.5s ease forwards;
+      }
+      .delay-100 { animation-delay: 0.1s; }
+      .delay-200 { animation-delay: 0.2s; }
+      .delay-300 { animation-delay: 0.3s; }
+      
+      /* Alert animations */
+      @keyframes slideDown {
+        from { transform: translateY(-20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+      .alert {
+        animation: slideDown 0.3s ease forwards;
+      }
+      
+      /* Toggle Switch */
+      .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 48px;
+        height: 24px;
+      }
+      
+      .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      
+      .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #4b5563;
+        transition: .4s;
+        border-radius: 24px;
+      }
+      
+      .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+      }
+      
+      input:checked + .toggle-slider {
+        background-color: #3B82F6;
+      }
+      
+      input:checked + .toggle-slider:before {
+        transform: translateX(24px);
+      }
+      
+      /* Tab styling */
+      .settings-tab {
+        transition: all 0.3s ease;
+      }
+      
+      .settings-tab.active {
+        border-color: #3B82F6;
+        color: #3B82F6;
+      }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans" th:data-email-verified="${isEmailVerified}">
+    <div class="flex min-h-screen">
+        <!-- Sidebar Trigger -->
+        <div th:replace="~{fragments/sidebar :: sidebar-trigger}"></div>
+        
+        <!-- Sidebar -->
+        <aside th:replace="~{fragments/sidebar :: sidebar}"></aside>
+
+        <div th:replace="fragments/FantasyBackground :: fantasy-elements"></div>
+
+        <!-- Main Content -->
+        <div class="flex-1 overflow-auto">
+            <main class="py-6 lg:py-10">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <!-- Success and Error Messages -->
+                    <div class="mb-4">
+                        <div th:if="${successMessage}" class="bg-green-700 text-white p-4 rounded-md mb-4 alert">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm font-medium" th:text="${successMessage}">Settings updated successfully</p>
+                                </div>
+                                <div class="ml-auto pl-3">
+                                    <div class="-mx-1.5 -my-1.5">
+                                        <button class="close-alert inline-flex rounded-md p-1.5 text-white hover:bg-green-800 focus:outline-none">
+                                            <span class="sr-only">Dismiss</span>
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div th:if="${errorMessage}" class="bg-red-700 text-white p-4 rounded-md mb-4 alert">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm font-medium" th:text="${errorMessage}">An error occurred</p>
+                                </div>
+                                <div class="ml-auto pl-3">
+                                    <div class="-mx-1.5 -my-1.5">
+                                        <button class="close-alert inline-flex rounded-md p-1.5 text-white hover:bg-red-800 focus:outline-none">
+                                            <span class="sr-only">Dismiss</span>
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Not Authenticated Message -->
+                    <div th:if="${notAuthenticated}" class="text-center py-12 animate-fade-in">
+                        <div class="text-6xl text-gray-600 mb-4">
+                            <i class="fas fa-user-lock"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold mb-2">Sign in to access settings</h2>
+                        <p class="text-gray-400 mb-6">You need to be signed in to access your settings.</p>
+                        <div class="flex flex-col sm:flex-row justify-center gap-4">
+                            <a href="/SignIn" class="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-accent-blue hover:bg-accent-purple transition-colors duration-300">
+                                Sign In
+                            </a>
+                            <a href="/SignUp" class="inline-flex items-center justify-center px-5 py-3 border border-gray-700 text-base font-medium rounded-md text-gray-300 bg-gray-800 hover:bg-gray-700 transition-colors duration-300">
+                                Create Account
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Settings Content (Only shown when user is authenticated) -->
+                    <div th:unless="${notAuthenticated}" class="space-y-8">
+                        <!-- Settings Header -->
+                        <div class="bg-gray-800 rounded-lg overflow-hidden shadow settings-card animate-fade-in">
+                            <div class="px-4 py-5 sm:px-6">
+                                <h1 class="text-2xl font-bold">Account Settings</h1>
+                                <p class="text-gray-400 mt-1">Manage your account preferences and settings</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Settings Navigation Tabs -->
+                        <div class="flex border-b border-gray-700">
+                            <button class="settings-tab px-6 py-3 border-b-2 border-transparent text-gray-300 hover:text-white active" data-tab="security">
+                                <i class="fas fa-shield-alt mr-2"></i>Security
+                            </button>
+                            <button class="settings-tab px-6 py-3 border-b-2 border-transparent text-gray-300 hover:text-white" data-tab="preferences">
+                                <i class="fas fa-sliders-h mr-2"></i>Preferences
+                            </button>
+                            <button class="settings-tab px-6 py-3 border-b-2 border-transparent text-gray-300 hover:text-white" data-tab="notifications">
+                                <i class="fas fa-bell mr-2"></i>Notifications
+                            </button>
+                            <button class="settings-tab px-6 py-3 border-b-2 border-transparent text-gray-300 hover:text-white" data-tab="writers">
+                                <i class="fas fa-pen-fancy mr-2"></i>Writers
+                            </button>
+                        </div>
+                        
+                        <!-- Security Settings -->
+                        <div id="security-tab" class="tab-content bg-gray-800 rounded-lg shadow overflow-hidden settings-card animate-fade-in delay-100">
+                            <div class="px-4 py-5 sm:px-6 border-b border-gray-700">
+                                <h3 class="text-lg leading-6 font-medium text-gray-100">Security Settings</h3>
+                                <p class="mt-1 text-sm text-gray-400">Manage your account security and authentication.</p>
+                            </div>
+                            <div class="px-4 py-5 sm:p-6 space-y-6">
+                                <form action="/settings/security/update" method="post" class="space-y-6">
+                                    <!-- Password Change Section -->
+                                    <div class="space-y-4">
+                                        <h4 class="text-md font-medium text-gray-200">Change Password</h4>
+                                        <div>
+                                            <label for="currentPassword" class="block text-sm font-medium text-gray-300">Current Password</label>
+                                            <input type="password" name="currentPassword" id="currentPassword" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-accent-blue focus:border-accent-blue">
+                                        </div>
+                                        <div>
+                                            <label for="newPassword" class="block text-sm font-medium text-gray-300">New Password</label>
+                                            <input type="password" name="newPassword" id="newPassword" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-accent-blue focus:border-accent-blue">
+                                        </div>
+                                        <div>
+                                            <label for="confirmPassword" class="block text-sm font-medium text-gray-300">Confirm New Password</label>
+                                            <input type="password" name="confirmPassword" id="confirmPassword" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-accent-blue focus:border-accent-blue">
+                                        </div>
+                                        <div>
+                                            <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-accent-blue hover:bg-accent-purple focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent-blue transition-colors duration-300">
+                                                Update Password
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                                
+<div class="border-t border-gray-700 pt-6">
+    <h4 class="text-md font-medium text-gray-200">Two-Factor Authentication</h4>
+    <div class="mt-4 flex items-center justify-between">
+        <div>
+            <p class="text-sm text-gray-300">Enable two-factor authentication for enhanced security</p>
+            <p class="text-xs text-gray-400 mt-1">Secure your account with an additional verification step</p>
+        </div>
+        <label class="toggle-switch">
+            <input type="checkbox" id="twoFactorToggle" th:checked="${user != null && user.usingMfa}">
+            <span class="toggle-slider"></span>
+        </label>
+    </div>
+    
+    <!-- 2FA Setup Modal (Hidden by default) -->
+    <div id="twoFactorSetupModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-white">Set Up Two-Factor Authentication</h3>
+                <button id="closeSetupModal" class="text-gray-400 hover:text-white">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div id="setupStep1" class="space-y-4">
+                <p class="text-gray-300">Scan this QR code with your authenticator app (like Google Authenticator, Authy, or Microsoft Authenticator).</p>
+                <div class="flex justify-center my-6">
+                    <div id="qrCode" class="bg-white p-4 rounded-lg">
+                        <!-- QR code will be inserted here -->
+                    </div>
+                </div>
+                <p class="text-sm text-gray-400">Can't scan the code? Use this secret key instead:</p>
+                <div class="bg-gray-700 p-2 rounded text-center text-gray-300 font-mono" id="secretKey">
+                    <!-- Secret key will be inserted here -->
+                </div>
+                <button id="continueToVerification" class="w-full mt-4 py-2 px-4 bg-accent-blue hover:bg-accent-purple text-white rounded-md transition-colors duration-300">
+                    Continue
+                </button>
+            </div>
+            
+            <div id="setupStep2" class="space-y-4 hidden">
+                <p class="text-gray-300">Enter the 6-digit verification code from your authenticator app to verify setup.</p>
+                <div class="flex justify-center my-6">
+                    <input type="text" id="verificationCode" class="bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-accent-blue focus:border-accent-blue text-center text-2xl tracking-widest w-48" maxlength="6" placeholder="000000">
+                </div>
+                <div id="verificationError" class="text-red-500 text-center hidden">
+                    Invalid verification code. Please try again.
+                </div>
+                <button id="verifyCode" class="w-full mt-4 py-2 px-4 bg-accent-blue hover:bg-accent-purple text-white rounded-md transition-colors duration-300">
+                    Verify and Enable
+                </button>
+                <button id="backToQrCode" class="w-full mt-2 py-2 px-4 bg-gray-700 hover:bg-gray-600 text-white rounded-md transition-colors duration-300">
+                    Back
+                </button>
+            </div>
+            
+            <div id="setupSuccess" class="space-y-4 hidden">
+                <div class="text-center text-green-500 text-5xl my-6">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <p class="text-gray-300 text-center">Two-factor authentication has been successfully enabled for your account.</p>
+                <button id="closeSuccessModal" class="w-full mt-4 py-2 px-4 bg-accent-blue hover:bg-accent-purple text-white rounded-md transition-colors duration-300">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+    
+            <!-- 2FA Disable Confirmation Modal (Hidden by default) -->
+            <div id="twoFactorDisableModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+                <div class="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold text-white">Disable Two-Factor Authentication</h3>
+                        <button id="closeDisableModal" class="text-gray-400 hover:text-white">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <p class="text-gray-300 mb-6">Are you sure you want to disable two-factor authentication? This will make your account less secure.</p>
+                    
+                    <div class="flex space-x-4">
+                        <button id="confirmDisable" class="flex-1 py-2 px-4 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors duration-300">
+                            Disable 2FA
+                        </button>
+                        <button id="cancelDisable" class="flex-1 py-2 px-4 bg-gray-700 hover:bg-gray-600 text-white rounded-md transition-colors duration-300">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+                                
+                                <div class="border-t border-gray-700 pt-6">
+                                    <h4 class="text-md font-medium text-red-400">Danger Zone</h4>
+                                    <div class="mt-4">
+                                        <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-300">
+                                            <i class="fas fa-trash-alt mr-2"></i>
+                                            Delete Account
+                                        </button>
+                                        <p class="text-xs text-gray-400 mt-2">Once deleted, your account cannot be recovered.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Preferences Settings -->
+                        <div id="preferences-tab" class="tab-content bg-gray-800 rounded-lg shadow overflow-hidden settings-card animate-fade-in delay-100 hidden">
+                            <div class="px-4 py-5 sm:px-6 border-b border-gray-700">
+                                <h3 class="text-lg leading-6 font-medium text-gray-100">Preferences</h3>
+                                <p class="mt-1 text-sm text-gray-400">Customize your reading and writing experience.</p>
+                            </div>
+                            <div class="px-4 py-5 sm:p-6 space-y-6">
+                                <div class="space-y-4">
+                                    <h4 class="text-md font-medium text-gray-200">Interface</h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div class="bg-gray-700 p-4 rounded-lg cursor-pointer border-2 border-accent-blue">
+                                            <div class="h-16 bg-gray-900 rounded-md mb-2"></div>
+                                            <p class="text-sm text-center text-gray-300">Default</p>
+                                        </div>
+                                        <div class="bg-gray-700 p-4 rounded-lg cursor-pointer border-2 border-transparent hover:border-gray-500" data-theme="fantasy">
+                                            <div class="h-16 bg-gradient-to-r from-blue-900 to-blue-700 rounded-md mb-2 relative overflow-hidden">
+                                                <div class="absolute inset-0 opacity-30" style="background-image: url('data:image/svg+xml,%3Csvg width%3D%2260%22 height%3D%2260%22 viewBox%3D%220 0 60 60%22 xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cg fill%3D%22none%22 fill-rule%3D%22evenodd%22%3E%3Cg fill%3D%22%233B82F6%22 fill-opacity%3D%220.3%22%3E%3Cpath d%3D%22M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z%22%2F%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E')"></div>
+                                            </div>
+                                            <p class="text-sm text-center text-gray-300">Fantasy</p>
+                                        </div>
+                                        <div class="bg-gray-700 p-4 rounded-lg cursor-pointer border-2 border-transparent hover:border-gray-500" data-theme="scifi">
+                                            <div class="h-16 bg-gradient-to-r from-purple-800 to-blue-800 rounded-md mb-2"></div>
+                                            <p class="text-sm text-center text-gray-300">Sci-Fi</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="border-t border-gray-700 pt-6">
+                                    <h4 class="text-md font-medium text-gray-200">Reading Preferences</h4>
+                                    <div class="mt-4 space-y-4">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <p class="text-sm text-gray-300">Font Size</p>
+                                                <p class="text-xs text-gray-400 mt-1">Adjust the text size for reading stories</p>
+                                            </div>
+                                            <div class="flex items-center space-x-2">
+                                                <button class="w-8 h-8 flex items-center justify-center bg-gray-700 rounded-md hover:bg-gray-600">
+                                                    <i class="fas fa-minus"></i>
+                                                </button>
+                                                <span class="px-2 text-lg">A</span>
+                                                <button class="w-8 h-8 flex items-center justify-center bg-gray-700 rounded-md hover:bg-gray-600">
+                                                    <i class="fas fa-plus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <p class="text-sm text-gray-300">Line Spacing</p>
+                                                <p class="text-xs text-gray-400 mt-1">Adjust the space between lines of text</p>
+                                            </div>
+                                            <select class="bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-accent-blue focus:border-accent-blue">
+                                                <option>Compact</option>
+                                                <option selected>Normal</option>
+                                                <option>Relaxed</option>
+                                                <option>Spacious</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <p class="text-sm text-gray-300">Content Width</p>
+                                                <p class="text-xs text-gray-400 mt-1">Adjust the width of the reading area</p>
+                                            </div>
+                                            <select class="bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-accent-blue focus:border-accent-blue">
+                                                <option>Narrow</option>
+                                                <option selected>Medium</option>
+                                                <option>Wide</option>
+                                                <option>Full</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="border-t border-gray-700 pt-6">
+                                    <h4 class="text-md font-medium text-gray-200">Writing Editor</h4>
+                                    <div class="mt-4 space-y-4">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <p class="text-sm text-gray-300">Autosave</p>
+                                                <p class="text-xs text-gray-400 mt-1">Automatically save your work while writing</p>
+                                            </div>
+                                            <label class="toggle-switch">
+                                                <input type="checkbox" id="autosaveToggle" checked>
+                                                <span class="toggle-slider"></span>
+                                            </label>
+                                        </div>
+                                        
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <p class="text-sm text-gray-300">Spell Check</p>
+                                                <p class="text-xs text-gray-400 mt-1">Check for spelling errors while writing</p>
+                                            </div>
+                                            <label class="toggle-switch">
+                                                <input type="checkbox" id="spellcheckToggle" checked>
+                                                <span class="toggle-slider"></span>
+                                            </label>
+                                        </div>
+
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <p class="text-sm text-gray-300">AutoCorrect</p>
+                                                <p class="text-xs text-gray-400 mt-1">Automatically correct spelling mistakes as you type</p>
+                                            </div>
+                                            <label class="toggle-switch">
+                                                <input type="checkbox" id="autocorrectToggle">
+                                                <span class="toggle-slider"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="pt-4">
+                                    <button type="button" class="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-accent-blue hover:bg-accent-purple focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent-blue transition-colors duration-300">
+                                        Save Preferences
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Notifications Settings -->
+                        <div id="notifications-tab" class="tab-content bg-gray-800 rounded-lg shadow overflow-hidden settings-card animate-fade-in delay-100 hidden">
+                            <div class="px-4 py-5 sm:px-6 border-b border-gray-700">
+                                <h3 class="text-lg leading-6 font-medium text-gray-100">Notifications</h3>
+                                <p class="mt-1 text-sm text-gray-400">Manage how we contact you.</p>
+                            </div>
+                            <div class="px-4 py-5 sm:p-6 space-y-6">
+                                <div class="space-y-4">
+                                    <h4 class="text-md font-medium text-gray-200">Email Notifications</h4>
+                                    <div class="mt-4 space-y-4">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <p class="text-sm text-gray-300">New Comments</p>
+                                                <p class="text-xs text-gray-400 mt-1">Receive notifications when someone comments on your stories</p>
+                                            </div>
+                                            <label class="toggle-switch">
+                                                <input type="checkbox" id="commentEmailToggle" checked>
+                                                <span class="toggle-slider"></span>
+                                            </label>
+                                        </div>
+                                        
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <p class="text-sm text-gray-300">New Likes</p>
+                                                <p class="text-xs text-gray-400 mt-1">Receive notifications when someone likes your stories</p>
+                                            </div>
+                                            <label class="toggle-switch">
+                                                <input type="checkbox" id="likeEmailToggle" checked>
+                                                <span class="toggle-slider"></span>
+                                            </label>
+                                        </div>
+                                        
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <p class="text-sm text-gray-300">New Followers</p>
+                                                <p class="text-xs text-gray-400 mt-1">Receive notifications when someone follows you</p>
+                                            </div>
+                                            <label class="toggle-switch">
+                                                <input type="checkbox" id="followerEmailToggle" checked>
+                                                <span class="toggle-slider"></span>
+                                            </label>
+                                        </div>
+                                        
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <p class="text-sm text-gray-300">Newsletter</p>
+                                                <p class="text-xs text-gray-400 mt-1">Receive updates about new features and announcements</p>
+                                            </div>
+                                            <label class="toggle-switch">
+                                                <input type="checkbox" id="newsletterToggle">
+                                                <span class="toggle-slider"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="border-t border-gray-700 pt-6">
+                                    <h4 class="text-md font-medium text-gray-200">In-App Notifications</h4>
+                                    <div class="mt-4 space-y-4">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <p class="text-sm text-gray-300">Comments</p>
+                                                <p class="text-xs text-gray-400 mt-1">Show notifications for new comments</p>
+                                            </div>
+                                            <label class="toggle-switch">
+                                                <input type="checkbox" id="commentAppToggle" checked>
+                                                <span class="toggle-slider"></span>
+                                            </label>
+                                        </div>
+                                        
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <p class="text-sm text-gray-300">Likes</p>
+                                                <p class="text-xs text-gray-400 mt-1">Show notifications for new likes</p>
+                                            </div>
+                                            <label class="toggle-switch">
+                                                <input type="checkbox" id="likeAppToggle" checked>
+                                                <span class="toggle-slider"></span>
+                                            </label>
+                                        </div>
+                                        
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <p class="text-sm text-gray-300">Followers</p>
+                                                <p class="text-xs text-gray-400 mt-1">Show notifications for new followers</p>
+                                            </div>
+                                            <label class="toggle-switch">
+                                                <input type="checkbox" id="followerAppToggle" checked>
+                                                <span class="toggle-slider"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="pt-4">
+                                    <button type="button" class="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-accent-blue hover:bg-accent-purple focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent-blue transition-colors duration-300">
+                                        Save Notification Settings
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="writers-tab" class="tab-content bg-gray-800 rounded-lg shadow overflow-hidden settings-card animate-fade-in delay-100 hidden">
+                            <div class="px-4 py-5 sm:px-6 border-b border-gray-700">
+                                <h3 class="text-lg leading-6 font-medium text-gray-100">Writer Settings</h3>
+                                <p class="mt-1 text-sm text-gray-400">Manage your writer account and preferences.</p>
+                            </div>
+                            <div class="px-4 py-5 sm:p-6 space-y-6">
+                                <!-- Email Confirmation Section (shown by default) -->
+                                <div th:if="${user != null && !user.isEmailVerified()}" id="email-confirmation-section" class="space-y-4">
+                                    <h4 class="text-md font-medium text-gray-200">Become a Writer</h4>
+                                    <div class="bg-gray-700 p-4 rounded-lg">
+                                        <p class="text-sm text-gray-300">To become a writer on Inkwell, you need to verify your email address first.</p>
+                                        <div class="mt-4">
+                                            <button id="confirm-email-btn" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-accent-blue hover:bg-accent-purple focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent-blue transition-colors duration-300">
+                                                <i class="fas fa-envelope mr-2"></i>
+                                                Confirm your email address
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                        
+                                <!-- Contract Section (shown after email verification) -->
+                                <div th:if="${user != null && user.isEmailVerified() && !user.isWriter()}" id="contract-section" class="space-y-4">
+                                    <h4 class="text-md font-medium text-gray-200">Writer Agreement</h4>
+                                    <div class="bg-gray-700 p-4 rounded-lg">
+                                        <p class="text-sm text-gray-300 mb-4">Please read and accept our writer agreement to start publishing your stories.</p>
+                                        
+                                        <div class="bg-gray-800 p-4 rounded-lg max-h-64 overflow-y-auto mb-4">
+                                            <h5 class="font-medium mb-2">Inkwell Writer Agreement</h5>
+                                            <p class="text-xs text-gray-400 mb-2">Last updated: April 14, 2025</p>
+                                            
+                                            <div class="text-sm text-gray-300 space-y-2">
+                                                <p>This Writer Agreement ("Agreement") is entered into between you ("Writer") and Inkwell ("Platform").</p>
+                                                
+                                                <p><strong>1. Content Ownership</strong><br>
+                                                You retain ownership of all content you publish on Inkwell. By publishing on our platform, you grant us a non-exclusive license to display, distribute, and promote your work.</p>
+                                                
+                                                <p><strong>2. Content Guidelines</strong><br>
+                                                You agree to publish content that complies with our community guidelines. Content that promotes hate speech, discrimination, or illegal activities is prohibited.</p>
+                                                
+                                                <p><strong>3. Account Responsibilities</strong><br>
+                                                You are responsible for maintaining the security of your account and for all activities that occur under your account.</p>
+                                                
+                                                <p><strong>4. Termination</strong><br>
+                                                We reserve the right to terminate your writer status if you violate this agreement or our community guidelines.</p>
+                                                
+                                                <p><strong>5. Changes to Agreement</strong><br>
+                                                We may update this agreement from time to time. Continued use of the platform after changes constitutes acceptance of the new terms.</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="flex items-center mb-4">
+                                            <input type="checkbox" id="accept-contract" class="h-4 w-4 text-accent-blue focus:ring-accent-blue border-gray-300 rounded">
+                                            <label for="accept-contract" class="ml-2 block text-sm text-gray-300">
+                                                I have read and accept the Writer Agreement
+                                            </label>
+                                        </div>
+                                        
+                                        <button id="become-writer-btn" disabled class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-600 cursor-not-allowed focus:outline-none transition-colors duration-300">
+                                            <i class="fas fa-pen-nib mr-2"></i>
+                                            Become a Writer
+                                        </button>
+                                    </div>
+                                </div>
+                        
+                                <!-- Writer Resources Section (shown after becoming a writer) -->
+                                <div th:if="${user != null && user.isWriter()}" id="writer-resources-section" class="space-y-4">
+                                    <h4 class="text-md font-medium text-gray-200">Writer Resources</h4>
+                                    <div class="bg-gray-700 p-4 rounded-lg">
+                                        <div class="flex items-center mb-4">
+                                            <div class="bg-green-600 rounded-full p-2 mr-3">
+                                                <i class="fas fa-check text-white"></i>
+                                            </div>
+                                            <p class="text-sm text-gray-300">You are now an Inkwell Writer!</p>
+                                        </div>
+                                        
+                                        <h5 class="font-medium mb-2 text-sm">Getting Started</h5>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                            <a href="/Writing" class="bg-gray-800 p-4 rounded-lg hover:bg-gray-700 transition-colors duration-300">
+                                                <h6 class="font-medium text-sm mb-1">Writing Studio</h6>
+                                                <p class="text-xs text-gray-400">Create and manage your stories</p>
+                                            </a>
+                                            <a href="/Dashboard" class="bg-gray-800 p-4 rounded-lg hover:bg-gray-700 transition-colors duration-300">
+                                                <h6 class="font-medium text-sm mb-1">Dashboard</h6>
+                                                <p class="text-xs text-gray-400">Track your writing performance</p>
+                                            </a>
+                                        </div>
+                                        
+                                        <h5 class="font-medium mb-2 text-sm">Tutorials</h5>
+                                        <div class="space-y-2">
+                                            <a href="#" class="flex items-center text-sm text-accent-blue hover:text-accent-purple transition-colors duration-300">
+                                                <i class="fas fa-play-circle mr-2"></i>
+                                                How to create your first story
+                                            </a>
+                                            <a href="#" class="flex items-center text-sm text-accent-blue hover:text-accent-purple transition-colors duration-300">
+                                                <i class="fas fa-play-circle mr-2"></i>
+                                                Using the chapter editor
+                                            </a>
+                                            <a href="#" class="flex items-center text-sm text-accent-blue hover:text-accent-purple transition-colors duration-300">
+                                                <i class="fas fa-play-circle mr-2"></i>
+                                                Publishing and promoting your work
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    
+    <!-- Settings page script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {            
+            // Tab navigation
+            const tabButtons = document.querySelectorAll('.settings-tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const tabName = this.getAttribute('data-tab');
+                    
+                    // Update active tab button
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Show selected tab content
+                    tabContents.forEach(content => {
+                        if (content.id === tabName + '-tab') {
+                            content.classList.remove('hidden');
+                        } else {
+                            content.classList.add('hidden');
+                        }
+                    });
+                });
+            });
+            
+            // Alert dismissal
+            const closeAlertButtons = document.querySelectorAll('.close-alert');
+            closeAlertButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const alert = this.closest('.alert');
+                    if (alert) {
+                        alert.style.opacity = '0';
+                        setTimeout(() => {
+                            alert.style.display = 'none';
+                        }, 300);
+                    }
+                });
+            });
+            
+            // Auto-hide alerts after 5 seconds
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                setTimeout(() => {
+                    alert.style.opacity = '0';
+                    setTimeout(() => {
+                        alert.style.display = 'none';
+                    }, 300);
+                }, 5000);
+            });
+
+            function updateEmailVerificationUI() {
+                // Check if user is verified from the model attribute
+                const isEmailVerified = document.body.getAttribute('data-email-verified') === 'true';
+                
+                // Get the email and contract sections
+                const emailSection = document.getElementById('email-confirmation-section');
+                const contractSection = document.getElementById('contract-section');
+                
+                if (emailSection && contractSection) {
+                    if (isEmailVerified) {
+                        // If verified, hide email section and show contract
+                        emailSection.classList.add('hidden');
+                        contractSection.classList.remove('hidden');
+                    } else {
+                        // If not verified, show email section and hide contract
+                        emailSection.classList.remove('hidden');
+                        contractSection.classList.add('hidden');
+                    }
+                }
+            }
+
+            // Call this when switching to the writers tab
+            document.querySelector('[data-tab="writers"]').addEventListener('click', updateEmailVerificationUI);
+
+            // Also add this after your success modal code
+            if (urlParams.get('emailVerified') === 'true') {
+                // After displaying the modal
+                document.body.setAttribute('data-email-verified', 'true');
+                updateEmailVerificationUI();
+            }
+        });
+    </script>
+    <script th:replace="~{fragments/sidebar :: sidebar-script}"></script>
+    <script th:replace="fragments/FantasyBackground :: fantasy-script"></script>
+<script>
+    function switchTab(tabId) {
+        // Hide all tab contents
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.add('hidden');
+        });
+        
+        // Show the selected tab content
+        const selectedTab = document.getElementById(tabId + '-tab');
+        if (selectedTab) {
+            selectedTab.classList.remove('hidden');
+        }
+        
+        // Update active tab button
+        document.querySelectorAll('.settings-tab').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        const activeTabButton = document.querySelector(`.settings-tab[data-tab="${tabId}"]`);
+        if (activeTabButton) {
+            activeTabButton.classList.add('active');
+        }
+    }
+
+document.addEventListener('DOMContentLoaded', function() {    
+    // Two-Factor Authentication Toggle
+    const twoFactorToggle = document.getElementById('twoFactorToggle');
+    const twoFactorSetupModal = document.getElementById('twoFactorSetupModal');
+    const twoFactorDisableModal = document.getElementById('twoFactorDisableModal');
+    const closeSetupModal = document.getElementById('closeSetupModal');
+    const closeDisableModal = document.getElementById('closeDisableModal');
+    const cancelDisable = document.getElementById('cancelDisable');
+    const confirmDisable = document.getElementById('confirmDisable');
+    const continueToVerification = document.getElementById('continueToVerification');
+    const backToQrCode = document.getElementById('backToQrCode');
+    const verifyCode = document.getElementById('verifyCode');
+    const closeSuccessModal = document.getElementById('closeSuccessModal');
+    
+    const setupStep1 = document.getElementById('setupStep1');
+    const setupStep2 = document.getElementById('setupStep2');
+    const setupSuccess = document.getElementById('setupSuccess');
+    const qrCode = document.getElementById('qrCode');
+    const secretKey = document.getElementById('secretKey');
+    const verificationCode = document.getElementById('verificationCode');
+    const verificationError = document.getElementById('verificationError');
+    
+    let currentSecret = '';
+    
+    // Check 2FA status on page load
+    fetch('/api/2fa/status')
+        .then(response => response.json())
+        .then(data => {
+            twoFactorToggle.checked = data.enabled;
+        })
+        .catch(error => console.error('Error checking 2FA status:', error));
+    
+    // Toggle 2FA
+    twoFactorToggle.addEventListener('change', function() {
+        if (this.checked) {
+            // Enable 2FA - show setup modal
+            fetch('/api/2fa/setup')
+                .then(response => response.json())
+                .then(data => {
+                    currentSecret = data.secret;
+                    qrCode.innerHTML = `<img src="${data.qrCodeImage}" alt="QR Code" class="w-48 h-48">`;
+                    secretKey.textContent = data.secret;
+                    
+                    // Reset modal state
+                    setupStep1.classList.remove('hidden');
+                    setupStep2.classList.add('hidden');
+                    setupSuccess.classList.add('hidden');
+                    verificationError.classList.add('hidden');
+                    verificationCode.value = '';
+                    
+                    // Show modal
+                    twoFactorSetupModal.classList.remove('hidden');
+                })
+                .catch(error => {
+                    console.error('Error setting up 2FA:', error);
+                    twoFactorToggle.checked = false;
+                });
+        } else {
+            // Disable 2FA - show confirmation modal
+            twoFactorDisableModal.classList.remove('hidden');
+        }
+    });
+    
+    // Close setup modal and reset toggle
+    closeSetupModal.addEventListener('click', function() {
+        twoFactorSetupModal.classList.add('hidden');
+        // If 2FA is not enabled, reset toggle
+        fetch('/api/2fa/status')
+            .then(response => response.json())
+            .then(data => {
+                twoFactorToggle.checked = data.enabled;
+            });
+    });
+    
+    // Close disable modal
+    closeDisableModal.addEventListener('click', function() {
+        twoFactorDisableModal.classList.add('hidden');
+        // Reset toggle to current state
+        fetch('/api/2fa/status')
+            .then(response => response.json())
+            .then(data => {
+                twoFactorToggle.checked = data.enabled;
+            });
+    });
+    
+    // Cancel disable
+    cancelDisable.addEventListener('click', function() {
+        twoFactorDisableModal.classList.add('hidden');
+        // Reset toggle to current state
+        fetch('/api/2fa/status')
+            .then(response => response.json())
+            .then(data => {
+                twoFactorToggle.checked = data.enabled;
+            });
+    });
+    
+    // Confirm disable
+    confirmDisable.addEventListener('click', function() {
+        fetch('/api/2fa/disable', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                twoFactorDisableModal.classList.add('hidden');
+                twoFactorToggle.checked = false;
+                
+                // Show success message
+                const successAlert = document.createElement('div');
+                successAlert.className = 'bg-green-700 text-white p-4 rounded-md mb-4 alert';
+                successAlert.innerHTML = `
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium">Two-factor authentication disabled successfully</p>
+                        </div>
+                    </div>
+                `;
+                
+                const messagesContainer = document.querySelector('.mb-4');
+                messagesContainer.prepend(successAlert);
+                
+                // Auto-hide after 5 seconds
+                setTimeout(() => {
+                    successAlert.style.opacity = '0';
+                    setTimeout(() => {
+                        successAlert.remove();
+                    }, 300);
+                }, 5000);
+            }
+        })
+        .catch(error => {
+            console.error('Error disabling 2FA:', error);
+            twoFactorToggle.checked = true;
+        });
+    });
+    
+    // Continue to verification step
+    continueToVerification.addEventListener('click', function() {
+        setupStep1.classList.add('hidden');
+        setupStep2.classList.remove('hidden');
+    });
+    
+    // Back to QR code step
+    backToQrCode.addEventListener('click', function() {
+        setupStep2.classList.add('hidden');
+        setupStep1.classList.remove('hidden');
+    });
+    
+    // Verify code and enable 2FA
+    verifyCode.addEventListener('click', function() {
+        const code = verificationCode.value.trim();
+        if (code.length !== 6) {
+            verificationError.textContent = 'Please enter a 6-digit code';
+            verificationError.classList.remove('hidden');
+            return;
+        }
+        
+        const formData = new URLSearchParams();
+        formData.append('secret', currentSecret);
+        formData.append('code', code);
+        
+        fetch('/api/2fa/enable', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                setupStep2.classList.add('hidden');
+                setupSuccess.classList.remove('hidden');
+            } else {
+                verificationError.textContent = data.message || 'Invalid verification code';
+                verificationError.classList.remove('hidden');
+            }
+        })
+        .catch(error => {
+            console.error('Error enabling 2FA:', error);
+            verificationError.textContent = 'An error occurred. Please try again.';
+            verificationError.classList.remove('hidden');
+        });
+    });
+    
+    // Close success modal
+    closeSuccessModal.addEventListener('click', function() {
+        twoFactorSetupModal.classList.add('hidden');
+    });
+    
+    // Auto-format verification code input
+    verificationCode.addEventListener('input', function() {
+        this.value = this.value.replace(/[^0-9]/g, '').substring(0, 6);
+    });
+
+    // Add preferences saving functionality
+    const savePreferencesButton = document.querySelector('#preferences-tab .pt-4 button');
+    if (savePreferencesButton) {
+        savePreferencesButton.addEventListener('click', function() {
+            savePreferences();
+        });
+    }
+
+    // Function to save all preferences
+    function savePreferences() {
+// Get all preference values with error checking
+const preferences = {};
+    
+    // Interface preferences - find the selected theme
+    const selectedTheme = document.querySelector('.bg-gray-700.p-4.rounded-lg.cursor-pointer.border-2.border-accent-blue');
+    preferences.interfaceTheme = selectedTheme ? (selectedTheme.getAttribute('data-theme') || 'default') : 'default';
+    
+    // Reading preferences
+    const fontSizeElement = document.querySelector('.flex.items-center.space-x-2 span');
+    preferences.fontSize = fontSizeElement ? fontSizeElement.textContent || 'A' : 'A';
+    
+    // Get selects by their position or add better identifiers
+    const selects = document.querySelectorAll('select');
+    preferences.lineSpacing = selects.length > 0 && selects[0].value ? selects[0].value : 'Normal';
+    preferences.contentWidth = selects.length > 1 && selects[1].value ? selects[1].value : 'Medium';
+    
+    // Writing preferences - check if elements exist before accessing
+    const autosaveToggle = document.getElementById('autosaveToggle');
+    const spellcheckToggle = document.getElementById('spellcheckToggle');
+    const autocorrectToggle = document.getElementById('autocorrectToggle');
+    
+    preferences.autosave = autosaveToggle ? autosaveToggle.checked : true;
+    preferences.spellCheck = spellcheckToggle ? spellcheckToggle.checked : true;
+    preferences.autoCorrect = autocorrectToggle ? autocorrectToggle.checked : false;
+    
+    // Log the preferences for debugging
+    console.log('Saving preferences to localStorage:', preferences);
+    
+    // Get the save button
+    const savePreferencesButton = document.querySelector('#preferences-tab .pt-4 button');
+    if (!savePreferencesButton) {
+        console.error('Save preferences button not found');
+        return;
+    }
+    
+    // Show saving indicator
+    const originalText = savePreferencesButton.innerHTML;
+    savePreferencesButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
+    savePreferencesButton.disabled = true;
+    
+    // Save to localStorage for client-side features
+    localStorage.setItem('spellCheckEnabled', preferences.spellCheck);
+    localStorage.setItem('autoCorrectEnabled', preferences.autoCorrect);
+    localStorage.setItem('autosaveEnabled', preferences.autosave);
+    localStorage.setItem('fontSize', preferences.fontSize);
+    localStorage.setItem('lineSpacing', preferences.lineSpacing);
+    localStorage.setItem('contentWidth', preferences.contentWidth);
+    localStorage.setItem('interfaceTheme', preferences.interfaceTheme);
+    
+    // Simulate a server delay for visual feedback
+    setTimeout(() => {
+        // Show success message
+        savePreferencesButton.innerHTML = '<i class="fas fa-check mr-2"></i>Saved';
+        
+        // Create success alert
+        const successAlert = document.createElement('div');
+        successAlert.className = 'bg-green-700 text-white p-4 rounded-md mb-4 alert';
+        successAlert.innerHTML = `
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium">Preferences saved successfully to browser storage</p>
+                </div>
+                <div class="ml-auto pl-3">
+                    <div class="-mx-1.5 -my-1.5">
+                        <button class="close-alert inline-flex rounded-md p-1.5 text-white hover:bg-green-800 focus:outline-none">
+                            <span class="sr-only">Dismiss</span>
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Add the alert to the page
+        const messagesContainer = document.querySelector('.mb-4');
+        if (messagesContainer) {
+            messagesContainer.prepend(successAlert);
+            
+            // Add event listener to close button
+            const closeButton = successAlert.querySelector('.close-alert');
+            if (closeButton) {
+                closeButton.addEventListener('click', function() {
+                    successAlert.style.opacity = '0';
+                    setTimeout(() => {
+                        successAlert.style.display = 'none';
+                    }, 300);
+                });
+            }
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                successAlert.style.opacity = '0';
+                setTimeout(() => {
+                    successAlert.remove();
+                }, 300);
+            }, 5000);
+        }
+        
+        // Reset button after delay
+        setTimeout(() => {
+            savePreferencesButton.innerHTML = originalText;
+            savePreferencesButton.disabled = false;
+        }, 1000);
+    }, 500);
+    }
+
+    // Update theme selectors to store their theme value
+    const themeSelectors = document.querySelectorAll('.bg-gray-700.p-4.rounded-lg.cursor-pointer.border-2');
+    themeSelectors.forEach((selector, index) => {
+        // Set data-theme attribute based on the theme name
+        if (index === 0) selector.setAttribute('data-theme', 'default');
+        if (index === 1) selector.setAttribute('data-theme', 'fantasy');
+        if (index === 2) selector.setAttribute('data-theme', 'scifi');
+        
+        selector.addEventListener('click', function() {
+            // Remove border from all selectors
+            themeSelectors.forEach(s => s.classList.remove('border-accent-blue'));
+            s.classList.add('border-transparent');
+            
+            // Add border to selected theme
+            this.classList.remove('border-transparent');
+            this.classList.add('border-accent-blue');
+        });
+    });
+
+    // Font size adjustment buttons
+    const decreaseFontBtn = document.querySelector('.flex.items-center.space-x-2 button:first-child');
+    const increaseFontBtn = document.querySelector('.flex.items-center.space-x-2 button:last-child');
+    const fontSizeDisplay = document.querySelector('.flex.items-center.space-x-2 span');
+    
+    if (decreaseFontBtn && increaseFontBtn && fontSizeDisplay) {
+        // Get saved font size from localStorage or use default
+        const savedFontSize = localStorage.getItem('fontSize') || 'A';
+        fontSizeDisplay.textContent = savedFontSize;
+        
+        // Set text size based on saved value
+        if (savedFontSize === 'A-') fontSizeDisplay.style.fontSize = '0.875rem';
+        if (savedFontSize === 'A') fontSizeDisplay.style.fontSize = '1.125rem';
+        if (savedFontSize === 'A+') fontSizeDisplay.style.fontSize = '1.375rem';
+        
+        // Decrease font size
+        decreaseFontBtn.addEventListener('click', function() {
+            if (fontSizeDisplay.textContent === 'A') {
+                fontSizeDisplay.textContent = 'A-';
+                fontSizeDisplay.style.fontSize = '0.875rem';
+            } else if (fontSizeDisplay.textContent === 'A+') {
+                fontSizeDisplay.textContent = 'A';
+                fontSizeDisplay.style.fontSize = '1.125rem';
+            }
+        });
+        
+        // Increase font size
+        increaseFontBtn.addEventListener('click', function() {
+            if (fontSizeDisplay.textContent === 'A-') {
+                fontSizeDisplay.textContent = 'A';
+                fontSizeDisplay.style.fontSize = '1.125rem';
+            } else if (fontSizeDisplay.textContent === 'A') {
+                fontSizeDisplay.textContent = 'A+';
+                fontSizeDisplay.style.fontSize = '1.375rem';
+            }
+        });
+    }
+
+    // Load saved preferences on page load
+    function loadSavedPreferences() {
+        // Load from localStorage
+        const theme = localStorage.getItem('interfaceTheme') || 'default';
+        const fontSize = localStorage.getItem('fontSize') || 'A';
+        const lineSpacing = localStorage.getItem('lineSpacing') || 'Normal';
+        const contentWidth = localStorage.getItem('contentWidth') || 'Medium';
+        const autosave = localStorage.getItem('autosaveEnabled') !== 'false';
+        const spellCheck = localStorage.getItem('spellCheckEnabled') !== 'false';
+        const autoCorrect = localStorage.getItem('autoCorrectEnabled') === 'true';
+
+        // Apply the theme
+        applyTheme(theme);
+        
+        // Update UI selection state
+        themeCards.forEach(card => {
+            card.classList.remove('border-accent-blue');
+            card.classList.add('border-transparent');
+            
+            if (card.getAttribute('data-theme') === theme) {
+                card.classList.remove('border-transparent');
+                card.classList.add('border-accent-blue');
+            }
+        });
+
+        // Set theme
+        themeSelectors.forEach(selector => {
+            if (selector.getAttribute('data-theme') === theme) {
+                themeSelectors.forEach(s => {
+                    s.classList.remove('border-accent-blue');
+                    s.classList.add('border-transparent');
+                });
+                selector.classList.remove('border-transparent');
+                selector.classList.add('border-accent-blue');
+            }
+        });
+        
+        // Set font size
+        if (fontSizeDisplay) {
+            fontSizeDisplay.textContent = fontSize;
+            if (fontSize === 'A-') fontSizeDisplay.style.fontSize = '0.875rem';
+            if (fontSize === 'A') fontSizeDisplay.style.fontSize = '1.125rem';
+            if (fontSize === 'A+') fontSizeDisplay.style.fontSize = '1.375rem';
+        }
+        
+        // Set line spacing
+        const lineSpacingSelect = document.querySelector('select:nth-of-type(1)');
+        if (lineSpacingSelect) {
+            for (let i = 0; i < lineSpacingSelect.options.length; i++) {
+                if (lineSpacingSelect.options[i].value === lineSpacing) {
+                    lineSpacingSelect.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+        
+        // Set content width
+        const contentWidthSelect = document.querySelector('select:nth-of-type(2)');
+        if (contentWidthSelect) {
+            for (let i = 0; i < contentWidthSelect.options.length; i++) {
+                if (contentWidthSelect.options[i].value === contentWidth) {
+                    contentWidthSelect.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+        
+        // Set toggle switches
+        if (document.getElementById('autosaveToggle')) {
+            document.getElementById('autosaveToggle').checked = autosave;
+        }
+        if (document.getElementById('spellcheckToggle')) {
+            document.getElementById('spellcheckToggle').checked = spellCheck;
+        }
+        if (document.getElementById('autocorrectToggle')) {
+            document.getElementById('autocorrectToggle').checked = autoCorrect;
+        }
+    }
+    
+    // Load saved preferences when the preferences tab is shown
+    document.querySelector('[data-tab="preferences"]').addEventListener('click', loadSavedPreferences);
+    
+    // If preferences tab is active on page load, load the saved preferences
+    if (document.querySelector('[data-tab="preferences"]').classList.contains('active')) {
+        loadSavedPreferences();
+    }
+
+    // Theme selection functionality
+const themeCards = document.querySelectorAll('[data-theme]');
+themeCards.forEach(card => {
+    card.addEventListener('click', function() {
+        const theme = this.getAttribute('data-theme');
+        
+        // Update UI selection state
+        themeCards.forEach(c => {
+            c.classList.remove('border-accent-blue');
+            c.classList.add('border-transparent');
+        });
+        this.classList.remove('border-transparent');
+        this.classList.add('border-accent-blue');
+        
+        // Apply theme immediately
+        applyTheme(theme);
+        
+        // Save theme preference
+        localStorage.setItem('interfaceTheme', theme);
+    });
+});
+
+// Apply theme function
+function applyTheme(theme) {
+    // This function calls the setTheme function in your FantasyBackground.html
+    if (window.setTheme) {
+        window.setTheme(theme);
+    } else {
+        console.warn('setTheme function not available');
+    }
+}
+
+// Load saved theme on page load
+const savedTheme = localStorage.getItem('interfaceTheme') || 'none';
+themeCards.forEach(card => {
+    if (card.getAttribute('data-theme') === savedTheme) {
+        card.click();
+    }
+});
+
+
+    // Add event listeners to tab buttons
+    document.querySelectorAll('.settings-tab').forEach(button => {
+        button.addEventListener('click', function() {
+            const tab = this.getAttribute('data-tab');
+            switchTab(tab);
+        });
+    });
+    
+    
+    themeCards.forEach(card => {
+        card.addEventListener('click', function() {
+            const theme = this.getAttribute('data-theme');
+            
+            // Remove selection from all theme cards
+            themeCards.forEach(otherCard => {
+                otherCard.classList.remove('ring-2', 'ring-accent-blue');
+            });
+            
+            // Add selection to clicked card
+            this.classList.add('ring-2', 'ring-accent-blue');
+            
+            // Apply theme
+            localStorage.setItem('interfaceTheme', theme);
+            applyTheme(theme);
+        });
+    });
+    
+    // Function to apply theme
+    function applyTheme(theme) {
+        const body = document.body;
+        
+        // Remove all theme classes
+        body.classList.remove('theme-light', 'theme-dark', 'theme-sepia');
+        
+        // Add selected theme class
+        if (theme && theme !== 'none') {
+            body.classList.add('theme-' + theme);
+        }
+    }
+    
+    themeCards.forEach(card => {
+        if (card.getAttribute('data-theme') === savedTheme) {
+            card.classList.add('ring-2', 'ring-accent-blue');
+            applyTheme(savedTheme);
+        }
+    });
+
+        // Writers tab functionality
+        const acceptContractCheckbox = document.getElementById('accept-contract');
+        const becomeWriterBtn = document.getElementById('become-writer-btn');
+        const confirmEmailBtn = document.getElementById('confirm-email-btn');
+        
+        // Enable/disable become writer button based on checkbox
+        if (acceptContractCheckbox) {
+            acceptContractCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    becomeWriterBtn.disabled = false;
+                    becomeWriterBtn.classList.remove('bg-gray-600', 'cursor-not-allowed');
+                    becomeWriterBtn.classList.add('bg-accent-blue', 'hover:bg-accent-purple');
+                } else {
+                    becomeWriterBtn.disabled = true;
+                    becomeWriterBtn.classList.add('bg-gray-600', 'cursor-not-allowed');
+                    becomeWriterBtn.classList.remove('bg-accent-blue', 'hover:bg-accent-purple');
+                }
+            });
+        }
+        
+        // Handle email confirmation
+if (confirmEmailBtn) {
+    confirmEmailBtn.addEventListener('click', function() {
+        // Show loading state
+        this.disabled = true;
+        this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Sending verification email...';
+        
+        // Get CSRF tokens directly
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+        
+        // Build headers
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        // Add CSRF token if available
+        if (csrfToken && csrfHeader) {
+            headers[csrfHeader] = csrfToken;
+        }
+        
+        // Send request to send verification email
+        fetch('/api/auth/send-verification-email', {
+            method: 'POST',
+            headers: headers,
+            credentials: 'same-origin' // Include cookies
+        })
+        .then(response => {
+            if (!response.ok) {
+                console.error('Server response:', response.status, response.statusText);
+                throw new Error('Server returned ' + response.status);
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Show success message
+            const successAlert = document.createElement('div');
+            successAlert.className = 'bg-green-700 text-white p-4 rounded-md mt-4 alert';
+            successAlert.innerHTML = `
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium">Verification email sent successfully. Please check your inbox.</p>
+                    </div>
+                </div>
+            `;
+            
+            confirmEmailBtn.parentNode.appendChild(successAlert);
+            
+            // Reset button
+            confirmEmailBtn.disabled = false;
+            confirmEmailBtn.innerHTML = '<i class="fas fa-envelope mr-2"></i> Resend verification email';
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            
+            // Show error message
+            const errorAlert = document.createElement('div');
+            errorAlert.className = 'bg-red-700 text-white p-4 rounded-md mt-4 alert';
+            errorAlert.innerHTML = `
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-circle"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium">Failed to send verification email. Please try again.</p>
+                    </div>
+                </div>
+            `;
+            
+            confirmEmailBtn.parentNode.appendChild(errorAlert);
+            
+            // Reset button
+            confirmEmailBtn.disabled = false;
+            confirmEmailBtn.innerHTML = '<i class="fas fa-envelope mr-2"></i> Confirm your email address';
+            
+            // Remove error after 5 seconds
+            setTimeout(() => {
+                errorAlert.style.opacity = '0';
+                errorAlert.style.transition = 'opacity 0.5s';
+                setTimeout(() => errorAlert.remove(), 500);
+            }, 5000);
+        });
+    });
+}
+        
+        // Handle become writer button
+        if (becomeWriterBtn) {
+            becomeWriterBtn.addEventListener('click', function() {
+                if (acceptContractCheckbox && acceptContractCheckbox.checked) {
+                    // Show loading state
+                    this.disabled = true;
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processing...';
+                    
+                    // Use the globally defined getCsrfToken function
+                    const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+                    const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+                    
+                    // Build headers
+                    const headers = {
+                        'Content-Type': 'application/json'
+                    };
+
+                    // Add CSRF token if available
+                    if (csrfToken && csrfHeader) {
+                        headers[csrfHeader] = csrfToken;
+                    } else {
+                        console.warn('CSRF token or header meta tags not found');
+                    }
+
+                    // Send request to become a writer
+                    fetch('/api/auth/become-writer', {
+                        method: 'POST',
+                        headers: headers,
+                        credentials: 'same-origin'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        // Show success message
+                        const successModal = document.createElement('div');
+                        successModal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+                        successModal.innerHTML = `
+                            <div class="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+                                <div class="text-center text-green-500 text-5xl my-6">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <h3 class="text-xl font-bold text-white text-center mb-4">Congratulations!</h3>
+                                <p class="text-gray-300 text-center mb-6">You are now a writer on Inkwell. You can access the Dashboard, Writing, and Statistics pages.</p>
+                                <div class="flex space-x-4">
+                                    <a href="/Dashboard" class="flex-1 text-center py-2 px-4 bg-accent-blue hover:bg-accent-purple text-white rounded-md transition-colors duration-300">
+                                        Go to Dashboard
+                                    </a>
+                                    <button id="close-writer-modal" class="flex-1 py-2 px-4 bg-gray-700 hover:bg-gray-600 text-white rounded-md transition-colors duration-300">
+                                        Stay Here
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                        
+                        document.body.appendChild(successModal);
+                        
+                        // Update the navigation to show writer links
+                        if (typeof window.updateNavigation === 'function') {
+                            window.updateNavigation(true);
+                        }
+                        
+                        // Handle close button
+                        document.getElementById('close-writer-modal').addEventListener('click', function() {
+                            successModal.remove();
+                            // Reload the page to update the UI
+                            window.location.reload();
+                        });
+                    })
+                .catch(error => {
+                    console.error('Error:', error);
+                    
+                    // Show error message
+                    const errorAlert = document.createElement('div');
+                    errorAlert.className = 'bg-red-700 text-white p-4 rounded-md mt-4 alert';
+                    errorAlert.innerHTML = `
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-exclamation-circle"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium">An error occurred. Please try again.</p>
+                            </div>
+                        </div>
+                    `;
+                    
+                    becomeWriterBtn.parentNode.appendChild(errorAlert);
+                    
+                    // Reset button
+                    becomeWriterBtn.disabled = false;
+                    becomeWriterBtn.innerHTML = '<i class="fas fa-pen-nib mr-2"></i> Become a Writer';
+                });
+            }
+        });
+        
+        // Show success message if email was verified
+        const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('emailVerified') === 'true') {
+        // Create success modal
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+        modal.innerHTML = `
+            <div class="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+                <div class="text-center text-green-500 text-5xl my-6">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white text-center mb-4">Email Verified!</h3>
+                <p class="text-gray-300 text-center mb-6">Your email has been successfully verified. You can now proceed to become a writer.</p>
+                <button id="close-verification-modal" class="w-full mt-4 py-2 px-4 bg-accent-blue hover:bg-accent-purple text-white rounded-md transition-colors duration-300">
+                    Continue
+                </button>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Handle close button
+        document.getElementById('close-verification-modal').addEventListener('click', function() {
+            modal.remove();
+        });
+        
+        // Remove the query parameter from the URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (urlParams.get('emailVerified') === 'false') {
+        // Show error message for failed verification
+        const errorAlert = document.createElement('div');
+        errorAlert.className = 'bg-red-700 text-white p-4 rounded-md mt-4 fixed top-4 right-4 z-50 alert';
+        errorAlert.innerHTML = `
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-exclamation-circle"></i>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium">Email verification failed. Please try again.</p>
+                </div>
+                <button class="ml-auto" onclick="this.parentElement.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+        
+        document.body.appendChild(errorAlert);
+        
+        // Remove after 5 seconds
+        setTimeout(() => {
+            errorAlert.style.opacity = '0';
+            errorAlert.style.transition = 'opacity 0.5s';
+            setTimeout(() => errorAlert.remove(), 500);
+        }, 5000);
+        
+            // Become writer button
+            const becomeWriterBtn = document.getElementById('become-writer-btn');
+if (becomeWriterBtn) {
+    becomeWriterBtn.addEventListener('click', function() {
+        // Show loading state
+        this.disabled = true;
+        this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processing...';
+        
+        // Get CSRF tokens directly
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+        
+        // Build headers
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        // Add CSRF token if available
+        if (csrfToken && csrfHeader) {
+            headers[csrfHeader] = csrfToken;
+        }
+        
+        // Send request to become a writer
+        fetch('/api/auth/become-writer', {
+            method: 'POST',
+            headers: headers,
+            credentials: 'same-origin' // Include cookies
+        })
+        .then(response => {
+            if (!response.ok) {
+                console.error('Server response:', response.status, response.statusText);
+                throw new Error('Server returned ' + response.status);
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Show success message
+            const successModal = document.createElement('div');
+            successModal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            successModal.innerHTML = `
+                <div class="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+                    <div class="text-center text-green-500 text-5xl my-6">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white text-center mb-4">Congratulations!</h3>
+                    <p class="text-gray-300 text-center mb-6">You are now a writer on Inkwell. You can access the Dashboard, Writing, and Statistics pages.</p>
+                    <div class="flex space-x-4">
+                        <a href="/Dashboard" class="flex-1 text-center py-2 px-4 bg-accent-blue hover:bg-accent-purple text-white rounded-md transition-colors duration-300">
+                            Go to Dashboard
+                        </a>
+                        <button id="close-writer-modal" class="flex-1 py-2 px-4 bg-gray-700 hover:bg-gray-600 text-white rounded-md transition-colors duration-300">
+                            Stay Here
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(successModal);
+            
+            // Handle close button
+            document.getElementById('close-writer-modal').addEventListener('click', function() {
+                successModal.remove();
+                // Reload the page to update the UI
+                window.location.reload();
+            });
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            
+            // Show error message
+            const errorAlert = document.createElement('div');
+            errorAlert.className = 'bg-red-700 text-white p-4 rounded-md mt-4 alert';
+            errorAlert.innerHTML = `
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-circle"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium">An error occurred. Please try again.</p>
+                    </div>
+                </div>
+            `;
+            
+            becomeWriterBtn.parentNode.appendChild(errorAlert);
+            
+            // Reset button
+            becomeWriterBtn.disabled = false;
+            becomeWriterBtn.innerHTML = 'Accept & Become a Writer';
+            
+            // Remove error after 5 seconds
+            setTimeout(() => {
+                errorAlert.style.opacity = '0';
+                errorAlert.style.transition = 'opacity 0.5s';
+                setTimeout(() => errorAlert.remove(), 500);
+            }, 5000);
+        });
+    });
+}
+    
+    // Helper function to get CSRF token
+    function getCsrfToken() {
+        const tokenElement = document.querySelector('meta[name="_csrf"]');
+        return tokenElement ? tokenElement.getAttribute('content') : null;
+    }
+    }
+    }});
+
+    // Initialize tab from URL parameter if present
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    if (tabParam) {
+        switchTab(tabParam);
+        // Remove the tab parameter from the URL
+        const newParams = new URLSearchParams(window.location.search);
+        newParams.delete('tab');
+        const newUrl = window.location.pathname + (newParams.toString() ? '?' + newParams.toString() : '');
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+    
+    // Check for emailVerified parameter
+    if (urlParams.get('emailVerified') === 'true') {
+        // Show success modal
+        const successModal = document.createElement('div');
+        successModal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+        successModal.innerHTML = `
+            <div class="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+                <div class="text-center text-green-500 text-5xl my-6">
+                    <i class="fas fa-check-circle"></i>
+                </div>    
+                <h3 class="text-xl font-bold text-white text-center mb-4">Email Verified!</h3>
+                <p class="text-gray-300 text-center mb-6">Your email has been successfully verified. You can now proceed to become a writer.</p>
+                <button id="close-verification-modal" class="w-full mt-4 py-2 px-4 bg-accent-blue hover:bg-accent-purple text-white rounded-md transition-colors duration-300">
+                    Continue to Writer Agreement
+                </button>
+            </div>
+        `;
+        
+        document.body.appendChild(successModal);
+
+        window.history.replaceState({}, document.title, window.location.pathname);
+    
+        // Handle close button
+        document.getElementById('close-verification-modal').addEventListener('click', function() {
+            successModal.remove();
+            
+            // Do a full page reload to ensure we have fresh data from the server
+            // Store that we want to show the writers tab after reload
+            sessionStorage.setItem('showWritersTab', 'true');
+            window.location.href = '/Settings';
+        });
+
+    }
+    
+    // Check if we should show writers tab after reload
+    if (sessionStorage.getItem('showWritersTab') === 'true') {
+        sessionStorage.removeItem('showWritersTab');
+        switchTab('writers');
+        
+        // Force the contract section to be visible
+        const emailSection = document.getElementById('email-confirmation-section');
+        const contractSection = document.getElementById('contract-section');
+        
+        if (emailSection && contractSection) {
+            emailSection.classList.add('hidden');
+            contractSection.classList.remove('hidden');
+        }
+    }
+    
+</script>
+</body>
+</html>
